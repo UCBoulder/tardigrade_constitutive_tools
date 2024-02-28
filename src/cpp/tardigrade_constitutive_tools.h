@@ -145,6 +145,8 @@ namespace tardigradeConstitutiveTools{
 
     errorOut computeSymmetricPart( const floatVector &A, floatVector &symmA );
 
+    errorOut computeSymmetricPart( const floatVector &A, floatVector &symmA, floatVector &dSymmAdA );
+
     errorOut computeSymmetricPart( const floatVector &A, floatVector &symmA, floatMatrix &dSymmAdA );
 
     errorOut pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress );

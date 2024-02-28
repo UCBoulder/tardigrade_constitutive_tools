@@ -1254,6 +1254,18 @@ BOOST_AUTO_TEST_CASE( testComputeSymmetricPart ){
 
     BOOST_CHECK( tardigradeVectorTools::fuzzyEquals( resultJ, answer ) );
 
+    floatVector resultJv;
+
+    floatVector dSymmAdAv;
+
+    error = tardigradeConstitutiveTools::computeSymmetricPart( A, resultJv, dSymmAdAv );
+
+    BOOST_CHECK( ! error );
+
+    BOOST_CHECK( tardigradeVectorTools::fuzzyEquals( resultJv, answer ) );
+
+    BOOST_CHECK( tardigradeVectorTools::fuzzyEquals( tardigradeVectorTools::appendVectors( dSymmAdA ), dSymmAdAv ) );
+
     floatType eps = 1e-6;
     for ( unsigned int i = 0; i < A.size( ); i++ ){
         floatVector delta( A.size( ), 0 );

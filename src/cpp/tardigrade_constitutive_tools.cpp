@@ -1538,7 +1538,7 @@ namespace tardigradeConstitutiveTools{
          * \param &symmA: The symmetric part of A ( \f$A^{symm}\f$ )
          * \param &dSymmAdA: The Jacobian of the symmetric part of A w.r.t. A ( \f$\frac{\partial A^{symm}}{\partial A}\f$ )
          */
-        
+     
         unsigned int dim;
         errorOut error = computeSymmetricPart( A, symmA, dim );
         
@@ -1559,6 +1559,52 @@ namespace tardigradeConstitutiveTools{
                 for ( unsigned int k = 0; k < dim; k++ ){
                     for ( unsigned int l = 0; l < dim; l++ ){
                         dSymmAdA[ dim * i + j ][ dim * k + l ] = 0.5 * ( eye[ dim * i + k ] * eye[ dim * j + l ] + eye[ dim * j + k ] * eye[ dim * i + l ] );
+                    }
+                }
+            }
+        }
+        
+        return NULL;
+   
+    }
+
+    errorOut computeSymmetricPart( const floatVector &A, floatVector &symmA, floatVector &dSymmAdA ){
+        /*!
+         * Compute the symmetric part of a second order tensor ( \f$A\f$ ) and return it.
+         *
+         * \f$( A )^{symm}_{ij} = \frac{1}{2}\left(A_{ij} + A_{ji}\right)\f$
+         *
+         * Also computes the jacobian
+         * 
+         * \f$\frac{\partial A^{symm}_{ij}}{\partial A_{kl}} = \frac{1}{2}\left( \delta_{ik} \delta_{jl} + \delta_{jk}\delta_{il} \right)
+         *
+         * \param &A: A constant reference to the second order tensor to process ( \f$A\f$ )
+         * \param &symmA: The symmetric part of A ( \f$A^{symm}\f$ )
+         * \param &dSymmAdA: The Jacobian of the symmetric part of A w.r.t. A ( \f$\frac{\partial A^{symm}}{\partial A}\f$ )
+         */
+        
+        unsigned int dim;
+        errorOut error = computeSymmetricPart( A, symmA, dim );
+        
+        if ( error ){
+            errorOut result = new errorNode( "computeSymmetricPart (jacobian)",
+                                             "Error in computation of the symmetric part of A" );
+            result->addNext( error );
+            return result;
+        }
+        
+        floatVector eye( A.size( ) );
+        tardigradeVectorTools::eye( eye );
+        
+        unsigned int Asize = A.size( );
+        
+        dSymmAdA = floatVector( symmA.size( ) * Asize, 0 );
+
+        for ( unsigned int i = 0; i < dim; i++ ){
+            for ( unsigned int j = 0; j < dim; j++ ){
+                for ( unsigned int k = 0; k < dim; k++ ){
+                    for ( unsigned int l = 0; l < dim; l++ ){
+                        dSymmAdA[ dim * Asize * i + Asize * j + dim * k + l ] = 0.5 * ( eye[ dim * i + k ] * eye[ dim * j + l ] + eye[ dim * j + k ] * eye[ dim * i + l ] );
                     }
                 }
             }
