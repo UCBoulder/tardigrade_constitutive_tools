@@ -44,6 +44,8 @@ namespace tardigradeConstitutiveTools{
 
     errorOut computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C );
 
+    errorOut computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C, floatVector &dCdF );
+
     errorOut computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C, floatMatrix &dCdF );
 
     errorOut computeGreenLagrangeStrain(const floatVector &deformationGradient, floatVector &E);

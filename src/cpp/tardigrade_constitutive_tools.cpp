@@ -58,7 +58,7 @@ namespace tardigradeConstitutiveTools{
         }
 
         //Set the dimension to be the square-root of the size of A
-        unsigned int dim = std::sqrt(A.size());
+        const unsigned int dim = std::sqrt(A.size());
         if (A.size() % dim != 0){
             return new errorNode("rotateMatrix", "A must be square");
         }
@@ -94,7 +94,7 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3D
-        unsigned int dim = 3;
+        const unsigned int dim = 3;
 
         if ( deformationGradient.size( ) != dim * dim ){
             return new errorNode( "computeRightCauchyGreen",
@@ -122,8 +122,45 @@ namespace tardigradeConstitutiveTools{
          * The Right Cauchy-Green deformation tensor is organized as C11, C12, C13, C21, C22, C23, C31, C32, C33
          */
 
+        const unsigned int dim = 3;
+        const unsigned int sot_dim = dim * dim;
+
+        floatVector _dCdF;
+
+        errorOut error = computeRightCauchyGreen( deformationGradient, C, _dCdF );
+
+        if ( error ){
+            errorOut result = new errorNode( "computeRightCauchyGreen (jacobian)",
+                                             "Error in computation of Right Cauchy green deformation tensor" );
+            result->addNext( error );
+            return result;
+        }
+
+        dCdF = tardigradeVectorTools::inflate( _dCdF, sot_dim, sot_dim );
+
+        return error;
+
+    }
+
+    errorOut computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C, floatVector &dCdF ){
+        /*!
+         * Compute the Right Cauchy-Green deformation tensor ( \f$C\f$ ) from the deformation gradient ( \f$F\f$ )
+         * 
+         * \f$C_{IJ} = F_{iI} F_{iJ}\f$
+         * 
+         * \param &deformationGradient: A reference to the deformation gradient ( \f$F\f$ )
+         * \param &C: The resulting Right Cauchy-Green deformation tensor ( \f$C\f$ )
+         * \param &dCdF: The Jacobian of the Right Cauchy-Green deformation tensor
+         *     with regards to the deformation gradient ( \f$\frac{\partial C}{\partial F}\f$ ).
+         *
+         * The deformation gradient is organized as F11, F12, F13, F21, F22, F23, F31, F32, F33
+         *
+         * The Right Cauchy-Green deformation tensor is organized as C11, C12, C13, C21, C22, C23, C31, C32, C33
+         */
+
         //Assume 3D
-        unsigned int dim = 3;
+        const unsigned int dim = 3;
+        const unsigned int sot_dim = dim * dim;
 
         errorOut error = computeRightCauchyGreen( deformationGradient, C );
 
@@ -138,14 +175,14 @@ namespace tardigradeConstitutiveTools{
         floatVector eye( dim * dim );
         tardigradeVectorTools::eye( eye );
         
-        dCdF = floatMatrix( C.size( ), floatVector( deformationGradient.size( ), 0 ) );
+        dCdF = floatVector( sot_dim * sot_dim, 0 );
         
         for ( unsigned int I = 0; I < dim; I++ ){
             for ( unsigned int J = 0; J < dim; J++ ){
                 for ( unsigned int k = 0; k < dim; k++ ){
                     for ( unsigned int K =0 ; K < dim; K++ ){
-                        dCdF[ dim * I + J ][ dim * k + K ] = eye[ dim * I + K ] * deformationGradient[ dim * k + J ]
-                                                           + deformationGradient[ dim * k + I ] * eye[ dim * J + K ];
+                        dCdF[ dim * sot_dim * I + sot_dim * J + dim * k + K ] = eye[ dim * I + K ] * deformationGradient[ dim * k + J ]
+                                                                              + deformationGradient[ dim * k + I ] * eye[ dim * J + K ];
                     }
                 }
             }
@@ -435,7 +472,7 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3D
-        unsigned int dim = 3;
+        const unsigned int dim = 3;
 
         if (velocityGradient.size() != deformationGradient.size()){
             return new errorNode("computeDFDt", "The velocity gradient and deformation gradient must have the same size");
@@ -477,7 +514,7 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3D
-        unsigned int dim = 3;
+        const unsigned int dim = 3;
 
         errorOut error = computeDFDt(velocityGradient, deformationGradient, DFDt);
 
@@ -1161,7 +1198,7 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3D
-        unsigned int dim = 3;
+        const unsigned int dim = 3;
 
         //Invert the deformation gradient
         floatVector inverseDeformationGradient = tardigradeVectorTools::inverse(deformationGradient, dim, dim);
@@ -1196,7 +1233,7 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3D
-        unsigned int dim = 3;
+        const unsigned int dim = 3;
 
         //Invert the deformation gradient
         floatVector inverseDeformationGradient = tardigradeVectorTools::inverse(deformationGradient, dim, dim);
@@ -1314,7 +1351,7 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3D
-        unsigned int dim = 3;
+        const unsigned int dim = 3;
 
         //Compute the inverse deformation gradient
         floatVector inverseDeformationGradient = tardigradeVectorTools::inverse(deformationGradient, dim, dim);
@@ -1350,7 +1387,7 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3D
-        unsigned int dim = 3;
+        const unsigned int dim = 3;
 
         //Compute the inverse deformation gradient
         floatVector inverseDeformationGradient = tardigradeVectorTools::inverse(deformationGradient, dim, dim);
@@ -1421,7 +1458,7 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3d
-        unsigned int dim = 3;
+        const unsigned int dim = 3;
 
         greenLagrangeStrain = tardigradeVectorTools::matrixMultiply( deformationGradient, almansiStrain, dim, dim, dim, dim, 1, 0 );
         greenLagrangeStrain = tardigradeVectorTools::matrixMultiply( greenLagrangeStrain, deformationGradient, dim, dim, dim, dim, 0, 0 );
@@ -1445,7 +1482,7 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3d
-        unsigned int dim = 3;
+        const unsigned int dim = 3;
 
         errorOut error = pullBackAlmansiStrain( almansiStrain, deformationGradient, greenLagrangeStrain );
 
@@ -1596,7 +1633,7 @@ namespace tardigradeConstitutiveTools{
         floatVector eye( A.size( ) );
         tardigradeVectorTools::eye( eye );
         
-        unsigned int Asize = A.size( );
+        const unsigned int Asize = A.size( );
         
         dSymmAdA = floatVector( symmA.size( ) * Asize, 0 );
 
@@ -1624,7 +1661,7 @@ namespace tardigradeConstitutiveTools{
          * \param &cauchyStress: The Cauchy stress \f$ \sigma_{ij} \f$
          */
 
-        unsigned int dim = ( unsigned int )( std::sqrt( ( double )PK2.size( ) ) + 0.5 );
+        const unsigned int dim = ( unsigned int )( std::sqrt( ( double )PK2.size( ) ) + 0.5 );
         
         if ( dim * dim != PK2.size( ) ){
 
@@ -1666,7 +1703,7 @@ namespace tardigradeConstitutiveTools{
          * \param &dCauchyStressdF: The gradient of the Cauchy stress w.r.t. the deformation gradient
          */
 
-        unsigned int dim = ( unsigned int )( std::sqrt( ( double )PK2.size( ) ) + 0.5 );
+        const unsigned int dim = ( unsigned int )( std::sqrt( ( double )PK2.size( ) ) + 0.5 );
         
         if ( dim * dim != PK2.size( ) ){
 
@@ -1743,7 +1780,7 @@ namespace tardigradeConstitutiveTools{
          * \param &PK2: The resulting second Piola-Kirchhoff stress
          */
 
-        unsigned int dim = ( unsigned int )( std::sqrt( ( double )cauchyStress.size( ) ) + 0.5 );
+        const unsigned int dim = ( unsigned int )( std::sqrt( ( double )cauchyStress.size( ) ) + 0.5 );
 
         if ( cauchyStress.size( ) != dim * dim ){
 
@@ -1796,7 +1833,7 @@ namespace tardigradeConstitutiveTools{
          *     deformation gradient
          */
 
-        unsigned int dim = ( unsigned int )( std::sqrt( ( double )cauchyStress.size( ) ) + 0.5 );
+        const unsigned int dim = ( unsigned int )( std::sqrt( ( double )cauchyStress.size( ) ) + 0.5 );
 
         if ( cauchyStress.size( ) != dim * dim ){
 
