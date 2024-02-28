@@ -44,6 +44,8 @@ namespace tardigradeConstitutiveTools{
 
     errorOut computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C );
 
+    errorOut computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C, floatVector &dCdF );
+
     errorOut computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C, floatMatrix &dCdF );
 
     errorOut computeGreenLagrangeStrain(const floatVector &deformationGradient, floatVector &E);
@@ -144,6 +146,8 @@ namespace tardigradeConstitutiveTools{
     errorOut computeSymmetricPart( const floatVector &A, floatVector &symmA, unsigned int &dim );
 
     errorOut computeSymmetricPart( const floatVector &A, floatVector &symmA );
+
+    errorOut computeSymmetricPart( const floatVector &A, floatVector &symmA, floatVector &dSymmAdA );
 
     errorOut computeSymmetricPart( const floatVector &A, floatVector &symmA, floatMatrix &dSymmAdA );
 
