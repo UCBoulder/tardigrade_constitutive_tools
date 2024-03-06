@@ -1560,19 +1560,6 @@ namespace tardigradeConstitutiveTools{
         //Compute the inverse deformation gradient
         floatVector inverseDeformationGradient = tardigradeVectorTools::inverse(deformationGradient, dim, dim);
 
-        //Compute the jacobian of the inverse deformation gradient
-        floatMatrix dFinvdF(dim*dim, floatVector(dim*dim, 0));
-        for (unsigned int I=0; I<dim; I++){
-            for (unsigned int l=0; l<dim; l++){
-                for (unsigned int k=0; k<dim; k++){
-                    for (unsigned int K=0; K<dim; K++){
-                        dFinvdF[dim*I + l][dim*k + K] = -inverseDeformationGradient[dim*I + k] *
-                                                         inverseDeformationGradient[dim*K + l];
-                    }
-                }
-            }
-        }
-
         //Map the Green-Lagrange strain to the current configuration
         almansiStrain = tardigradeVectorTools::matrixMultiply(greenLagrangeStrain, inverseDeformationGradient,
                                                     dim, dim, dim, dim, 0, 0);
@@ -1581,31 +1568,15 @@ namespace tardigradeConstitutiveTools{
 
         //Compute the jacobians
         dalmansiStraindE = floatMatrix(dim*dim, floatVector(dim*dim, 0));
+        dalmansiStraindF = floatMatrix(dim*dim, floatVector(dim*dim, 0));
         for (unsigned int i=0; i<dim; i++){
             for (unsigned int j=0; j<dim; j++){
                 for (unsigned int K=0; K<dim; K++){
                     for (unsigned int L=0; L<dim; L++){
                         dalmansiStraindE[dim*i + j][dim*K + L] = inverseDeformationGradient[dim*K + i] *
                                                                  inverseDeformationGradient[dim*L + j];
-                    }
-                }
-            }
-        }
-
-        dalmansiStraindF = floatMatrix(dim*dim, floatVector(dim*dim, 0));
-        floatVector term1 = tardigradeVectorTools::matrixMultiply(greenLagrangeStrain, inverseDeformationGradient,
-                                                        dim, dim, dim, dim, 0, 0);
-        floatVector term2 = tardigradeVectorTools::matrixMultiply(inverseDeformationGradient, greenLagrangeStrain,
-                                                        dim, dim, dim, dim, 1, 0);
-
-        for (unsigned int i=0; i<dim; i++){
-            for (unsigned int j=0; j<dim; j++){
-                for (unsigned int k=0; k<dim; k++){
-                    for (unsigned int K=0; K<dim; K++){
-                        for (unsigned int I=0; I<dim; I++){
-                            dalmansiStraindF[dim*i + j][dim*k + K] += dFinvdF[dim*I + i][dim*k + K] * term1[dim*I + j]
-                                                                    + term2[dim*i + I] * dFinvdF[dim*I + j][dim*k + K];
-                        }
+                        dalmansiStraindF[dim*i + j][dim*K + L] = -inverseDeformationGradient[dim*L + i ] * almansiStrain[dim*K+j]
+                                                                 -inverseDeformationGradient[dim*L + j ] * almansiStrain[dim*i+K];
                     }
                 }
             }
