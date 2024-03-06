@@ -13,6 +13,9 @@
 #include <boost/test/included/unit_test.hpp>
 #include <boost/test/tools/output_test_stream.hpp>
 
+#define DEFAULT_TEST_TOLERANCE 1e-6
+#define CHECK_PER_ELEMENT boost::test_tools::per_element( )
+
 typedef tardigradeConstitutiveTools::errorOut errorOut;
 typedef tardigradeConstitutiveTools::floatType floatType;
 typedef tardigradeConstitutiveTools::floatVector floatVector;
@@ -44,18 +47,18 @@ struct cerr_redirect{
         std::streambuf * old;
 };
 
-BOOST_AUTO_TEST_CASE( testDeltaDirac ){
+BOOST_AUTO_TEST_CASE( testDeltaDirac, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
     /*!
      * Test the deltaDirac function in constitutive tools
      */
 
-    BOOST_CHECK( tardigradeConstitutiveTools::deltaDirac( 1, 2 ) == 0 );
+    BOOST_TEST( tardigradeConstitutiveTools::deltaDirac( 1, 2 ) == 0 );
 
-    BOOST_CHECK( tardigradeConstitutiveTools::deltaDirac( 1, 1 ) == 1 );
+    BOOST_TEST( tardigradeConstitutiveTools::deltaDirac( 1, 1 ) == 1 );
 
 }
 
-BOOST_AUTO_TEST_CASE( testRotateMatrix ){
+BOOST_AUTO_TEST_CASE( testRotateMatrix, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
     /*!
      * Test the rotation of a matrix by an orthogonal rotation matrix..
      */
@@ -67,14 +70,16 @@ BOOST_AUTO_TEST_CASE( testRotateMatrix ){
 
     floatVector A = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
+    floatVector rotatedA_answer = { -0.09485264, -3.38815017, -5.39748037,
+                                    -1.09823916,  2.23262233,  4.68884658,
+                                    -1.68701666,  6.92240128, 12.8622303 };
+
     floatVector rotatedA;
     errorOut ret = tardigradeConstitutiveTools::rotateMatrix( A, Q, rotatedA );
 
     BOOST_CHECK( ! ret );
 
-    BOOST_CHECK( tardigradeVectorTools::fuzzyEquals( rotatedA, { -0.09485264, -3.38815017, -5.39748037,
-                                                       -1.09823916,  2.23262233,  4.68884658,
-                                                       -1.68701666,  6.92240128, 12.8622303 } ) );
+    BOOST_TEST( rotatedA == rotatedA_answer, CHECK_PER_ELEMENT );
 
     //Test rotation back to original frame
 
@@ -90,11 +95,11 @@ BOOST_AUTO_TEST_CASE( testRotateMatrix ){
 
     BOOST_CHECK( ! ret );
 
-    BOOST_CHECK( tardigradeVectorTools::fuzzyEquals( A, App ) );
+    BOOST_TEST( A == App, CHECK_PER_ELEMENT );
 
 }
 
-BOOST_AUTO_TEST_CASE( testComputeGreenLagrangeStrain ){
+BOOST_AUTO_TEST_CASE( testComputeGreenLagrangeStrain, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
     /*!
      * Test the computation of the Green-Lagrange strain
      */
@@ -107,7 +112,9 @@ BOOST_AUTO_TEST_CASE( testComputeGreenLagrangeStrain ){
 
     BOOST_CHECK( ! ret );
 
-    BOOST_CHECK( tardigradeVectorTools::fuzzyEquals( E, { 0, 0, 0, 0, 0, 0, 0, 0, 0 } ) );
+    floatVector E_answer_1( 9, 0 );
+
+    BOOST_TEST( E == E_answer_1, CHECK_PER_ELEMENT );
 
     F = { 0.69646919, 0.28613933, 0.22685145,
           0.55131477, 0.71946897, 0.42310646,
@@ -117,9 +124,11 @@ BOOST_AUTO_TEST_CASE( testComputeGreenLagrangeStrain ){
 
     BOOST_CHECK( ! ret );
 
-    BOOST_CHECK( tardigradeVectorTools::fuzzyEquals( E, { 0.37545786,  0.63379879,  0.43147034,
-                                                0.63379879,  0.03425154,  0.34933978,
-                                                0.43147034,  0.34933978, -0.26911192 } ) );
+    floatVector E_answer_2 = { 0.37545786,  0.63379879,  0.43147034,
+                               0.63379879,  0.03425154,  0.34933978,
+                               0.43147034,  0.34933978, -0.26911192 };
+
+    BOOST_TEST( E == E_answer_2, CHECK_PER_ELEMENT );
 
     floatVector EJ;
     floatMatrix dEdF;
@@ -127,7 +136,7 @@ BOOST_AUTO_TEST_CASE( testComputeGreenLagrangeStrain ){
 
     BOOST_CHECK( ! ret );
 
-    BOOST_CHECK( tardigradeVectorTools::fuzzyEquals( E, EJ ) );
+    BOOST_TEST( E == EJ, CHECK_PER_ELEMENT );
 
     floatType eps = 1e-6;
     for ( unsigned int i=0; i<F.size( ); i++ ){
@@ -135,20 +144,24 @@ BOOST_AUTO_TEST_CASE( testComputeGreenLagrangeStrain ){
 
         delta[ i ] = eps * fabs( F[ i ] ) + eps;
 
-        ret = tardigradeConstitutiveTools::computeGreenLagrangeStrain( F + delta, EJ );
+        floatVector EJp, EJm;
+
+        ret = tardigradeConstitutiveTools::computeGreenLagrangeStrain( F + delta, EJp );
+
+        ret = tardigradeConstitutiveTools::computeGreenLagrangeStrain( F - delta, EJm );
 
         BOOST_CHECK( ! ret );
 
-        floatVector gradCol = ( EJ - E )/delta[ i ];
+        floatVector gradCol = ( EJp - EJm )/(2*delta[ i ]);
 
         for ( unsigned int j=0; j<gradCol.size( ); j++ ){
-            BOOST_CHECK( tardigradeVectorTools::fuzzyEquals( gradCol[ j ], dEdF[ j ][ i ] ) );
+            BOOST_TEST( tardigradeVectorTools::fuzzyEquals( gradCol[ j ], dEdF[ j ][ i ] ) );
         }
     }
 
 }
 
-BOOST_AUTO_TEST_CASE( testDecomposeGreenLagrangeStrain ){
+BOOST_AUTO_TEST_CASE( testDecomposeGreenLagrangeStrain, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
     /*!
      * Test the decomposition of the Green-Lagrange strain into isochoric and
      * volumetric parts.
@@ -227,7 +240,7 @@ BOOST_AUTO_TEST_CASE( testDecomposeGreenLagrangeStrain ){
 
 }
 
-BOOST_AUTO_TEST_CASE( testMapPK2toCauchy ){
+BOOST_AUTO_TEST_CASE( testMapPK2toCauchy, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
     /*!
      * Test the mapping of the PK2 stress from the reference
      * configuration to the current configuration.
@@ -253,7 +266,7 @@ BOOST_AUTO_TEST_CASE( testMapPK2toCauchy ){
 
 }
 
-BOOST_AUTO_TEST_CASE( testWLF ){
+BOOST_AUTO_TEST_CASE( testWLF, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
     /*!
      * Test the computation of the WLF function.
      */
@@ -283,7 +296,7 @@ BOOST_AUTO_TEST_CASE( testWLF ){
 
 }
 
-BOOST_AUTO_TEST_CASE( testComputeDGreenLagrangeStrainDF ){
+BOOST_AUTO_TEST_CASE( testComputeDGreenLagrangeStrainDF, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
     /*!
      * Test the computation of the gradient of the Green-Lagrange
      * strain w.r.t. the deformation gradient.
@@ -320,7 +333,7 @@ BOOST_AUTO_TEST_CASE( testComputeDGreenLagrangeStrainDF ){
     }
 }
 
-BOOST_AUTO_TEST_CASE( testMidpointEvolution ){
+BOOST_AUTO_TEST_CASE( testMidpointEvolution, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
     /*!
      * Test the midpoint evolution algorithm.
      */
@@ -453,7 +466,7 @@ BOOST_AUTO_TEST_CASE( testMidpointEvolution ){
 
 }
 
-BOOST_AUTO_TEST_CASE( testComputeDFDt ){
+BOOST_AUTO_TEST_CASE( testComputeDFDt, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
     /*!
      * Test the computation of the total time derivative of the
      * deformation gradient.
@@ -525,7 +538,7 @@ BOOST_AUTO_TEST_CASE( testComputeDFDt ){
 
 }
 
-BOOST_AUTO_TEST_CASE( testEvolveF ){
+BOOST_AUTO_TEST_CASE( testEvolveF, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
     /*!
      * Test the evolution of the deformation gradient.
      */
@@ -834,7 +847,7 @@ BOOST_AUTO_TEST_CASE( testEvolveF ){
 
 }
 
-BOOST_AUTO_TEST_CASE( testMac ){
+BOOST_AUTO_TEST_CASE( testMac, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
     /*!
      * Test the computation of the Macullay brackets.
      */
@@ -858,7 +871,7 @@ BOOST_AUTO_TEST_CASE( testMac ){
 
 }
 
-BOOST_AUTO_TEST_CASE( testComputeUnitNormal ){
+BOOST_AUTO_TEST_CASE( testComputeUnitNormal, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
     /*!
      * Test the computation of the unit normal.
      */
@@ -918,7 +931,7 @@ BOOST_AUTO_TEST_CASE( testComputeUnitNormal ){
 
 }
 
-BOOST_AUTO_TEST_CASE( testPullBackVelocityGradient ){
+BOOST_AUTO_TEST_CASE( testPullBackVelocityGradient, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
     /*!
      * Test the pull back operation on the velocity gradient.
      */
@@ -988,7 +1001,7 @@ BOOST_AUTO_TEST_CASE( testPullBackVelocityGradient ){
 
 }
 
-BOOST_AUTO_TEST_CASE( testQuadraticThermalExpansion ){
+BOOST_AUTO_TEST_CASE( testQuadraticThermalExpansion, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
     /*!
      * Test the computation of the thermal expansion using a
      * quadratic form.
@@ -1038,7 +1051,7 @@ BOOST_AUTO_TEST_CASE( testQuadraticThermalExpansion ){
 
 }
 
-BOOST_AUTO_TEST_CASE( testPushForwardGreenLagrangeStrain ){
+BOOST_AUTO_TEST_CASE( testPushForwardGreenLagrangeStrain, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
     /*!
      * Test the push-forward operation on the Green-Lagrange strain.
      */
@@ -1111,7 +1124,7 @@ BOOST_AUTO_TEST_CASE( testPushForwardGreenLagrangeStrain ){
 
 }
 
-BOOST_AUTO_TEST_CASE( testPullBackAlmansiStrain ){
+BOOST_AUTO_TEST_CASE( testPullBackAlmansiStrain, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
     /*!
      * Test the pull-back operation on the Green-Lagrange strain.
      */
@@ -1180,7 +1193,7 @@ BOOST_AUTO_TEST_CASE( testPullBackAlmansiStrain ){
 
 }
 
-BOOST_AUTO_TEST_CASE( testComputeRightCauchyGreen ){
+BOOST_AUTO_TEST_CASE( testComputeRightCauchyGreen, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
     /*!
      * Test the computation of the Right Cauchy-Green deformation tensor
      */
@@ -1226,7 +1239,7 @@ BOOST_AUTO_TEST_CASE( testComputeRightCauchyGreen ){
 
 }
 
-BOOST_AUTO_TEST_CASE( testComputeSymmetricPart ){
+BOOST_AUTO_TEST_CASE( testComputeSymmetricPart, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
     /*!
      * Test the computation of the symmetric part of a matrix
      *
@@ -1284,7 +1297,7 @@ BOOST_AUTO_TEST_CASE( testComputeSymmetricPart ){
 
 }
 
-BOOST_AUTO_TEST_CASE( testPushForwardPK2Stress ){
+BOOST_AUTO_TEST_CASE( testPushForwardPK2Stress, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
     /*!
      * Test the push forward the PK2 stress to the current configuration
      */
@@ -1363,7 +1376,7 @@ BOOST_AUTO_TEST_CASE( testPushForwardPK2Stress ){
 
 }
 
-BOOST_AUTO_TEST_CASE( testPullBackCauchyStress ){
+BOOST_AUTO_TEST_CASE( testPullBackCauchyStress, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
 
     floatVector cauchyStress = { 0.69646919, 0.28613933, 0.22685145,
                                  0.55131477, 0.71946897, 0.42310646,
