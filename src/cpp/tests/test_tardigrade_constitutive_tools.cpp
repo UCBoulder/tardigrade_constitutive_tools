@@ -189,9 +189,9 @@ BOOST_AUTO_TEST_CASE( testDecomposeGreenLagrangeStrain, * boost::unit_test::tole
 
     BOOST_CHECK( ! ret );
 
-    BOOST_CHECK( tardigradeVectorTools::fuzzyEquals( J, JOut ) );
+    BOOST_TEST( J == JOut );
 
-    BOOST_CHECK( tardigradeVectorTools::fuzzyEquals( EbarOut, Ebar ) );
+    BOOST_TEST( EbarOut == Ebar, CHECK_PER_ELEMENT );
 
     floatVector EbarOut2;
     floatType JOut2;
@@ -201,34 +201,43 @@ BOOST_AUTO_TEST_CASE( testDecomposeGreenLagrangeStrain, * boost::unit_test::tole
 
     BOOST_CHECK( ! ret );
 
-    BOOST_CHECK( tardigradeVectorTools::fuzzyEquals( EbarOut, EbarOut2 ) );
+    BOOST_TEST( EbarOut == EbarOut2, CHECK_PER_ELEMENT );
 
-    BOOST_CHECK( tardigradeVectorTools::fuzzyEquals( JOut, JOut2 ) );
+    BOOST_TEST( JOut == JOut2 );
 
     floatType eps = 1e-8;
     for ( unsigned int i=0; i<E.size( ); i++ ){
         floatVector delta( E.size( ), 0 );
         delta[ i ] =  fabs( eps*E[ i ] );
 
-        ret = tardigradeConstitutiveTools::decomposeGreenLagrangeStrain( E + delta, EbarOut2, JOut2 );
-
+        floatType Jp, Jm;
+        ret = tardigradeConstitutiveTools::decomposeGreenLagrangeStrain( E + delta, EbarOut2, Jp );
         BOOST_CHECK( ! ret );
 
-        BOOST_CHECK( tardigradeVectorTools::fuzzyEquals( ( JOut2 - JOut )/delta[ i ], dJdE[ i ], 1e-4, 1e-4 ) );
+        ret = tardigradeConstitutiveTools::decomposeGreenLagrangeStrain( E - delta, EbarOut2, Jm );
+        BOOST_CHECK( ! ret );
+
+        BOOST_TEST( ( Jp - Jm )/(2*delta[ i ]) == dJdE[ i ] );
     }
 
     for ( unsigned int i=0; i<E.size( ); i++ ){
         floatVector delta( E.size( ), 0 );
         delta[ i ] = fabs( eps*E[ i ] );
 
-        ret = tardigradeConstitutiveTools::decomposeGreenLagrangeStrain( E + delta, EbarOut2, JOut2 );
+        floatVector Ebarp, Ebarm;
+
+        ret = tardigradeConstitutiveTools::decomposeGreenLagrangeStrain( E + delta, Ebarp, JOut2 );
 
         BOOST_CHECK( ! ret );
 
-        floatVector gradCol = ( EbarOut2 - EbarOut )/delta[ i ];
+        ret = tardigradeConstitutiveTools::decomposeGreenLagrangeStrain( E - delta, Ebarm, JOut2 );
+
+        BOOST_CHECK( ! ret );
+
+        floatVector gradCol = ( Ebarp - Ebarm )/(2*delta[ i ]);
 
         for ( unsigned int j=0; j<gradCol.size( ); j++ ){
-            BOOST_CHECK( tardigradeVectorTools::fuzzyEquals( gradCol[ j ], dEbardE[ j ][ i ], 1e-4, 1e-4 ) );
+            BOOST_TEST( gradCol[ j ] == dEbardE[ j ][ i ] );
         }
     }
 
@@ -256,13 +265,15 @@ BOOST_AUTO_TEST_CASE( testMapPK2toCauchy, * boost::unit_test::tolerance( DEFAULT
 
     floatVector cauchy;
 
+    floatVector cauchy_answer = { -2.47696057,  0.48015011, -0.28838671,
+                                   0.16490963, -0.57481137, -0.92071407,
+                                  -0.21450698, -1.22714923, -1.73532173 };
+
     errorOut error = tardigradeConstitutiveTools::mapPK2toCauchy( PK2, F, cauchy );
 
     BOOST_CHECK( ! error );
 
-    BOOST_CHECK( tardigradeVectorTools::fuzzyEquals( cauchy, { -2.47696057,  0.48015011, -0.28838671,
-                                                      0.16490963, -0.57481137, -0.92071407,
-                                                     -0.21450698, -1.22714923, -1.73532173 } ) );
+    BOOST_TEST( cauchy == cauchy_answer, CHECK_PER_ELEMENT );
 
 }
 
@@ -282,17 +293,19 @@ BOOST_AUTO_TEST_CASE( testWLF, * boost::unit_test::tolerance( DEFAULT_TEST_TOLER
 
     tardigradeConstitutiveTools::WLF( T, WLFParameters, factor );
 
-    BOOST_CHECK( tardigradeVectorTools::fuzzyEquals( factor, pow( 10, -C1*( T - Tr )/( C2 + ( T - Tr ) ) ) ) );
+    BOOST_TEST( factor == pow( 10, -C1*( T - Tr )/( C2 + ( T - Tr ) ) ) );
 
     floatType factor2;
     tardigradeConstitutiveTools::WLF( T, WLFParameters, factor2, dfactordT );
 
-    BOOST_CHECK( tardigradeVectorTools::fuzzyEquals( factor, factor2 ) );
+    BOOST_TEST( factor == factor2 );
 
     floatType delta = fabs( 1e-6*T );
-    tardigradeConstitutiveTools::WLF( T + delta, WLFParameters, factor2 );
+    floatType fp, fm;
+    tardigradeConstitutiveTools::WLF( T + delta, WLFParameters, fp );
+    tardigradeConstitutiveTools::WLF( T - delta, WLFParameters, fm );
 
-    BOOST_CHECK( tardigradeVectorTools::fuzzyEquals( dfactordT, ( factor2 - factor )/delta ) );
+    BOOST_TEST( dfactordT == ( fp - fm )/(2*delta) );
 
 }
 
