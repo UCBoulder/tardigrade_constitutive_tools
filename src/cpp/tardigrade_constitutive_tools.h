@@ -50,7 +50,11 @@ namespace tardigradeConstitutiveTools{
 
     errorOut computeGreenLagrangeStrain(const floatVector &deformationGradient, floatVector &E);
 
+    errorOut computeGreenLagrangeStrain(const floatVector &deformationGradient, floatVector &E, floatVector &dEdF);
+
     errorOut computeGreenLagrangeStrain(const floatVector &deformationGradient, floatVector &E, floatMatrix &dEdF);
+
+    errorOut computeDGreenLagrangeStrainDF(const floatVector &deformationGradient, floatVector &dEdF);
 
     errorOut computeDGreenLagrangeStrainDF(const floatVector &deformationGradient, floatMatrix &dEdF);
 
@@ -73,6 +77,13 @@ namespace tardigradeConstitutiveTools{
     errorOut midpointEvolution(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                floatVector &dA, floatVector &A, const floatVector &alpha);
 
+    errorOut midpointEvolutionFlatJ(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+                                    floatVector &dA, floatVector &A, floatVector &DADADt, const floatVector &alpha);
+
+    errorOut midpointEvolutionFlatJ(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+                                    floatVector &dA, floatVector &A, floatVector &DADADt, floatVector &DADADtp,
+                                    const floatVector &alpha);
+
     errorOut midpointEvolution(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                floatVector &dA, floatVector &A, floatMatrix &DADADt, const floatVector &alpha);
 
@@ -82,6 +93,13 @@ namespace tardigradeConstitutiveTools{
 
     errorOut midpointEvolution(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                floatVector &dA, floatVector &A, const floatType alpha=0.5);
+
+    errorOut midpointEvolutionFlatJ(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+                                    floatVector &dA, floatVector &A, floatVector &DADADt, const floatType alpha=0.5);
+
+    errorOut midpointEvolutionFlatJ(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+                                    floatVector &dA, floatVector &A, floatVector &DADADt, floatVector &DADADtp,
+                                    const floatType alpha=0.5);
 
     errorOut midpointEvolution(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                floatVector &dA, floatVector &A, floatMatrix &DADADt, const floatType alpha=0.5);
@@ -166,9 +184,15 @@ namespace tardigradeConstitutiveTools{
     errorOut pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress );
 
     errorOut pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress,
+                                   floatVector &dCauchyStressdPK2, floatVector &dCauchyStressdF );
+
+    errorOut pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress,
                                    floatMatrix &dCauchyStressdPK2, floatMatrix &dCauchyStressdF );
 
     errorOut pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2 );
+
+    errorOut pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2,
+                                   floatVector &dPK2dCauchyStress, floatVector &dPK2dF );
 
     errorOut pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2,
                                    floatMatrix &dPK2dCauchyStress, floatMatrix &dPK2dF );
