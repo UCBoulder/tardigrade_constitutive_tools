@@ -665,8 +665,8 @@ namespace tardigradeConstitutiveTools{
 
     }
 
-    errorOut midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
-                                floatVector &dA, floatVector &A, floatMatrix &DADADt, const floatVector &alpha ){
+    errorOut midpointEvolutionFlatJ( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+                                     floatVector &dA, floatVector &A, floatVector &DADADt, const floatVector &alpha ){
         /*!
          * Perform midpoint rule based evolution of a vector and return the jacobian.
          *
@@ -696,13 +696,106 @@ namespace tardigradeConstitutiveTools{
 
         }
 
-        DADADt = floatMatrix( A.size( ), floatVector( A.size( ), 0 ) );
+        const unsigned int A_size = A.size( );
+
+        DADADt = floatVector( A_size * A_size, 0 );
 
         unsigned int i = 0;
 
         for ( auto ai = alpha.begin( ); ai != alpha.end( ); ai++, i++ ){
 
-            DADADt[ i ][ i ] = Dt * ( 1 - *ai );
+            DADADt[ A_size * i + i ] = Dt * ( 1 - *ai );
+
+        }
+
+        return NULL;
+
+    }
+
+    errorOut midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+                                floatVector &dA, floatVector &A, floatMatrix &DADADt, const floatVector &alpha ){
+        /*!
+         * Perform midpoint rule based evolution of a vector and return the jacobian.
+         *
+         * alpha=0 (implicit)
+         *
+         * alpha=1 (explicit)
+         *
+         * \param &Dt: The change in time.
+         * \param &Ap: The previous value of the vector
+         * \param &DApDt: The previous time rate of change of the vector.
+         * \param &DADt: The current time rate of change of the vector.
+         * \param &A: The change in value of the vector.
+         * \param &A: The current value of the vector.
+         * \param &DADADt: The gradient of A w.r.t. the current rate of change.
+         * \param &alpha: The integration parameter.
+         */
+
+        floatVector _DADADt;
+
+        errorOut error = midpointEvolutionFlatJ( Dt, Ap, DApDt, DADt, dA, A, _DADADt, alpha );
+
+        if ( error ){
+
+            errorOut result = new errorNode( "midpointEvolution", "Error in calculation of the evolution" );
+
+            result->addNext( error );
+
+            return result;
+
+        }
+
+        DADADt = tardigradeVectorTools::inflate( _DADADt, A.size( ), A.size( ) );
+
+        return NULL;
+
+    }
+
+
+    errorOut midpointEvolutionFlatJ( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+                                     floatVector &dA, floatVector &A, floatVector &DADADt, floatVector &DADADtp,
+                                     const floatVector &alpha ){
+        /*!
+         * Perform midpoint rule based evolution of a vector and return the jacobian.
+         *
+         * alpha=0 (implicit)
+         *
+         * alpha=1 (explicit)
+         *
+         * Note that the gradient of A w.r.t. Ap is identity and the gradient of dA w.r.t. Ap is zero
+         *
+         * \param &Dt: The change in time.
+         * \param &Ap: The previous value of the vector
+         * \param &DApDt: The previous time rate of change of the vector.
+         * \param &DADt: The current time rate of change of the vector.
+         * \param &A: The change in value of the vector.
+         * \param &A: The current value of the vector.
+         * \param &DADADt: The gradient of A w.r.t. the current rate of change.
+         * \param &DADADtp: The gradient of A w.r.t. the previous rate of change.
+         * \param &alpha: The integration parameter.
+         */
+
+        errorOut error = midpointEvolutionFlatJ( Dt, Ap, DApDt, DADt, dA, A, DADADt, alpha );
+
+        if ( error ){
+
+            errorOut result = new errorNode( __func__, "Error in computation of the integrated term" );
+
+            result->addNext( error );
+
+            return result;
+
+        }
+
+        const unsigned int A_size = A.size( );
+
+        DADADtp = floatVector( A_size * A_size, 0 );
+
+        unsigned int i = 0;
+
+        for ( auto ai = alpha.begin( ); ai != alpha.end( ); ai++, i++ ){
+
+            DADADtp[ A_size * i + i ] = Dt * ( *ai );
 
         }
 
@@ -733,11 +826,13 @@ namespace tardigradeConstitutiveTools{
          * \param &alpha: The integration parameter.
          */
 
-        errorOut error = midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, DADADt, alpha );
+        floatVector _DADADt, _DADADtp;
+
+        errorOut error = midpointEvolutionFlatJ( Dt, Ap, DApDt, DADt, dA, A, _DADADt, _DADADtp, alpha );
 
         if ( error ){
 
-            errorOut result = new errorNode( __func__, "Error in computation of the integrated term" );
+            errorOut result = new errorNode( "midpointEvolution", "Error in calculation of the evolution" );
 
             result->addNext( error );
 
@@ -745,15 +840,9 @@ namespace tardigradeConstitutiveTools{
 
         }
 
-        DADADtp = floatMatrix( A.size( ), floatVector( A.size( ), 0 ) );
+        DADADt  = tardigradeVectorTools::inflate( _DADADt,  A.size( ), A.size( ) );
 
-        unsigned int i = 0;
-
-        for ( auto ai = alpha.begin( ); ai != alpha.end( ); ai++, i++ ){
-
-            DADADtp[ i ][ i ] = Dt * ( *ai );
-
-        }
+        DADADtp = tardigradeVectorTools::inflate( _DADADtp, A.size( ), A.size( ) );
 
         return NULL;
 
@@ -778,6 +867,56 @@ namespace tardigradeConstitutiveTools{
          */
 
         return midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, alpha * floatVector( Ap.size( ), 1 ) );
+
+    }
+
+    errorOut midpointEvolutionFlatJ( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+                                     floatVector &dA, floatVector &A, floatVector &DADADt, const floatType alpha ){
+        /*!
+         * Perform midpoint rule based evolution of a vector. Defaults to the trapezoidal rule.
+         *
+         * alpha=0 (implicit)
+         *
+         * alpha=1 (explicit)
+         *
+         * \param &Dt: The change in time.
+         * \param &Ap: The previous value of the vector
+         * \param &DApDt: The previous time rate of change of the vector.
+         * \param *DADt: The current time rate of change of the vector.
+         * \param &dA: The change in the vector
+         * \param &A: The current value of the vector.
+         * \param &DADADt: The derivative of the vector w.r.t. the rate of change of the vector.
+         * \param alpha: The integration parameter.
+         */
+
+        return midpointEvolutionFlatJ( Dt, Ap, DApDt, DADt, dA, A, DADADt, alpha * floatVector( Ap.size( ), 1 ) );
+
+    }
+
+    errorOut midpointEvolutionFlatJ( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+                                     floatVector &dA, floatVector &A, floatVector &DADADt, floatVector &DADADtp,
+                                     const floatType alpha ){
+        /*!
+         * Perform midpoint rule based evolution of a vector. Defaults to the trapezoidal rule.
+         *
+         * alpha=0 (implicit)
+         *
+         * alpha=1 (explicit)
+         * 
+         * Note that the gradient of A w.r.t. Ap is identity and the gradient of dA w.r.t. Ap is zero
+         *
+         * \param &Dt: The change in time.
+         * \param &Ap: The previous value of the vector
+         * \param &DApDt: The previous time rate of change of the vector.
+         * \param *DADt: The current time rate of change of the vector.
+         * \param &dA: The change in the vector
+         * \param &A: The current value of the vector.
+         * \param &DADADt: The derivative of the vector w.r.t. the rate of change of the vector.
+         * \param &DADADtp: The derivative of the vector w.r.t. the previous rate of change of the vector.
+         * \param alpha: The integration parameter.
+         */
+
+        return midpointEvolutionFlatJ( Dt, Ap, DApDt, DADt, dA, A, DADADt, DADADtp, alpha * floatVector( Ap.size( ), 1 ) );
 
     }
 
@@ -1894,7 +2033,7 @@ namespace tardigradeConstitutiveTools{
     }
 
     errorOut pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress,
-                                   floatMatrix &dCauchyStressdPK2, floatMatrix &dCauchyStressdF ){
+                                   floatVector &dCauchyStressdPK2, floatVector &dCauchyStressdF ){
         /*!
          * Push the Second Piola-Kirchhoff stress forward to the current configuration resulting in the Cauchy stress
          * 
@@ -1908,10 +2047,12 @@ namespace tardigradeConstitutiveTools{
          */
 
         const unsigned int dim = ( unsigned int )( std::sqrt( ( double )PK2.size( ) ) + 0.5 );
+        const unsigned int sot_dim = dim * dim;
+        const unsigned int fot_dim = sot_dim * sot_dim;
         
         if ( dim * dim != PK2.size( ) ){
 
-            return new errorNode( "The PK2 stress must have a size of " + std::to_string( dim * dim ) + " and has a size of " + std::to_string( PK2.size( ) ) );
+            return new errorNode( "The PK2 stress must have a size of " + std::to_string( sot_dim ) + " and has a size of " + std::to_string( PK2.size( ) ) );
 
         }
 
@@ -1921,7 +2062,7 @@ namespace tardigradeConstitutiveTools{
 
         }
 
-        cauchyStress = floatVector( dim * dim, 0 );
+        cauchyStress = floatVector( sot_dim, 0 );
 
         floatType J = tardigradeVectorTools::determinant( F, dim, dim );
 
@@ -1931,11 +2072,11 @@ namespace tardigradeConstitutiveTools{
 
         cauchyStress = tardigradeVectorTools::matrixMultiply( cauchyStress, F, dim, dim, dim, dim, false, true );
 
-        dCauchyStressdF = tardigradeVectorTools::dyadic( -cauchyStress / ( J * J ), dJdF );
+        dCauchyStressdF = tardigradeVectorTools::matrixMultiply( -cauchyStress / ( J * J ), dJdF, sot_dim, 1, 1, sot_dim );
 
         cauchyStress /= J;
 
-        dCauchyStressdPK2 = floatMatrix( dim * dim, floatVector( dim * dim, 0 ) );
+        dCauchyStressdPK2 = floatVector( fot_dim, 0 );
 
         floatVector eye( dim * dim, 0 );
         tardigradeVectorTools::eye( eye );
@@ -1948,12 +2089,12 @@ namespace tardigradeConstitutiveTools{
 
                     for ( unsigned int B = 0; B < dim; B++ ){
 
-                        dCauchyStressdPK2[ dim * i + j ][ dim * A + B ] += F[ dim * i + A ] * F[ dim * j + B ] / J;
+                        dCauchyStressdPK2[ dim * sot_dim * i + sot_dim * j + dim * A + B ] += F[ dim * i + A ] * F[ dim * j + B ] / J;
 
                         for ( unsigned int I = 0; I < dim; I++ ){
 
-                            dCauchyStressdF[ dim * i + j ][ dim * A + B ] += eye[ dim * i + A ] * PK2[ dim * B + I ] * F[ dim * j + I ] / J
-                                                                           + F[ dim * i + I ] * PK2[ dim * I + B ] * eye[ dim * j + A ] / J;
+                            dCauchyStressdF[ dim * sot_dim * i + sot_dim * j + dim * A + B ] += eye[ dim * i + A ] * PK2[ dim * B + I ] * F[ dim * j + I ] / J
+                                                                                              + F[ dim * i + I ] * PK2[ dim * I + B ] * eye[ dim * j + A ] / J;
 
                         }
 
@@ -1964,6 +2105,42 @@ namespace tardigradeConstitutiveTools{
             }
 
         } 
+
+        return NULL;
+
+    }
+
+    errorOut pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress,
+                                   floatMatrix &dCauchyStressdPK2, floatMatrix &dCauchyStressdF ){
+        /*!
+         * Push the Second Piola-Kirchhoff stress forward to the current configuration resulting in the Cauchy stress
+         * 
+         * \f$ \sigma_{ij} = \frac{1}{J} F_{iI} S_{IJ} F_{jJ} \f$
+         * 
+         * \param &PK2: The Second Piola-Kirchhoff stress \f$ S_{IJ} \f$
+         * \param &F: The deformation gradient \f$ F_{iI} \f$
+         * \param &cauchyStress: The Cauchy stress \f$ \sigma_{ij} \f$
+         * \param &dCauchyStressdPK2: The gradient of the Cauchy stress w.r.t. the PK2 stress
+         * \param &dCauchyStressdF: The gradient of the Cauchy stress w.r.t. the deformation gradient
+         */
+
+        floatVector _dCauchyStressdPK2, _dCauchyStressdF;
+
+        errorOut error = pushForwardPK2Stress( PK2, F, cauchyStress, _dCauchyStressdPK2, _dCauchyStressdF );
+
+        if ( error ){
+
+            errorOut result = new errorNode( "pushForwardPK2Stress", "Error in calculation of the Cauchy stress" );
+
+            result->addNext( error );
+
+            return result;
+
+        }
+
+        dCauchyStressdPK2 = tardigradeVectorTools::inflate( _dCauchyStressdPK2, cauchyStress.size( ), PK2.size( ) );
+
+        dCauchyStressdF   = tardigradeVectorTools::inflate( _dCauchyStressdF,   cauchyStress.size( ), F.size( ) );
 
         return NULL;
 
