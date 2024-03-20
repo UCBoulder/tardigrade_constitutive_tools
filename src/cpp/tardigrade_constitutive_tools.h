@@ -50,7 +50,11 @@ namespace tardigradeConstitutiveTools{
 
     errorOut computeGreenLagrangeStrain(const floatVector &deformationGradient, floatVector &E);
 
+    errorOut computeGreenLagrangeStrain(const floatVector &deformationGradient, floatVector &E, floatVector &dEdF);
+
     errorOut computeGreenLagrangeStrain(const floatVector &deformationGradient, floatVector &E, floatMatrix &dEdF);
+
+    errorOut computeDGreenLagrangeStrainDF(const floatVector &deformationGradient, floatVector &dEdF);
 
     errorOut computeDGreenLagrangeStrainDF(const floatVector &deformationGradient, floatMatrix &dEdF);
 
@@ -169,6 +173,9 @@ namespace tardigradeConstitutiveTools{
                                    floatMatrix &dCauchyStressdPK2, floatMatrix &dCauchyStressdF );
 
     errorOut pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2 );
+
+    errorOut pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2,
+                                   floatVector &dPK2dCauchyStress, floatVector &dPK2dF );
 
     errorOut pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2,
                                    floatMatrix &dPK2dCauchyStress, floatMatrix &dPK2dF );
