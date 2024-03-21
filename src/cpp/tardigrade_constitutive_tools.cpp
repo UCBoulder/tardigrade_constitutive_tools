@@ -20,6 +20,8 @@
 
 #include<tardigrade_constitutive_tools.h>
 
+#include<algorithm>
+
 namespace tardigradeConstitutiveTools{
 
     floatType deltaDirac(const unsigned int i, const unsigned int j){
@@ -77,6 +79,130 @@ namespace tardigradeConstitutiveTools{
         }
 
         return NULL;
+    }
+
+    void computeDeformationGradient( const floatVector &displacementGradient, floatVector &F, const bool isCurrent ){
+        /*!
+         * Compute the deformation gradient from the gradient of the displacement
+         *
+         * If isCurrent = false
+         *
+         * \f$ \bf{F} = \frac{\partial \bf{u}}{\partial \bf{X} } u_i + \bf{I} \f$
+         *
+         * else if isCurrent = true
+         *
+         * \f$ \bf{F} = \left(\bf{I} - \frac{\partial \bf{u}}{\partial \bf{x}}\right)^{-1} \f$
+         *
+         * \param &displacementGradient: The gradient of the displacement with respect to either the
+         *     current or previous position.
+         * \param &F: The deformation gradient
+         * \param &isCurrent: Boolean indicating whether the gradient is taken w.r.t. the current (true)
+         *     or reference (false) position.
+         */
+
+        const unsigned int dim = ( unsigned int )std::pow( displacementGradient.size( ), 0.5 );
+        const unsigned int sot_dim = dim * dim;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( displacementGradient.size( ) == sot_dim, "The displacement gradienthas " + std::to_string( displacementGradient.size( ) ) + " values but the dimension has been determined to be " + std::to_string( dim ) + "." );
+
+        F = floatVector( sot_dim, 0 );
+
+        std::copy( displacementGradient.begin( ),
+                   displacementGradient.end( ),
+                   F.begin( ) );
+
+        if ( isCurrent ){
+
+            std::transform( F.cbegin( ), F.cend( ), F.begin( ), std::negate< floatType >( ) );
+
+            for ( unsigned int i = 0; i < dim; i++ ){ F[ dim * i + i ] += 1; }
+
+            Eigen::Map< Eigen::Matrix< floatType, -1, -1 > > map( F.data( ), dim, dim );
+            map = map.inverse( ).eval( );
+
+        }
+        else{
+
+            for ( unsigned int i = 0; i < dim; i++ ){ F[ dim * i + i ] += 1.; }
+
+        }
+
+        return;
+
+    }
+
+    void computeDeformationGradient( const floatVector &displacementGradient, floatVector &F, floatVector &dFdGradU, const bool isCurrent ){
+        /*!
+         * Compute the deformation gradient from the gradient of the displacement
+         *
+         * If isCurrent = false
+         *
+         * \f$ \bf{F} = \frac{\partial \bf{u}}{\partial \bf{X} } u_i + \bf{I} \f$
+         *
+         * else if isCurrent = true
+         *
+         * \f$ \bf{F} = \left(\bf{I} - \frac{\partial \bf{u}}{\partial \bf{x}}\right)^{-1} \f$
+         *
+         * \param &displacementGradient: The gradient of the displacement with respect to either the
+         *     current or previous position.
+         * \param &F: The deformation gradient
+         * \param &dFdGradU: The derivative of the deformation gradient w.r.t. the displacement gradient
+         * \param &isCurrent: Boolean indicating whether the gradient is taken w.r.t. the current (true)
+         *     or reference (false) position.
+         */
+
+        const unsigned int dim = ( unsigned int )std::pow( displacementGradient.size( ), 0.5 );
+        const unsigned int sot_dim = dim * dim;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( displacementGradient.size( ) == sot_dim, "The displacement gradienthas " + std::to_string( displacementGradient.size( ) ) + " values but the dimension has been determined to be " + std::to_string( dim ) + "." );
+
+        F = floatVector( sot_dim, 0 );
+
+        dFdGradU = floatVector( sot_dim * sot_dim, 0 );
+
+        std::copy( displacementGradient.begin( ),
+                   displacementGradient.end( ),
+                   F.begin( ) );
+
+        if ( isCurrent ){
+
+            std::transform( F.cbegin( ), F.cend( ), F.begin( ), std::negate< floatType >( ) );
+
+            for ( unsigned int i = 0; i < dim; i++ ){ F[ dim * i + i ] += 1; }
+
+            Eigen::Map< Eigen::Matrix< floatType, -1, -1 > > map( F.data( ), dim, dim );
+            map = map.inverse( ).eval( );
+
+            for ( unsigned int i = 0; i < dim; i++ ){
+
+                for ( unsigned int j = 0; j < dim; j++ ){
+
+                    for ( unsigned int k = 0; k < dim; k++ ){
+
+                        for ( unsigned int l = 0; l < dim; l++ ){
+
+                            dFdGradU[ dim * sot_dim * i + sot_dim * j + dim * k + l ]
+                                = F[ dim * i + k ] * F[ dim * l + j ];
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+        else{
+
+            for ( unsigned int i = 0; i < dim; i++ ){ F[ dim * i + i ] += 1.; }
+
+            for ( unsigned int i = 0; i < sot_dim; i++ ){ dFdGradU[ sot_dim * i + i ] += 1; }
+
+        }
+
+        return;
+
     }
 
     errorOut computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C ){
