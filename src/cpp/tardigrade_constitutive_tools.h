@@ -42,6 +42,10 @@ namespace tardigradeConstitutiveTools{
 
     errorOut rotateMatrix(const floatVector &A, const floatVector &Q, floatVector &rotatedA);
 
+    void computeDeformationGradient( const floatVector &displacementGradient, floatVector &F, const bool isCurrent );
+
+    void computeDeformationGradient( const floatVector &displacementGradient, floatVector &F, floatVector &dFdGradU, const bool isCurrent );
+
     errorOut computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C );
 
     errorOut computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C, floatVector &dCdF );

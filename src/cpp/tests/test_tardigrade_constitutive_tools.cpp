@@ -99,6 +99,86 @@ BOOST_AUTO_TEST_CASE( testRotateMatrix, * boost::unit_test::tolerance( DEFAULT_T
 
 }
 
+BOOST_AUTO_TEST_CASE( testComputeDeformationGradient, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
+    /*!
+     * Test the calculation of the deformation gradient from the displacement gradient
+     */
+
+    floatVector gradU = { -0.01078825, -0.0156822 ,  0.02290497,
+                          -0.00614278, -0.04403221, -0.01019557,
+                           0.02379954, -0.03175083, -0.03245482 };
+
+    floatVector answer1 = { 0.98994207, -0.01554229,  0.02211531,
+                           -0.00604919,  0.95820757, -0.00959658,
+                            0.02300559, -0.02982579,  0.96937029 };
+
+    floatVector answer2 = { 0.98921175, -0.0156822 ,  0.02290497,
+                           -0.00614278,  0.95596779, -0.01019557,
+                            0.02379954, -0.03175083,  0.96754518 };
+
+    floatVector F;
+
+    tardigradeConstitutiveTools::computeDeformationGradient( gradU, F, true );
+
+    BOOST_TEST( F == answer1, CHECK_PER_ELEMENT );
+
+    F.clear( );
+    tardigradeConstitutiveTools::computeDeformationGradient( gradU, F, false );
+
+    BOOST_TEST( F == answer2, CHECK_PER_ELEMENT );
+
+    floatVector dFdGradU_true, dFdGradU_false;
+
+    F.clear( );
+    tardigradeConstitutiveTools::computeDeformationGradient( gradU, F, dFdGradU_true, true );
+
+    BOOST_TEST( F == answer1, CHECK_PER_ELEMENT );
+
+    F.clear( );
+    tardigradeConstitutiveTools::computeDeformationGradient( gradU, F, dFdGradU_false, false );
+
+    BOOST_TEST( F == answer2, CHECK_PER_ELEMENT );
+
+    const float eps = 1e-6;
+
+    floatVector j1( 9 * 9, 0 ), j2( 9 * 9, 0 );
+
+    for ( unsigned int i = 0; i < 9; i++ ){
+
+        floatVector delta( 9, 0 );
+
+        delta[ i ] = eps * std::fabs( gradU[ i ] ) + eps;
+
+        floatVector rp, rm;
+
+        tardigradeConstitutiveTools::computeDeformationGradient( gradU + delta, rp, true );
+
+        tardigradeConstitutiveTools::computeDeformationGradient( gradU - delta, rm, true );
+
+        for ( unsigned int j = 0; j < 9; j++ ){
+
+            j1[ 9 * j + i ] = ( rp[ j ] - rm[ j ] ) / ( 2 * delta[ i ] );
+
+        }
+
+        tardigradeConstitutiveTools::computeDeformationGradient( gradU + delta, rp, false );
+
+        tardigradeConstitutiveTools::computeDeformationGradient( gradU - delta, rm, false );
+
+        for ( unsigned int j = 0; j < 9; j++ ){
+
+            j2[ 9 * j + i ] = ( rp[ j ] - rm[ j ] ) / ( 2 * delta[ i ] );
+
+        }
+
+    }
+
+    BOOST_TEST( j1 == dFdGradU_true,  CHECK_PER_ELEMENT );
+
+    BOOST_TEST( j2 == dFdGradU_false, CHECK_PER_ELEMENT );
+
+}
+
 BOOST_AUTO_TEST_CASE( testComputeGreenLagrangeStrain, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
     /*!
      * Test the computation of the Green-Lagrange strain
