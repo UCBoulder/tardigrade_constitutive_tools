@@ -528,12 +528,7 @@ namespace tardigradeConstitutiveTools{
         constexpr unsigned int dim = 3;
         constexpr unsigned int sot_dim = dim * dim;
 
-        errorOut error = decomposeGreenLagrangeStrain(E, Ebar, J);
-        if (error){
-            errorOut result = new errorNode("decomposeGreenLagrangeStrain", "Error in computation of the isochoric volumetric split");
-            result->addNext(error);
-            return result;
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( decomposeGreenLagrangeStrain(E, Ebar, J) );
 
         //Compute the derivative of the jacobian of deformation w.r.t. the Green-Lagrange strain
         dJdE = 2 * E;
@@ -576,8 +571,6 @@ namespace tardigradeConstitutiveTools{
             }
 
         }
-
-//        dEbardE = invJ23*EYE - (2./3)*invJ53*tardigradeVectorTools::dyadic(E, dJdE) - (1./3)*invJ53*tardigradeVectorTools::dyadic(eye, dJdE);
 
         return NULL;
     }
@@ -626,16 +619,16 @@ namespace tardigradeConstitutiveTools{
          * \param &cauchyStress: The Cauchy stress (\f$\sigma\f$ ).
          */
 
-        if (PK2Stress.size() != 9){
-            return new errorNode("mapPK2toCauchy", "The cauchy stress must have nine components (3D)");
-        }
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        if (deformationGradient.size() != PK2Stress.size()){
-            return new errorNode("mapPK2toCauchy", "The deformation gradient and the PK2 stress don't have the same size");
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( PK2Stress.size( ) == sot_dim, "The cauchy stress must have nine components (3D)");
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( deformationGradient.size() == PK2Stress.size(), "The deformation gradient and the PK2 stress don't have the same size");
 
         //Compute the determinant of the deformation gradient
-        floatType detF = tardigradeVectorTools::determinant(deformationGradient, 3, 3);
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > map( deformationGradient.data( ), dim, dim );
+        floatType detF = map.determinant( );
 
         //Initialize the Cauchy stress
         cauchyStress = floatVector(PK2Stress.size(), 0);
