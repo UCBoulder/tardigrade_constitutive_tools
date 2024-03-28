@@ -220,14 +220,17 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3D
-        const unsigned int dim = 3;
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        if ( deformationGradient.size( ) != dim * dim ){
-            return new errorNode( "computeRightCauchyGreen",
-			          "The deformation gradient must be 3D" );
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( deformationGradient.size( ) == sot_dim, "The deformation gradient must be 3D" );
 
-        C = tardigradeVectorTools::matrixMultiply( deformationGradient, deformationGradient, dim, dim, dim, dim, 1, 0 );
+        C = floatVector( sot_dim, 0 );
+
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F( deformationGradient.data( ), dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > C_map( C.data( ), dim, dim );
+
+        C_map = ( F.transpose( ) * F ).eval( );
 
         return NULL;
     }
@@ -248,23 +251,16 @@ namespace tardigradeConstitutiveTools{
          * The Right Cauchy-Green deformation tensor is organized as C11, C12, C13, C21, C22, C23, C31, C32, C33
          */
 
-        const unsigned int dim = 3;
-        const unsigned int sot_dim = dim * dim;
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
         floatVector _dCdF;
 
-        errorOut error = computeRightCauchyGreen( deformationGradient, C, _dCdF );
-
-        if ( error ){
-            errorOut result = new errorNode( "computeRightCauchyGreen (jacobian)",
-                                             "Error in computation of Right Cauchy green deformation tensor" );
-            result->addNext( error );
-            return result;
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeRightCauchyGreen( deformationGradient, C, _dCdF ) );
 
         dCdF = tardigradeVectorTools::inflate( _dCdF, sot_dim, sot_dim );
 
-        return error;
+        return NULL;
 
     }
 
@@ -285,31 +281,20 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3D
-        const unsigned int dim = 3;
-        const unsigned int sot_dim = dim * dim;
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        errorOut error = computeRightCauchyGreen( deformationGradient, C );
-
-        if ( error ){
-            errorOut result = new errorNode( "computeRightCauchyGreen (jacobian)",
-                                             "Error in computation of Right Cauchy green deformation tensor" );
-            result->addNext( error );
-            return result;
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeRightCauchyGreen( deformationGradient, C ) );
         
         //Assemble the Jacobian
-        floatVector eye( dim * dim );
-        tardigradeVectorTools::eye( eye );
         
         dCdF = floatVector( sot_dim * sot_dim, 0 );
         
         for ( unsigned int I = 0; I < dim; I++ ){
             for ( unsigned int J = 0; J < dim; J++ ){
                 for ( unsigned int k = 0; k < dim; k++ ){
-                    for ( unsigned int K =0 ; K < dim; K++ ){
-                        dCdF[ dim * sot_dim * I + sot_dim * J + dim * k + K ] = eye[ dim * I + K ] * deformationGradient[ dim * k + J ]
-                                                                              + deformationGradient[ dim * k + I ] * eye[ dim * J + K ];
-                    }
+                    dCdF[ dim * sot_dim * I + sot_dim * J + dim * k + I ] += deformationGradient[ dim * k + J ];
+                    dCdF[ dim * sot_dim * I + sot_dim * J + dim * k + J ] += deformationGradient[ dim * k + I ];
                 }
             }
         }
@@ -339,7 +324,7 @@ namespace tardigradeConstitutiveTools{
             return new errorNode( "computeGreenLagrangeStrain", "The deformation gradient must be 3D." );
         }
 
-        const unsigned int dim=3;
+        constexpr unsigned int dim=3;
         E.resize( dim * dim );
 
         for ( unsigned int I = 0; I < dim; I++ ){
@@ -498,20 +483,26 @@ namespace tardigradeConstitutiveTools{
          * \param &J: The Jacobian of deformation ( \f$J\f$ )
          */
 
-        if (E.size() != 9){
-            return new errorNode("decomposeGreenLagrangeStrain", "the Green-Lagrange strain must be 3D");
-        }
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( E.size() == sot_dim, "the Green-Lagrange strain must be 3D");
 
         //Construct the identity tensor
-        floatVector eye = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+        floatVector F_squared = 2 * E;
+        for ( unsigned int i = 0; i < dim; i++ ){ F_squared[ dim * i + i ] += 1; }
 
-        floatType Jsq = tardigradeVectorTools::determinant(2*E + eye, 3, 3);
-        if (Jsq<=0){
-            return new errorNode("decomposeGreenLagrangeStrain", "the determinant of the Green-Lagrange strain is negative");
-        }
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F_squared_map( F_squared.data( ), dim, dim );
+
+        floatType Jsq = F_squared_map.determinant( );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( Jsq > 0, "the determinant of the Green-Lagrange strain is negative");
 
         J = sqrt(Jsq);
-        Ebar = E/(pow(J, 2./3)) + 0.5*(1/pow(J, 2./3) - 1)*eye;
+        Ebar = E/(pow(J, 2./3));
+       
+        for ( unsigned int i = 0; i < dim; i++ ){ Ebar[ dim * i + i ] += 0.5*(1/pow(J, 2./3) - 1); }
+
         return NULL;
     }
 
@@ -663,7 +654,7 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3D
-        const unsigned int dim = 3;
+        constexpr unsigned int dim = 3;
 
         if (velocityGradient.size() != deformationGradient.size()){
             return new errorNode("computeDFDt", "The velocity gradient and deformation gradient must have the same size");
@@ -705,7 +696,7 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3D
-        const unsigned int dim = 3;
+        constexpr unsigned int dim = 3;
 
         errorOut error = computeDFDt(velocityGradient, deformationGradient, DFDt);
 
@@ -1121,7 +1112,7 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assumes 3D
-        const unsigned int dim = 3;
+        constexpr unsigned int dim = 3;
         if ( previousDeformationGradient.size( ) != dim * dim ){
             return new errorNode( "evolveF", "The deformation gradient doesn't have enough terms (require 9 for 3D)" );
         }
@@ -1231,7 +1222,7 @@ namespace tardigradeConstitutiveTools{
          * \param mode: The form of the ODE. See above for details.
          */
 
-        const unsigned int dim = 3;
+        constexpr unsigned int dim = 3;
         const unsigned int sot_dim = dim * dim;
 
         floatVector _dFdL;
@@ -1277,7 +1268,7 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assumes 3D
-        const unsigned int dim = 3;
+        constexpr unsigned int dim = 3;
         const unsigned int sot_dim = dim * dim;
 
         errorOut error = evolveF( Dt, previousDeformationGradient, Lp, L, dF, deformationGradient, alpha, mode);
@@ -1413,7 +1404,7 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assumes 3D
-        const unsigned int dim = 3;
+        constexpr unsigned int dim = 3;
         const unsigned int sot_dim = dim * dim;
 
         floatVector _dFdL;
@@ -1468,7 +1459,7 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assumes 3D
-        const unsigned int dim = 3;
+        constexpr unsigned int dim = 3;
         const unsigned int sot_dim = dim * dim;
 
         errorOut error = evolveF( Dt, previousDeformationGradient, Lp, L, dF, deformationGradient, alpha, mode);
@@ -1696,7 +1687,7 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3D
-        const unsigned int dim = 3;
+        constexpr unsigned int dim = 3;
 
         //Invert the deformation gradient
         floatVector inverseDeformationGradient = tardigradeVectorTools::inverse(deformationGradient, dim, dim);
@@ -1731,7 +1722,7 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3D
-        const unsigned int dim = 3;
+        constexpr unsigned int dim = 3;
 
         //Invert the deformation gradient
         floatVector inverseDeformationGradient = tardigradeVectorTools::inverse(deformationGradient, dim, dim);
@@ -1849,7 +1840,7 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3D
-        const unsigned int dim = 3;
+        constexpr unsigned int dim = 3;
 
         //Compute the inverse deformation gradient
         floatVector inverseDeformationGradient = tardigradeVectorTools::inverse(deformationGradient, dim, dim);
@@ -1885,7 +1876,7 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3D
-        const unsigned int dim = 3;
+        constexpr unsigned int dim = 3;
 
         //Compute the inverse deformation gradient
         floatVector inverseDeformationGradient = tardigradeVectorTools::inverse(deformationGradient, dim, dim);
@@ -1927,7 +1918,7 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3d
-        const unsigned int dim = 3;
+        constexpr unsigned int dim = 3;
 
         greenLagrangeStrain = tardigradeVectorTools::matrixMultiply( deformationGradient, almansiStrain, dim, dim, dim, dim, 1, 0 );
         greenLagrangeStrain = tardigradeVectorTools::matrixMultiply( greenLagrangeStrain, deformationGradient, dim, dim, dim, dim, 0, 0 );
@@ -1951,7 +1942,7 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3d
-        const unsigned int dim = 3;
+        constexpr unsigned int dim = 3;
 
         errorOut error = pullBackAlmansiStrain( almansiStrain, deformationGradient, greenLagrangeStrain );
 
