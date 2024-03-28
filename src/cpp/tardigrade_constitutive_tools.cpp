@@ -631,14 +631,23 @@ namespace tardigradeConstitutiveTools{
         floatType detF = map.determinant( );
 
         //Initialize the Cauchy stress
-        cauchyStress = floatVector(PK2Stress.size(), 0);
+        floatVector temp_sot( sot_dim, 0 );
+        cauchyStress = floatVector( sot_dim, 0);
 
-        for (unsigned int i=0; i<3; i++){
-            for (unsigned int j=0; j<3; j++){
-                for (unsigned int I=0; I<3; I++){
-                    for (unsigned int J=0; J<3; J++){
-                        cauchyStress[3*i + j] += deformationGradient[3*i + I]*PK2Stress[3*I + J]*deformationGradient[3*j + J]/detF;
-                    }
+        for (unsigned int i=0; i<dim; i++){
+            for (unsigned int I=0; I<dim; I++){
+                for (unsigned int j=0; j<dim; j++){
+                    temp_sot[ dim * i + j ] += deformationGradient[ 3 * i + I ] * PK2Stress[ 3 * I + j ];
+                }
+            }
+        }
+
+        temp_sot /= detF;
+
+        for ( unsigned int i = 0; i < dim; i++ ){
+            for ( unsigned int j = 0; j < dim; j++ ){
+                for ( unsigned int I = 0; I < dim; I++ ){
+                        cauchyStress[ dim * i + j ] += temp_sot[ dim * i + I ]*deformationGradient[ 3 * j + I ];
                 }
             }
         }
@@ -658,17 +667,13 @@ namespace tardigradeConstitutiveTools{
          * \param &factor: The shift factor
          */
 
-        if (WLFParameters.size() != 3){
-            return new errorNode("WLF", "The parameters have the wrong number of terms");
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( WLFParameters.size() == 3, "The parameters have the wrong number of terms");
 
         floatType Tr = WLFParameters[0];
         floatType C1 = WLFParameters[1];
         floatType C2 = WLFParameters[2];
 
-        if (tardigradeVectorTools::fuzzyEquals(C2 + (temperature - Tr), 0.)){
-            return new errorNode("WLF", "Zero in the denominator");
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( !tardigradeVectorTools::fuzzyEquals(C2 + (temperature - Tr), 0.), "Zero in the denominator");
 
         factor = pow(10., -C1*(temperature - Tr)/(C2 + (temperature - Tr)));
 
@@ -685,12 +690,7 @@ namespace tardigradeConstitutiveTools{
          * \param &dfactordT: The derivative of the shift factor w.r.t. the temperature ( \f$\frac{\partial factor}{\partial T}\f$ )
          */
 
-        errorOut error = WLF(temperature, WLFParameters, factor);
-        if (error){
-            errorOut result = new errorNode("WLF", "error in computation of WLF factor");
-            result->addNext(error);
-            return result;
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( WLF(temperature, WLFParameters, factor) );
 
         floatType Tr = WLFParameters[0];
         floatType C1 = WLFParameters[1];
@@ -714,14 +714,11 @@ namespace tardigradeConstitutiveTools{
 
         //Assume 3D
         constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        if (velocityGradient.size() != deformationGradient.size()){
-            return new errorNode("computeDFDt", "The velocity gradient and deformation gradient must have the same size");
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( velocityGradient.size() == deformationGradient.size(), "The velocity gradient and deformation gradient must have the same size");
 
-        if (velocityGradient.size() != dim*dim){
-            return new errorNode("computeDFDt", "The velocity gradient doesn't have enough entries");
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( velocityGradient.size() == sot_dim, "The velocity gradient doesn't have enough entries");
 
         DFDt = floatVector(velocityGradient.size(), 0);
 
@@ -756,14 +753,9 @@ namespace tardigradeConstitutiveTools{
 
         //Assume 3D
         constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        errorOut error = computeDFDt(velocityGradient, deformationGradient, DFDt);
-
-        if (error){
-            errorOut result = new errorNode("computeDFDt (jacobian)", "error in computation of DFDt");
-            result->addNext(error);
-            return result;
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeDFDt(velocityGradient, deformationGradient, DFDt) );
 
         //Form the identity tensor
         floatVector eye(dim*dim, 0);
