@@ -2160,10 +2160,9 @@ namespace tardigradeConstitutiveTools{
         
         //Get the dimension of A
         dim = ( unsigned int )( std::sqrt( ( double )A.size( ) ) + 0.5 );
-    
-        if ( dim * dim != A.size( ) ){
-            return new errorNode( "computeSymmetricPart", "A is not a square matrix" );
-        }
+        const unsigned int sot_dim = dim * dim;
+   
+        TARDIGRADE_ERROR_TOOLS_CHECK( sot_dim == A.size( ), "A is not a square matrix" );
  
         symmA = floatVector( A.size( ), 0 );
 
@@ -2206,27 +2205,14 @@ namespace tardigradeConstitutiveTools{
          */
      
         unsigned int dim;
-        errorOut error = computeSymmetricPart( A, symmA, dim );
-        
-        if ( error ){
-            errorOut result = new errorNode( "computeSymmetricPart (jacobian)",
-                                             "Error in computation of the symmetric part of A" );
-            result->addNext( error );
-            return result;
-        }
-        
-        floatVector eye( A.size( ) );
-        tardigradeVectorTools::eye( eye );
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeSymmetricPart( A, symmA, dim ) );
         
         dSymmAdA = floatMatrix( symmA.size( ), floatVector( A.size( ), 0 ) );
         
         for ( unsigned int i = 0; i < dim; i++ ){
             for ( unsigned int j = 0; j < dim; j++ ){
-                for ( unsigned int k = 0; k < dim; k++ ){
-                    for ( unsigned int l = 0; l < dim; l++ ){
-                        dSymmAdA[ dim * i + j ][ dim * k + l ] = 0.5 * ( eye[ dim * i + k ] * eye[ dim * j + l ] + eye[ dim * j + k ] * eye[ dim * i + l ] );
-                    }
-                }
+                dSymmAdA[ dim * i + j ][ dim * i + j ] += 0.5;
+                dSymmAdA[ dim * i + j ][ dim * j + i ] += 0.5;
             }
         }
         
@@ -2250,17 +2236,7 @@ namespace tardigradeConstitutiveTools{
          */
         
         unsigned int dim;
-        errorOut error = computeSymmetricPart( A, symmA, dim );
-        
-        if ( error ){
-            errorOut result = new errorNode( "computeSymmetricPart (jacobian)",
-                                             "Error in computation of the symmetric part of A" );
-            result->addNext( error );
-            return result;
-        }
-        
-        floatVector eye( A.size( ) );
-        tardigradeVectorTools::eye( eye );
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeSymmetricPart( A, symmA, dim ) );
         
         const unsigned int Asize = A.size( );
         
@@ -2268,11 +2244,8 @@ namespace tardigradeConstitutiveTools{
 
         for ( unsigned int i = 0; i < dim; i++ ){
             for ( unsigned int j = 0; j < dim; j++ ){
-                for ( unsigned int k = 0; k < dim; k++ ){
-                    for ( unsigned int l = 0; l < dim; l++ ){
-                        dSymmAdA[ dim * Asize * i + Asize * j + dim * k + l ] = 0.5 * ( eye[ dim * i + k ] * eye[ dim * j + l ] + eye[ dim * j + k ] * eye[ dim * i + l ] );
-                    }
-                }
+                dSymmAdA[ dim * Asize * i + Asize * j + dim * i + j ] += 0.5;
+                dSymmAdA[ dim * Asize * i + Asize * j + dim * j + i ] += 0.5;
             }
         }
         
@@ -2291,20 +2264,13 @@ namespace tardigradeConstitutiveTools{
          */
 
         const unsigned int dim = ( unsigned int )( std::sqrt( ( double )PK2.size( ) ) + 0.5 );
+        const unsigned int sot_dim = dim * dim;
         
-        if ( dim * dim != PK2.size( ) ){
+        TARDIGRADE_ERROR_TOOLS_CHECK( sot_dim == PK2.size( ), "The PK2 stress must have a size of " + std::to_string( dim * dim ) + " and has a size of " + std::to_string( PK2.size( ) ) )
 
-            return new errorNode( "The PK2 stress must have a size of " + std::to_string( dim * dim ) + " and has a size of " + std::to_string( PK2.size( ) ) );
+        TARDIGRADE_ERROR_TOOLS_CHECK( PK2.size( ) == F.size( ), "The deformation gradient must have a size of " + std::to_string( PK2.size( ) ) + " and has a size of " + std::to_string( F.size( ) ) );
 
-        }
-
-        if ( PK2.size( ) != F.size( ) ){
-
-            return new errorNode( "The deformation gradient must have a size of " + std::to_string( PK2.size( ) ) + " and has a size of " + std::to_string( F.size( ) ) );
-
-        }
-
-        cauchyStress = floatVector( dim * dim, 0 );
+        cauchyStress = floatVector( sot_dim, 0 );
 
         floatType J = tardigradeVectorTools::determinant( F, dim, dim );
 
