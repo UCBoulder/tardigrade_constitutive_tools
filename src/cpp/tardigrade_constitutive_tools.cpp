@@ -1144,33 +1144,31 @@ namespace tardigradeConstitutiveTools{
 
         //Assumes 3D
         constexpr unsigned int dim = 3;
-        if ( previousDeformationGradient.size( ) != dim * dim ){
-            return new errorNode( "evolveF", "The deformation gradient doesn't have enough terms (require 9 for 3D)" );
-        }
+        constexpr unsigned int sot_dim = dim * dim;
 
-        if ( Lp.size( ) != previousDeformationGradient.size( ) ){
-            return new errorNode( "evolveF", "The previous velocity gradient and deformation gradient aren't the same size" );
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( previousDeformationGradient.size( ) == sot_dim, "The deformation gradient doesn't have enough terms (require 9 for 3D)" );
 
-        if ( previousDeformationGradient.size( ) != L.size( ) ){
-            return new errorNode( "evolveF", "The previous deformation gradient and the current velocity gradient aren't the same size" );
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( Lp.size( ) == previousDeformationGradient.size( ), "The previous velocity gradient and deformation gradient aren't the same size" );
 
-        if ( ( mode != 1 ) && ( mode != 2 ) ){
-            return new errorNode( "evolveF", "The mode of evolution is not recognized" );
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( previousDeformationGradient.size( ) == L.size( ), "The previous deformation gradient and the current velocity gradient aren't the same size" );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( mode == 1 ) || ( mode == 2 ), "The mode of evolution is not recognized" );
 
         //Compute L^{t + \alpha}
         floatVector LtpAlpha = alpha * Lp + ( 1 - alpha ) * L;
 
         //Compute the right hand side
 
-        floatVector RHS;
+        floatVector RHS( sot_dim, 0 );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > Fp( previousDeformationGradient.data( ), dim, dim );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > Lt( LtpAlpha.data( ), dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > RHS_map( RHS.data( ), dim, dim );
+
         if ( mode == 1 ){
-            RHS = tardigradeVectorTools::matrixMultiply( LtpAlpha, previousDeformationGradient, dim, dim, dim, dim );
+            RHS_map = ( Lt * Fp ).eval( );
         }
         if ( mode == 2 ){
-            RHS = tardigradeVectorTools::matrixMultiply( previousDeformationGradient, LtpAlpha, dim, dim, dim, dim );
+            RHS_map = ( Fp * Lt ).eval( );
         }
 
         RHS *= Dt;
@@ -1180,17 +1178,24 @@ namespace tardigradeConstitutiveTools{
 
         tardigradeVectorTools::eye( eye );
 
-        floatVector LHS = eye - Dt * ( 1 - alpha ) * L;
-        floatVector invLHS = tardigradeVectorTools::inverse( LHS, dim, dim );
+        floatVector invLHS = -Dt * ( 1 - alpha ) * L;
+        for ( unsigned int i = 0; i < dim; i++ ){ invLHS[ dim * i + i ] += 1; }
+
+        dF = floatVector( sot_dim, 0 );
+
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invLHS_map( invLHS.data( ), dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > dF_map( dF.data( ), dim, dim );
+
+        invLHS_map = invLHS_map.inverse( ).eval( );
 
         if ( mode == 1 ){
 
-            dF = tardigradeVectorTools::matrixMultiply( invLHS, RHS, dim, dim, dim, dim );
+            dF_map = ( invLHS_map * RHS_map ).eval( );
 
         }
         if ( mode == 2 ){
 
-            dF = tardigradeVectorTools::matrixMultiply( RHS, invLHS, dim, dim, dim, dim );
+            dF_map = ( RHS_map * invLHS_map ).eval( );
 
         }
 
@@ -1302,25 +1307,15 @@ namespace tardigradeConstitutiveTools{
         constexpr unsigned int dim = 3;
         const unsigned int sot_dim = dim * dim;
 
-        errorOut error = evolveF( Dt, previousDeformationGradient, Lp, L, dF, deformationGradient, alpha, mode);
-
-        if ( error ){
-
-            errorOut result = new errorNode( __func__, "Error when computing the evolved deformation gradient" );
-            result->addNext( error );
-            return result;
-
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( evolveF( Dt, previousDeformationGradient, Lp, L, dF, deformationGradient, alpha, mode) );
 
         //Compute the left hand side
-        floatVector eye( dim * dim );
+        floatVector invLHS = -Dt * ( 1 - alpha ) * L;
+        for ( unsigned int i = 0; i < dim; i++ ){ invLHS[ dim * i + i ] += 1; }
 
-        tardigradeVectorTools::eye( eye );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invLHS_map( invLHS.data( ), dim, dim );
 
-        floatVector LHS = eye - Dt * ( 1 - alpha ) * L;
-
-        //Compute the inverse of the left-hand side
-        floatVector invLHS = tardigradeVectorTools::inverse( LHS, dim, dim );
+        invLHS_map = invLHS_map.inverse( ).eval( );
 
         //Compute the jacobian
         dFdL = floatVector( sot_dim * sot_dim, 0 );
@@ -1511,10 +1506,12 @@ namespace tardigradeConstitutiveTools{
 
         tardigradeVectorTools::eye( eye );
 
-        floatVector LHS = eye - Dt * ( 1 - alpha ) * L;
+        floatVector invLHS = -Dt * ( 1 - alpha ) * L;
+        for ( unsigned int i = 0; i < dim; i++ ){ invLHS[ dim * i + i ] += 1; }
 
-        //Compute the inverse of the left-hand side
-        floatVector invLHS = tardigradeVectorTools::inverse( LHS, dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invLHS_map( invLHS.data( ), dim, dim );
+
+        invLHS_map = invLHS_map.inverse( ).eval( );
 
         //Compute the jacobian
         dFdL   = floatVector( sot_dim * sot_dim, 0 );
@@ -1527,9 +1524,7 @@ namespace tardigradeConstitutiveTools{
                         for ( unsigned int l = 0; l < dim; l++ ){
                             dFdL[ dim * sot_dim * j + sot_dim * I + dim * k + l ]  += Dt * ( 1 - alpha ) * invLHS[ dim * j + k ] * deformationGradient[ dim * l + I ];
                             dFdLp[ dim * sot_dim * j + sot_dim * I + dim * k + l ] += invLHS[ dim * j + k ] * Dt * alpha * previousDeformationGradient[ dim * l + I ];
-                            for ( unsigned int a = 0; a < dim; a++ ){
-                                ddFdFp[ dim * sot_dim * j + sot_dim * I + dim * k + l ] += Dt * invLHS[ dim * j + a ] * LtpAlpha[ dim * a + k ] * eye[ dim * I + l ];
-                            }
+                            ddFdFp[ dim * sot_dim * j + sot_dim * I + dim * k + I ] += Dt * invLHS[ dim * j + l ] * LtpAlpha[ dim * l + k ];
                         }
                     }
                 }
@@ -1542,9 +1537,7 @@ namespace tardigradeConstitutiveTools{
                         for ( unsigned int _L = 0; _L < dim; _L++ ){
                             dFdL[ dim * sot_dim * j + sot_dim * I + dim * K + _L ]  += Dt * ( 1 - alpha ) * invLHS[ dim * _L + I ] * deformationGradient[ dim * j + K ];
                             dFdLp[ dim * sot_dim * j + sot_dim * I + dim * K + _L ] += Dt * alpha * invLHS[ dim * _L + I ] * previousDeformationGradient[ dim * j + K ];
-                            for ( unsigned int A = 0; A < dim; A++ ){
-                                ddFdFp[ dim * sot_dim * j + sot_dim * I + dim * K + _L ] += Dt * eye[ dim * j + K ] * LtpAlpha[ dim * _L + A ] * invLHS[ dim * A + I ];
-                            }
+                            ddFdFp[ dim * sot_dim * j + sot_dim * I + dim * j + K ] += Dt * LtpAlpha[ dim * K + _L ] * invLHS[ dim * _L + I ];
                         }
                     }
                 }
