@@ -733,7 +733,7 @@ namespace tardigradeConstitutiveTools{
     }
 
     errorOut computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt,
-                         floatMatrix &dDFDtdL, floatMatrix &dDFDtdF){
+                         floatVector &dDFDtdL, floatVector &dDFDtdF){
         /*!
          * Compute the total time derivative of the deformation gradient
          * and return the partial derivatives w.r.t. L and F.
@@ -762,19 +762,51 @@ namespace tardigradeConstitutiveTools{
         tardigradeVectorTools::eye(eye);
 
         //Form the partial w.r.t. L and F
-        dDFDtdL = floatMatrix(dim*dim, floatVector(dim*dim, 0));
-        dDFDtdF = dDFDtdL;
+        dDFDtdL = floatVector( sot_dim * sot_dim, 0 );
+        dDFDtdF = floatVector( sot_dim * sot_dim, 0 );;
 
         for (unsigned int i=0; i<dim; i++){
             for (unsigned int I=0; I<dim; I++){
                 for (unsigned int k=0; k<dim; k++){
-                    for (unsigned int l=0; l<dim; l++){ //Note that we will use l = K for efficiency
-                        dDFDtdL[dim*i + I][dim*k + l] = eye[dim*i + k] * deformationGradient[dim*l + I];
-                        dDFDtdF[dim*i + I][dim*k + l] = velocityGradient[dim*i + k] * eye[dim*I + l];
-                    }
+                    dDFDtdL[ sot_dim * dim * i + sot_dim * I + dim * i + k] = deformationGradient[ dim * k + I ];
+                    dDFDtdF[ sot_dim * dim * i + sot_dim * I + dim * k + I] = velocityGradient[ dim * i + k ];
                 }
             }
         }
+
+        return NULL;
+    }
+
+    errorOut computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt,
+                         floatMatrix &dDFDtdL, floatMatrix &dDFDtdF){
+        /*!
+         * Compute the total time derivative of the deformation gradient
+         * and return the partial derivatives w.r.t. L and F.
+         *
+         * \f$\dot{F}_{iI} = L_{ij} F_{jI}\f$
+         * \f$\frac{\partial \dot{F}_{iI}}{\partial L_{kl}} = \delta_{ik} F{lI}\f$
+         * \f$\frac{\partial \dot{F}_{iI}}{\partial F_{kK}} = L_{ik} \delta{IK}\f$
+         *
+         * \param &velocityGradient: The velocity gradient \f$L_{ij}\f$
+         * \param &deformationGradient: The deformation gradient \f$F_{iI}\f$
+         * \param &DFDt: The total time derivative of the deformation gradient
+         * \param &dDFDtdL: The derivative of the total time derivative of the deformation gradient
+         *     with respect to the velocity gradient.
+         * \param &dDFDtdF: The derivative of the total time derivative of the deformation gradient
+         *     with respect to the deformation gradient.
+         */
+
+        //Assume 3D
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+
+        floatVector _dDFDtdL, _dDFDtdF;
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeDFDt( velocityGradient, deformationGradient, DFDt, _dDFDtdL, _dDFDtdF ) );
+
+        dDFDtdL = tardigradeVectorTools::inflate( _dDFDtdL, sot_dim, sot_dim );
+
+        dDFDtdF = tardigradeVectorTools::inflate( _dDFDtdF, sot_dim, sot_dim );
 
         return NULL;
     }
@@ -797,17 +829,9 @@ namespace tardigradeConstitutiveTools{
          * \param &alpha: The integration parameter.
          */
 
-        if ( ( Ap.size( ) != DApDt.size( ) ) || ( Ap.size( ) != DADt.size( ) ) ){
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( Ap.size( ) == DApDt.size( ) ) && ( Ap.size( ) == DADt.size( ) ), "The size of the previous value of the vector and the two rates are not equal" );
 
-            return new errorNode( __func__, "The size of the previous value of the vector and the two rates are not equal" );
-
-        }
-
-        if ( Ap.size( ) != alpha.size( ) ){
-
-            return new errorNode( __func__, "The size of the alpha vector is not the same size as the previous vector value" );
-
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( Ap.size( ) == alpha.size( ), "The size of the alpha vector is not the same size as the previous vector value" );
 
         dA = floatVector( Ap.size( ), 0 );
 
@@ -817,11 +841,7 @@ namespace tardigradeConstitutiveTools{
 
         for ( auto ai = alpha.begin( ); ai != alpha.end( ); ai++, i++ ){
 
-            if ( ( ( *ai ) < 0) || ( ( *ai ) > 1 ) ){
-
-                return new errorNode( __func__, "Alpha must be between 0 and 1" );
-
-            }
+            TARDIGRADE_ERROR_TOOLS_CHECK( ( ( *ai ) >= 0) && ( ( *ai ) <= 1 ), "Alpha must be between 0 and 1" );
 
             dA[ i ] = Dt * ( *ai * DApDt[ i ] + ( 1 - *ai ) * DADt[ i ] );
 
@@ -852,17 +872,7 @@ namespace tardigradeConstitutiveTools{
          * \param &alpha: The integration parameter.
          */
 
-        errorOut error = midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, alpha );
-
-        if ( error ){
-
-            errorOut result = new errorNode( __func__, "Error in computation of the integrated term" );
-
-            result->addNext( error );
-
-            return result;
-
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, alpha ) )
 
         const unsigned int A_size = A.size( );
 
@@ -901,17 +911,7 @@ namespace tardigradeConstitutiveTools{
 
         floatVector _DADADt;
 
-        errorOut error = midpointEvolutionFlatJ( Dt, Ap, DApDt, DADt, dA, A, _DADADt, alpha );
-
-        if ( error ){
-
-            errorOut result = new errorNode( "midpointEvolution", "Error in calculation of the evolution" );
-
-            result->addNext( error );
-
-            return result;
-
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( midpointEvolutionFlatJ( Dt, Ap, DApDt, DADt, dA, A, _DADADt, alpha ) )
 
         DADADt = tardigradeVectorTools::inflate( _DADADt, A.size( ), A.size( ) );
 
@@ -943,17 +943,7 @@ namespace tardigradeConstitutiveTools{
          * \param &alpha: The integration parameter.
          */
 
-        errorOut error = midpointEvolutionFlatJ( Dt, Ap, DApDt, DADt, dA, A, DADADt, alpha );
-
-        if ( error ){
-
-            errorOut result = new errorNode( __func__, "Error in computation of the integrated term" );
-
-            result->addNext( error );
-
-            return result;
-
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( midpointEvolutionFlatJ( Dt, Ap, DApDt, DADt, dA, A, DADADt, alpha ) );
 
         const unsigned int A_size = A.size( );
 
@@ -996,17 +986,7 @@ namespace tardigradeConstitutiveTools{
 
         floatVector _DADADt, _DADADtp;
 
-        errorOut error = midpointEvolutionFlatJ( Dt, Ap, DApDt, DADt, dA, A, _DADADt, _DADADtp, alpha );
-
-        if ( error ){
-
-            errorOut result = new errorNode( "midpointEvolution", "Error in calculation of the evolution" );
-
-            result->addNext( error );
-
-            return result;
-
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( midpointEvolutionFlatJ( Dt, Ap, DApDt, DADt, dA, A, _DADADt, _DADADtp, alpha ) );
 
         DADADt  = tardigradeVectorTools::inflate( _DADADt,  A.size( ), A.size( ) );
 

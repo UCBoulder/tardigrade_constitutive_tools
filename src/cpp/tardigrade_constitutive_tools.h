@@ -79,6 +79,9 @@ namespace tardigradeConstitutiveTools{
     errorOut computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt);
 
     errorOut computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt,
+                         floatVector &dDFDtdL, floatVector &dDFDtdF);
+
+    errorOut computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt,
                          floatMatrix &dDFDtdL, floatMatrix &dDFDtdF);
 
     errorOut midpointEvolution(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
