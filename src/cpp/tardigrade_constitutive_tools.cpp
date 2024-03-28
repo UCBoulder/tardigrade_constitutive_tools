@@ -1729,7 +1729,7 @@ namespace tardigradeConstitutiveTools{
     }
 
     errorOut pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
-                                      floatVector &pullBackVelocityGradient){
+                                      floatVector &pulledBackVelocityGradient){
         /*!
          * Pull back the velocity gradient to the configuration indicated by deformationGradient, i.e.
          *
@@ -1742,24 +1742,92 @@ namespace tardigradeConstitutiveTools{
          * \param &velocityGradient: The velocity gradient in the current configuration.
          * \param &deformationGradient: The deformation gradient between the desired configuration
          *     and the current configuration.
-         * \param &pullBackVelocityGradient: The pulled back velocity gradient.
+         * \param &pulledBackVelocityGradient: The pulled back velocity gradient.
          */
 
         //Assume 3D
         constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
         //Invert the deformation gradient
-        floatVector inverseDeformationGradient = tardigradeVectorTools::inverse(deformationGradient, dim, dim);
+        pulledBackVelocityGradient = floatVector( sot_dim, 0 );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F( deformationGradient.data( ), dim, dim );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > L( velocityGradient.data( ), dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > pullBackL( pulledBackVelocityGradient.data( ), dim, dim );
 
-        //Pull back the velocity gradient
-        pullBackVelocityGradient = tardigradeVectorTools::matrixMultiply(inverseDeformationGradient, velocityGradient, dim, dim, dim, dim);
-        pullBackVelocityGradient = tardigradeVectorTools::matrixMultiply(pullBackVelocityGradient, deformationGradient, dim, dim, dim, dim);
+        pullBackL = ( F.inverse( ) * L * F ).eval( );
 
         return NULL;
     }
 
     errorOut pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
-                                      floatVector &pullBackVelocityGradient, floatMatrix &dPullBackLdL,
+                                      floatVector &pulledBackVelocityGradient, floatVector &dPullBackLdL,
+                                      floatVector &dPullBackLdF){
+        /*!
+         * Pull back the velocity gradient to the configuration indicated by deformationGradient, i.e.
+         *
+         * \f$totalDeformationGradient_{iI} = deformationGradient_{i \bar{I}} remainingDeformationGradient_{\bar{I}I}\f$
+         *
+         * This is done via
+         *
+         * \f$L_{\bar{I} \bar{J}} = deformationGradient_{\bar{I} i}^{-1} velocityGradient_{ij} deformationGradient_{j\bar{J}}\f$
+         *
+         * \param &velocityGradient: The velocity gradient in the current configuration.
+         * \param &deformationGradient: The deformation gradient between the desired configuration
+         *     and the current configuration.
+         * \param &pulledBackVelocityGradient: The pulled back velocity gradient.
+         * \param &dPullBackLdL: The gradient of the pulled back velocity gradient
+         *     w.r.t. the velocity gradient.
+         * \param &dPullBackLdF: The gradient of the pulled back velocity gradient
+         *     w.r.t. the deformation gradient.
+         */
+
+        //Assume 3D
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+
+        pulledBackVelocityGradient = floatVector( sot_dim, 0 );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F( deformationGradient.data( ), dim, dim );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > L( velocityGradient.data( ), dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > pullBackL( pulledBackVelocityGradient.data( ), dim, dim );
+
+        floatVector inverseDeformationGradient = deformationGradient;
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invF_map( inverseDeformationGradient.data( ), dim, dim );
+        invF_map = invF_map.inverse( ).eval( );
+
+        floatVector term2( sot_dim, 0 );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > term2_map( term2.data( ), dim, dim );
+
+        term2_map = ( invF_map * L ).eval( );
+
+        //Pull back the velocity gradient
+        pullBackL = ( term2_map * F ).eval( );
+
+        //Construct the gradients
+        dPullBackLdL = floatVector( sot_dim * sot_dim, 0 );
+        dPullBackLdF = floatVector( sot_dim * sot_dim, 0 );
+
+        for (unsigned int I=0; I<dim; I++){
+            for (unsigned int J=0; J<dim; J++){
+                for (unsigned int k=0; k<dim; k++){
+                    for (unsigned int l=0; l<dim; l++){
+                        dPullBackLdL[sot_dim * dim * I + sot_dim * J + dim * k + l ] = inverseDeformationGradient[dim*I + k] * deformationGradient[dim*l + J];
+                    }
+
+                    dPullBackLdF[sot_dim * dim * I + sot_dim * J + dim * k + J ] += term2[dim*I + k];
+
+                    for ( unsigned int K = 0; K < dim; K++ ){
+                        dPullBackLdF[sot_dim * dim * I + sot_dim * J + dim * k + K ] -= inverseDeformationGradient[dim*I + k] * pulledBackVelocityGradient[dim*K + J];
+                    }
+                }
+            }
+        }
+
+        return NULL;
+    }
+
+    errorOut pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
+                                      floatVector &pulledBackVelocityGradient, floatMatrix &dPullBackLdL,
                                       floatMatrix &dPullBackLdF){
         /*!
          * Pull back the velocity gradient to the configuration indicated by deformationGradient, i.e.
@@ -1773,7 +1841,7 @@ namespace tardigradeConstitutiveTools{
          * \param &velocityGradient: The velocity gradient in the current configuration.
          * \param &deformationGradient: The deformation gradient between the desired configuration
          *     and the current configuration.
-         * \param &pullBackVelocityGradient: The pulled back velocity gradient.
+         * \param &pulledBackVelocityGradient: The pulled back velocity gradient.
          * \param &dPullBackLdL: The gradient of the pulled back velocity gradient
          *     w.r.t. the velocity gradient.
          * \param &dPullBackLdF: The gradient of the pulled back velocity gradient
@@ -1782,37 +1850,15 @@ namespace tardigradeConstitutiveTools{
 
         //Assume 3D
         constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        //Invert the deformation gradient
-        floatVector inverseDeformationGradient = tardigradeVectorTools::inverse(deformationGradient, dim, dim);
+        floatVector _dPullBackLdL, _dPullBackLdF;
 
-        //Pull back the velocity gradient
-        pullBackVelocityGradient = tardigradeVectorTools::matrixMultiply(inverseDeformationGradient, velocityGradient, dim, dim, dim, dim);
-        pullBackVelocityGradient = tardigradeVectorTools::matrixMultiply(pullBackVelocityGradient, deformationGradient, dim, dim, dim, dim);
+        TARDIGRADE_ERROR_TOOLS_CATCH( pullBackVelocityGradient( velocityGradient, deformationGradient, pulledBackVelocityGradient, _dPullBackLdL, _dPullBackLdF ) );
 
-        //Construct the gradients
-        dPullBackLdL = floatMatrix(pullBackVelocityGradient.size(), floatVector( velocityGradient.size(), 0));
-        dPullBackLdF = floatMatrix(pullBackVelocityGradient.size(), floatVector( deformationGradient.size(), 0));
+        dPullBackLdL = tardigradeVectorTools::inflate( _dPullBackLdL, sot_dim, sot_dim );
 
-        floatVector term1 = tardigradeVectorTools::matrixMultiply(inverseDeformationGradient, velocityGradient, dim, dim, dim, dim);
-        term1 = tardigradeVectorTools::matrixMultiply(term1, deformationGradient, dim, dim, dim, dim);
-
-        floatVector term2 = tardigradeVectorTools::matrixMultiply(inverseDeformationGradient, velocityGradient, dim, dim, dim, dim);
-
-        for (unsigned int I=0; I<dim; I++){
-            for (unsigned int J=0; J<dim; J++){
-                for (unsigned int k=0; k<dim; k++){
-                    for (unsigned int l=0; l<dim; l++){
-                        dPullBackLdL[dim*I + J][dim*k + l] = inverseDeformationGradient[dim*I + k] * deformationGradient[dim*l + J];
-                    }
-
-                    for (unsigned int K=0; K<dim; K++){
-                        dPullBackLdF[dim*I + J][dim*k + K] += -inverseDeformationGradient[dim*I + k] * term1[dim*K + J]
-                                                              + term2[dim*I + k] * deltaDirac(J, K);
-                    }
-                }
-            }
-        }
+        dPullBackLdF = tardigradeVectorTools::inflate( _dPullBackLdF, sot_dim, sot_dim );
 
         return NULL;
     }

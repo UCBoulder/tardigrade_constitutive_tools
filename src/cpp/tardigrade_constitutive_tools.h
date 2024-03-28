@@ -157,10 +157,14 @@ namespace tardigradeConstitutiveTools{
     errorOut computeUnitNormal(const floatVector &A, floatVector &Anorm, floatMatrix &dAnormdA);
 
     errorOut pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
-                                      floatVector &pullBackVelocityGradient);
+                                      floatVector &pulledBackVelocityGradient);
 
     errorOut pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
-                                      floatVector &pullBackVelocityGradient, floatMatrix &dPullBackLdL,
+                                      floatVector &pulledBackVelocityGradient, floatVector &dPullBackLdL,
+                                      floatVector &dPullBackLdF);
+
+    errorOut pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
+                                      floatVector &pulledBackVelocityGradient, floatMatrix &dPullBackLdL,
                                       floatMatrix &dPullBackLdF);
 
     errorOut quadraticThermalExpansion(const floatType &temperature, const floatType &referenceTemperature,

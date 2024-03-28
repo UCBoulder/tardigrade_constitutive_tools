@@ -1089,7 +1089,7 @@ BOOST_AUTO_TEST_CASE( testPullBackVelocityGradient, * boost::unit_test::toleranc
 
     BOOST_CHECK( ! error );
 
-    BOOST_TEST( pullBackL == pullBackLJ );
+    BOOST_TEST( pullBackL == pullBackLJ, CHECK_PER_ELEMENT );
 
     //Check dpbLdL
     floatType eps = 1e-6;
