@@ -1936,24 +1936,27 @@ namespace tardigradeConstitutiveTools{
          * \param &almansiStrain: The strain in the current configuration indicated by the deformation gradient.
          */
 
-HERE
-
         //Assume 3D
         constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        //Compute the inverse deformation gradient
-        floatVector inverseDeformationGradient = tardigradeVectorTools::inverse(deformationGradient, dim, dim);
+        floatVector inverseDeformationGradient = deformationGradient;
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invF( inverseDeformationGradient.data( ), dim, dim );
+        invF = invF.inverse( ).eval( );
+
+        almansiStrain = floatVector( sot_dim, 0 );
+
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > E( greenLagrangeStrain.data( ), dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > e( almansiStrain.data( ), dim, dim );
 
         //Map the Green-Lagrange strain to the current configuration
-        almansiStrain = tardigradeVectorTools::matrixMultiply(greenLagrangeStrain, inverseDeformationGradient,
-                                                    dim, dim, dim, dim, 0, 0);
-        almansiStrain = tardigradeVectorTools::matrixMultiply(inverseDeformationGradient, almansiStrain,
-                                                    dim, dim, dim, dim, 1, 0);
+        e = ( invF.transpose( ) * E * invF ).eval( );
+
         return NULL;
     }
 
     errorOut pushForwardGreenLagrangeStrain(const floatVector &greenLagrangeStrain, const floatVector &deformationGradient,
-                                            floatVector &almansiStrain, floatMatrix &dalmansiStraindE, floatMatrix &dalmansiStraindF){
+                                            floatVector &almansiStrain, floatVector &dAlmansiStraindE, floatVector &dAlmansiStraindF){
         /*!
          * Push forward the Green-Lagrange strain to the current configuration
          * and return the jacobians.
@@ -1970,33 +1973,38 @@ HERE
          * \param &greenLagrangeStrain: The Green-Lagrange strain.
          * \param &deformationGradient: The deformation gradient mapping between configurations.
          * \param &almansiStrain: The strain in the current configuration indicated by the deformation gradient.
-         * \param &dalmansiStraindE: Compute the derivative of the almansi strain w.r.t. the Green-Lagrange strain.
-         * \param &dalmansiStraindF: Compute the derivative of the almansi strain w.r.t. the deformation gradient.
+         * \param &dAlmansiStraindE: Compute the derivative of the Almansi strain w.r.t. the Green-Lagrange strain.
+         * \param &dAlmansiStraindF: Compute the derivative of the Almansi strain w.r.t. the deformation gradient.
          */
 
         //Assume 3D
         constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        //Compute the inverse deformation gradient
-        floatVector inverseDeformationGradient = tardigradeVectorTools::inverse(deformationGradient, dim, dim);
+        floatVector inverseDeformationGradient = deformationGradient;
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invF( inverseDeformationGradient.data( ), dim, dim );
+        invF = invF.inverse( ).eval( );
+
+        almansiStrain = floatVector( sot_dim, 0 );
+
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > E( greenLagrangeStrain.data( ), dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > e( almansiStrain.data( ), dim, dim );
 
         //Map the Green-Lagrange strain to the current configuration
-        almansiStrain = tardigradeVectorTools::matrixMultiply(greenLagrangeStrain, inverseDeformationGradient,
-                                                    dim, dim, dim, dim, 0, 0);
-        almansiStrain = tardigradeVectorTools::matrixMultiply(inverseDeformationGradient, almansiStrain,
-                                                    dim, dim, dim, dim, 1, 0);
+        e = ( invF.transpose( ) * E * invF ).eval( );
+
 
         //Compute the jacobians
-        dalmansiStraindE = floatMatrix(dim*dim, floatVector(dim*dim, 0));
-        dalmansiStraindF = floatMatrix(dim*dim, floatVector(dim*dim, 0));
+        dAlmansiStraindE = floatVector( sot_dim * sot_dim, 0 );
+        dAlmansiStraindF = floatVector( sot_dim * sot_dim, 0 );
         for (unsigned int i=0; i<dim; i++){
             for (unsigned int j=0; j<dim; j++){
                 for (unsigned int K=0; K<dim; K++){
                     for (unsigned int L=0; L<dim; L++){
-                        dalmansiStraindE[dim*i + j][dim*K + L] = inverseDeformationGradient[dim*K + i] *
-                                                                 inverseDeformationGradient[dim*L + j];
-                        dalmansiStraindF[dim*i + j][dim*K + L] = -inverseDeformationGradient[dim*L + i ] * almansiStrain[dim*K+j]
-                                                                 -inverseDeformationGradient[dim*L + j ] * almansiStrain[dim*i+K];
+                        dAlmansiStraindE[sot_dim * dim * i + sot_dim * j + dim * K + L ] = inverseDeformationGradient[dim*K + i] *
+                                                                                           inverseDeformationGradient[dim*L + j];
+                        dAlmansiStraindF[sot_dim * dim * i + sot_dim * j + dim * K + L ] = -inverseDeformationGradient[dim*L + i ] * almansiStrain[dim*K+j]
+                                                                                           -inverseDeformationGradient[dim*L + j ] * almansiStrain[dim*i+K];
                     }
                 }
             }
@@ -2004,6 +2012,43 @@ HERE
 
         return NULL;
     }
+
+    errorOut pushForwardGreenLagrangeStrain(const floatVector &greenLagrangeStrain, const floatVector &deformationGradient,
+                                            floatVector &almansiStrain, floatMatrix &dAlmansiStraindE, floatMatrix &dAlmansiStraindF){
+        /*!
+         * Push forward the Green-Lagrange strain to the current configuration
+         * and return the jacobians.
+         *
+         * \f$e_{ij} = F_{Ii}^{-1} E_{IJ} F_{Jj}^{-1}\f$
+         *
+         * \f$\frac{\partial e_{ij}}{\partial E_{KL}} = F_{Ki}^{-1} F_{Kj}^{-1}\f$
+         *
+         * \f$\frac{\partial e_{ij}}{\partial F_{kK}} = -F_{Ik}^{-1} F_{Ki}^{-1} E_{IJ} F_{J j}^{-1} - F_{Ii}^{-1} E_{IJ} F_{Jk}^{-1} F_{Kj}^{-1}\f$
+         *
+         * where \f$e_{ij}\f$ is the Almansi strain (the strain in the current configuration, \f$F_{iI}^{-1}\f$ is the
+         * inverse of the deformation gradient, and \f$E_{IJ}\f$ is the Green-Lagrange strain.
+         *
+         * \param &greenLagrangeStrain: The Green-Lagrange strain.
+         * \param &deformationGradient: The deformation gradient mapping between configurations.
+         * \param &almansiStrain: The strain in the current configuration indicated by the deformation gradient.
+         * \param &dAlmansiStraindE: Compute the derivative of the Almansi strain w.r.t. the Green-Lagrange strain.
+         * \param &dAlmansiStraindF: Compute the derivative of the Almansi strain w.r.t. the deformation gradient.
+         */
+
+        //Assume 3D
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+
+        floatVector _dAlmansiStraindE, _dAlmansiStraindF;
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( pushForwardGreenLagrangeStrain( greenLagrangeStrain, deformationGradient, almansiStrain, _dAlmansiStraindE, _dAlmansiStraindF ) );
+
+        dAlmansiStraindE = tardigradeVectorTools::inflate( _dAlmansiStraindE, sot_dim, sot_dim );
+        dAlmansiStraindF = tardigradeVectorTools::inflate( _dAlmansiStraindF, sot_dim, sot_dim );
+
+        return NULL;
+
+    } 
 
     errorOut pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
                                     floatVector &greenLagrangeStrain ){
