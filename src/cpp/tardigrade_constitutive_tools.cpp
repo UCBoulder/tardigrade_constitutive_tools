@@ -1544,10 +1544,8 @@ namespace tardigradeConstitutiveTools{
             }
         }
 
-        floatVector EYE( sot_dim * sot_dim );
-        tardigradeVectorTools::eye( EYE );
-
-        dFdFp = ddFdFp + EYE;
+        dFdFp = ddFdFp;
+        for ( unsigned int i = 0; i < sot_dim; i++ ){ dFdFp[ sot_dim * i + i ] += 1; }
 
         return NULL;
     }
