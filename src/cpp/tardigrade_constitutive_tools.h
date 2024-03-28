@@ -188,6 +188,9 @@ namespace tardigradeConstitutiveTools{
                                     floatVector &greenLagrangeStrain );
 
     errorOut pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
+                                    floatVector &greenLagrangeStrain, floatVector &dEde, floatVector &dEdF );
+
+    errorOut pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
                                     floatVector &greenLagrangeStrain, floatMatrix &dEde, floatMatrix &dEdF );
 
     errorOut computeSymmetricPart( const floatVector &A, floatVector &symmA, unsigned int &dim );

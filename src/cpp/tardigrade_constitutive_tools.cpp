@@ -328,8 +328,8 @@ namespace tardigradeConstitutiveTools{
         E.resize( dim * dim );
 
         for ( unsigned int I = 0; I < dim; I++ ){
+            E[ dim * I + I ] -= 1;
             for ( unsigned int J = 0; J < dim; J++ ){
-                E[ dim * I + J ] = -deltaDirac( I, J );
                 for ( unsigned int i = 0; i < dim; i++ ){
                     E[ dim * I + J ] += deformationGradient[ dim * i + I ] * deformationGradient[ dim * i + J ];
                 }
@@ -458,10 +458,8 @@ namespace tardigradeConstitutiveTools{
         for ( unsigned int I = 0; I < 3; I++ ){
             for ( unsigned int J = 0; J < 3; J++ ){
                 for ( unsigned int k = 0; k < 3; k++ ){
-                    for (unsigned int K = 0; K < 3; K++ ){
-                        dEdF[ 3 * 9 * I + 9 * J + 3 * k + K ] = 0.5 * ( deltaDirac( I, K ) * deformationGradient[ 3 * k + J ]
-                                                              + deformationGradient[ 3 * k + I ] * deltaDirac( J, K ) );
-                    }
+                    dEdF[ 3 * 9 * I + 9 * J + 3 * k + I ] += 0.5 * deformationGradient[ 3 * k + J ];
+                    dEdF[ 3 * 9 * I + 9 * J + 3 * k + J ] += 0.5 * deformationGradient[ 3 * k + I ];
                 }
             }
         }
@@ -1993,7 +1991,6 @@ namespace tardigradeConstitutiveTools{
         //Map the Green-Lagrange strain to the current configuration
         e = ( invF.transpose( ) * E * invF ).eval( );
 
-
         //Compute the jacobians
         dAlmansiStraindE = floatVector( sot_dim * sot_dim, 0 );
         dAlmansiStraindF = floatVector( sot_dim * sot_dim, 0 );
@@ -2063,9 +2060,58 @@ namespace tardigradeConstitutiveTools{
 
         //Assume 3d
         constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        greenLagrangeStrain = tardigradeVectorTools::matrixMultiply( deformationGradient, almansiStrain, dim, dim, dim, dim, 1, 0 );
-        greenLagrangeStrain = tardigradeVectorTools::matrixMultiply( greenLagrangeStrain, deformationGradient, dim, dim, dim, dim, 0, 0 );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F( deformationGradient.data( ), dim, dim );
+
+        greenLagrangeStrain = floatVector( sot_dim, 0 );
+
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > E( greenLagrangeStrain.data( ), dim, dim );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > e( almansiStrain.data( ), dim, dim );
+
+        E = ( F.transpose( ) * e * F ).eval( );
+
+        return NULL;
+    }
+
+    errorOut pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
+                                    floatVector &greenLagrangeStrain, floatVector &dEde, floatVector &dEdF ){
+        /*!
+         * Pull back the almansi strain to the configuration indicated by the deformation gradient.
+         *
+         * Also return the Jacobians.
+         *
+         * \param &almansiStrain: The strain in the deformation gradient's current configuration.
+         * \param &deformationGradient: The deformation gradient between configurations.
+         * \param &greenLagrangeStrain: The Green-Lagrange strain which corresponds to the reference
+         *     configuration of the deformation gradient.
+         * \param &dEde: The derivative of the Green-Lagrange strain w.r.t. the Almansi strain.
+         * \param &dEdF: The derivative of the Green-Lagrange strain w.r.t. the deformation gradient
+         */
+
+        //Assume 3d
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( pullBackAlmansiStrain( almansiStrain, deformationGradient, greenLagrangeStrain ) )
+
+        floatVector eye( dim * dim );
+        tardigradeVectorTools::eye( eye );
+
+        dEde = floatVector( sot_dim * sot_dim, 0 );
+        dEdF = floatVector( sot_dim * sot_dim, 0 );
+
+        for ( unsigned int I = 0; I < dim; I++ ){
+            for ( unsigned int J = 0; J < dim; J++ ){
+                for ( unsigned int K = 0; K < dim; K++ ){
+                    for ( unsigned int L = 0; L < dim; L++ ){
+                        dEde[ sot_dim * dim * I + sot_dim * J + dim * K + L ] = deformationGradient[ dim * K + I ] * deformationGradient[ dim * L + J ];
+                        dEdF[ sot_dim * dim * I + sot_dim * J + dim * K + I ] += almansiStrain[ dim * K + L ] * deformationGradient[ dim * L + J ];
+                        dEdF[ sot_dim * dim * I + sot_dim * J + dim * K + J ] += deformationGradient[ dim * L + I ] * almansiStrain[ dim * L + K ];
+                    }
+                }
+            }
+        }
 
         return NULL;
     }
@@ -2087,35 +2133,14 @@ namespace tardigradeConstitutiveTools{
 
         //Assume 3d
         constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        errorOut error = pullBackAlmansiStrain( almansiStrain, deformationGradient, greenLagrangeStrain );
+        floatVector _dEde, _dEdF;
 
-        if ( error ){
-            errorOut result = new errorNode( "pullBackAlmansiStrain (jacobian)",
-                                             "Error in computation of Green-Lagrange strain" );
-            result->addNext( error );
-            return result;
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( pullBackAlmansiStrain( almansiStrain, deformationGradient, greenLagrangeStrain, _dEde, _dEdF ) )
 
-        floatVector eye( dim * dim );
-        tardigradeVectorTools::eye( eye );
-
-        dEde = floatMatrix( dim * dim, floatVector( dim * dim, 0 ) );
-        dEdF = floatMatrix( dim * dim, floatVector( dim * dim, 0 ) );
-
-        for ( unsigned int I = 0; I < dim; I++ ){
-            for ( unsigned int J = 0; J < dim; J++ ){
-                for ( unsigned int K = 0; K < dim; K++ ){
-                    for ( unsigned int L = 0; L < dim; L++ ){
-                        dEde[ dim * I + J ][ dim * K + L ] = deformationGradient[ dim * K + I ] * deformationGradient[ dim * L + J ];
-                        for ( unsigned int j = 0; j < dim; j++ ){
-                            dEdF[ dim * I + J ][ dim * K + L ] += eye[ dim * I + L ] * almansiStrain[ dim * K + j ] * deformationGradient[ dim * j + J ]
-                                                                + deformationGradient[ dim * j + I ] * almansiStrain[ dim * j + K ] * eye[ dim * J + L ];
-                        }
-                    }
-                }
-            }
-        }
+        dEde = tardigradeVectorTools::inflate( _dEde, sot_dim, sot_dim );
+        dEdF = tardigradeVectorTools::inflate( _dEdF, sot_dim, sot_dim );
 
         return NULL;
     }
