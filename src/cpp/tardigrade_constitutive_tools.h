@@ -65,6 +65,9 @@ namespace tardigradeConstitutiveTools{
     errorOut decomposeGreenLagrangeStrain(const floatVector &E, floatVector &Ebar, floatType &J);
 
     errorOut decomposeGreenLagrangeStrain(const floatVector &E, floatVector &Ebar, floatType &J,
+                                          floatVector &dEbardE, floatVector &dJdE);
+
+    errorOut decomposeGreenLagrangeStrain(const floatVector &E, floatVector &Ebar, floatType &J,
                                           floatMatrix &dEbardE, floatVector &dJdE);
 
     errorOut mapPK2toCauchy(const floatVector &PK2Stress, const floatVector &deformationGradient, floatVector &cauchyStress);

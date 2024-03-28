@@ -507,7 +507,7 @@ namespace tardigradeConstitutiveTools{
     }
 
     errorOut decomposeGreenLagrangeStrain(const floatVector &E, floatVector &Ebar, floatType &J,
-                                          floatMatrix &dEbardE, floatVector &dJdE){
+                                          floatVector &dEbardE, floatVector &dJdE){
         /*!
          * Decompose the Green-Lagrange strain tensor ( \f$E\f$ ) into isochoric ( \f$\bar{E}\f$ ) and volumetric ( \f$J\f$ ) parts where
          *
@@ -551,7 +551,64 @@ namespace tardigradeConstitutiveTools{
         floatType invJ23 = 1./pow(J, 2./3);
         floatType invJ53 = 1./pow(J, 5./3);
 
-        dEbardE = invJ23*EYE - (2./3)*invJ53*tardigradeVectorTools::dyadic(E, dJdE) - (1./3)*invJ53*tardigradeVectorTools::dyadic(eye, dJdE);
+        dEbardE = floatVector( sot_dim * sot_dim, 0 );
+
+        for ( unsigned int i = 0; i < sot_dim; i++ ){
+            dEbardE[ sot_dim * i + i ] += invJ23;
+        }
+
+        for ( unsigned int i = 0; i < dim; i++ ){
+
+            for ( unsigned int j = 0; j < dim; j++ ){
+
+                for ( unsigned int k = 0; k < dim; k++ ){
+
+                    dEbardE[ sot_dim * dim * i + sot_dim * i + dim * j + k ] -= (1./3) * invJ53 * dJdE[ dim * j + k ];
+
+                    for ( unsigned int l = 0; l < dim; l++ ){
+
+                        dEbardE[ sot_dim * dim * i + sot_dim * j + dim * k + l ] -= (2./3) * invJ53 * E[ dim * i + j ] * dJdE[ dim * k + l ];
+
+                    }
+
+                }
+
+            }
+
+        }
+
+//        dEbardE = invJ23*EYE - (2./3)*invJ53*tardigradeVectorTools::dyadic(E, dJdE) - (1./3)*invJ53*tardigradeVectorTools::dyadic(eye, dJdE);
+
+        return NULL;
+    }
+
+    errorOut decomposeGreenLagrangeStrain(const floatVector &E, floatVector &Ebar, floatType &J,
+                                          floatMatrix &dEbardE, floatVector &dJdE){
+        /*!
+         * Decompose the Green-Lagrange strain tensor ( \f$E\f$ ) into isochoric ( \f$\bar{E}\f$ ) and volumetric ( \f$J\f$ ) parts where
+         *
+         * \f$J = det(F) = sqrt(det(2*E + I))\f$
+         *
+         * \f$\bar{E}_{IJ} = 0.5*((1/(J**(2/3))) F_{iI} F_{iJ} - I_{IJ}) = (1/(J**(2/3)))*E_{IJ} + 0.5(1/(J**(2/3)) - 1)*I_{IJ}\f$
+         *
+         * \param &E: The Green-Lagrange strain tensor ( \f$E\f$ )
+         * \param &Ebar: The isochoric Green-Lagrange strain tensor ( \f$\bar{E}\f$ ).
+         *     format = E11, E12, E13, E21, E22, E23, E31, E32, E33
+         * \param &J: The Jacobian of deformation ( \f$J\f$ )
+         * \param &dEbardE: The derivative of the isochoric Green-Lagrange strain
+         *     tensor w.r.t. the total strain tensor ( \f$\frac{\partial \bar{E}}{\partial E}\f$ ).
+         * \param &dJdE: The derivative of the jacobian of deformation w.r.t. the
+         *     Green-Lagrange strain tensor ( \f$\frac{\partial J}{\partial E}\f$ ).
+         */
+
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+
+        floatVector _dEbardE;
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( decomposeGreenLagrangeStrain( E, Ebar, J, _dEbardE, dJdE ) );
+
+        dEbardE = tardigradeVectorTools::inflate( _dEbardE, sot_dim, sot_dim );
 
         return NULL;
     }
