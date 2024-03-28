@@ -1653,14 +1653,56 @@ namespace tardigradeConstitutiveTools{
          * \param &Anorm: The unit normal in the direction of A
          */
 
+        const unsigned int A_size = A.size( );
+
         floatType norm = sqrt(tardigradeVectorTools::inner(A, A));
 
         if ( tardigradeVectorTools::fuzzyEquals( norm, 0. ) ){
-            Anorm = floatVector( A.size(), 0 );
+            Anorm = floatVector( A_size, 0 );
         }
         else {
             Anorm = A/norm;
         }
+
+        return NULL;
+    }
+
+    errorOut computeUnitNormal(const floatVector &A, floatVector &Anorm, floatVector &dAnormdA){
+        /*!
+         * Compute the unit normal of a second order tensor (or strictly speaking any
+         * tensor) and the gradient of that unit normal w.r.t. the tensor.
+         *
+         * \param &A: The second order tensor
+         * \param &Anorm: The unit normal in the direction of A
+         * \param &dAnormdA: The gradient of the unit normal w.r.t. A
+         */
+
+        const unsigned int A_size = A.size( );
+
+        floatType norm = sqrt(tardigradeVectorTools::inner(A, A));
+
+        if ( tardigradeVectorTools::fuzzyEquals( norm, 0. ) ){
+            Anorm = floatVector( A_size, 0 );
+        }
+        else {
+            Anorm = A/norm;
+        }
+
+        dAnormdA = floatVector( A_size * A_size, 0 );
+
+        for ( unsigned int i = 0; i < A_size; i++ ){
+
+            dAnormdA[ A_size * i + i ] += 1;
+
+            for ( unsigned int j = 0; j < A_size; j++ ){
+
+                dAnormdA[ A_size * i + j ] -= Anorm[ i ] * Anorm[ j ];
+
+            }
+
+        }
+
+        dAnormdA /= norm;
 
         return NULL;
     }
@@ -1675,18 +1717,13 @@ namespace tardigradeConstitutiveTools{
          * \param &dAnormdA: The gradient of the unit normal w.r.t. A
          */
 
-        floatType norm = sqrt(tardigradeVectorTools::inner(A, A));
+        const unsigned int A_size = A.size( );
 
-        if ( tardigradeVectorTools::fuzzyEquals( norm, 0. ) ){
-            Anorm = floatVector( A.size(), 0 );
-        }
-        else {
-            Anorm = A/norm;
-        }
+        floatVector _dAnormdA;
 
-        floatMatrix eye = tardigradeVectorTools::eye<floatType>(A.size());
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeUnitNormal( A, Anorm, _dAnormdA ) );
 
-        dAnormdA = (eye - tardigradeVectorTools::dyadic(Anorm, Anorm))/norm;
+        dAnormdA = tardigradeVectorTools::inflate( _dAnormdA, A_size, A_size );
 
         return NULL;
     }
