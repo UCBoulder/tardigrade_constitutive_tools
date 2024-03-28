@@ -1883,9 +1883,7 @@ namespace tardigradeConstitutiveTools{
          * \param &thermalExpansion: The resulting thermal expansion.
          */
 
-        if (linearParameters.size() != quadraticParameters.size()){
-            return new errorNode("quadraticThermalExpansion", "The linear and quadratic parameters must have the same length");
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( linearParameters.size() == quadraticParameters.size(), "The linear and quadratic parameters must have the same length");
 
         thermalExpansion = linearParameters * temperature          + quadraticParameters * temperature * temperature
                          - linearParameters * referenceTemperature - quadraticParameters * referenceTemperature * referenceTemperature;
@@ -1915,14 +1913,8 @@ namespace tardigradeConstitutiveTools{
          *     the temperature.
          */
 
-        errorOut error = quadraticThermalExpansion(temperature, referenceTemperature, linearParameters, quadraticParameters,
-                                                   thermalExpansion);
-
-        if (error){
-            errorOut result = new errorNode("quadraticThermalExpansion (jacobian)", "Error in computation of thermal expansion");
-            result->addNext(error);
-            return result;
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( quadraticThermalExpansion(temperature, referenceTemperature, linearParameters, quadraticParameters,
+                                                                thermalExpansion) )
 
         thermalExpansionJacobian = linearParameters + 2 * quadraticParameters * temperature;
 
@@ -1943,6 +1935,8 @@ namespace tardigradeConstitutiveTools{
          * \param &deformationGradient: The deformation gradient mapping between configurations.
          * \param &almansiStrain: The strain in the current configuration indicated by the deformation gradient.
          */
+
+HERE
 
         //Assume 3D
         constexpr unsigned int dim = 3;
