@@ -525,6 +525,9 @@ namespace tardigradeConstitutiveTools{
          *     Green-Lagrange strain tensor ( \f$\frac{\partial J}{\partial E}\f$ ).
          */
 
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+
         errorOut error = decomposeGreenLagrangeStrain(E, Ebar, J);
         if (error){
             errorOut result = new errorNode("decomposeGreenLagrangeStrain", "Error in computation of the isochoric volumetric split");
@@ -533,10 +536,16 @@ namespace tardigradeConstitutiveTools{
         }
 
         //Compute the derivative of the jacobian of deformation w.r.t. the Green-Lagrange strain
-        floatVector eye = {1, 0, 0, 0, 1, 0, 0, 0, 1};
-        dJdE = J * tardigradeVectorTools::inverse(2*E + eye, 3, 3);
+        dJdE = 2 * E;
+        for ( unsigned int i = 0; i < 3; i++ ){ dJdE[ dim * i + i ] += 1; };
+
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > dJdE_map( dJdE.data( ), dim, dim );
+
+        dJdE_map = ( J * dJdE_map.inverse( ) ).eval( );
 
         //Compute the derivative of the isochoric part of the Green-Lagrange strain w.r.t. the Green-Lagrange strain
+        floatVector eye( sot_dim );
+        for ( unsigned int i = 0; i < dim; i++ ){ eye[ dim * i + i ] = 1.; };
         floatMatrix EYE = tardigradeVectorTools::eye<floatType>(9);
 
         floatType invJ23 = 1./pow(J, 2./3);
