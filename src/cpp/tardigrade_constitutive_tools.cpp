@@ -2370,17 +2370,7 @@ namespace tardigradeConstitutiveTools{
 
         floatVector _dCauchyStressdPK2, _dCauchyStressdF;
 
-        errorOut error = pushForwardPK2Stress( PK2, F, cauchyStress, _dCauchyStressdPK2, _dCauchyStressdF );
-
-        if ( error ){
-
-            errorOut result = new errorNode( "pushForwardPK2Stress", "Error in calculation of the Cauchy stress" );
-
-            result->addNext( error );
-
-            return result;
-
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( pushForwardPK2Stress( PK2, F, cauchyStress, _dCauchyStressdPK2, _dCauchyStressdF ) )
 
         dCauchyStressdPK2 = tardigradeVectorTools::inflate( _dCauchyStressdPK2, cauchyStress.size( ), PK2.size( ) );
 
@@ -2405,34 +2395,26 @@ namespace tardigradeConstitutiveTools{
          * \param &PK2: The resulting second Piola-Kirchhoff stress
          */
 
-        const unsigned int dim = ( unsigned int )( std::sqrt( ( double )cauchyStress.size( ) ) + 0.5 );
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        if ( cauchyStress.size( ) != dim * dim ){
+        TARDIGRADE_ERROR_TOOLS_CHECK( cauchyStress.size( ) == sot_dim, "The Cauchy stress size is not consistent with the computed dimension\n    cauchyStress.size( ): " + std::to_string( cauchyStress.size( ) ) + "\n    dim * dim           : " + std::to_string( dim * dim ) + "\n" );
 
-            std::string message = "The Cauchy stress size is not consistent with the computed dimension\n";
-            message            += "    cauchyStress.size( ): " + std::to_string( cauchyStress.size( ) ) + "\n";
-            message            += "    dim * dim           : " + std::to_string( dim * dim ) + "\n";
+        TARDIGRADE_ERROR_TOOLS_CHECK( cauchyStress.size( ) == F.size( ), "The Cauchy stress and the deformation gradient have inconsistent sizes\n    cauchyStress.size( ): " + std::to_string( cauchyStress.size( ) ) + "\n    F.size( )           : " + std::to_string( F.size( ) ) + "\n" );
 
-            return new errorNode( __func__, message );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > cauchyStress_map( cauchyStress.data( ), dim, dim );
 
-        }
+        floatVector Finv = F;
 
-        if ( cauchyStress.size( ) != F.size( ) ){
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > Finv_map( Finv.data( ), dim, dim );
+        Finv_map = Finv_map.inverse( ).eval( );
 
-            std::string message = "The Cauchy stress and the deformation gradient have inconsistent sizes\n";
-            message            += "    cauchyStress.size( ): " + std::to_string( cauchyStress.size( ) ) + "\n";
-            message            += "    F.size( )           : " + std::to_string( F.size( ) ) + "\n";
+        floatType J = 1 / Finv_map.determinant( );
 
-            return new errorNode( __func__, message );
+        PK2 = floatVector( sot_dim, 0 );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > PK2_map( PK2.data( ), dim, dim );
 
-        }
-
-        floatType J = tardigradeVectorTools::determinant( F, dim, dim );
-
-        floatVector Finv = tardigradeVectorTools::inverse( F, dim, dim );
-
-        PK2 = J * tardigradeVectorTools::matrixMultiply( tardigradeVectorTools::matrixMultiply( Finv, cauchyStress, dim, dim, dim, dim, false, false ),
-                                                         Finv, dim, dim, dim, dim, false, true );
+        PK2_map = ( J * Finv_map * cauchyStress_map * Finv_map.transpose( ) ).eval( );
 
         return NULL;
 
@@ -2458,37 +2440,30 @@ namespace tardigradeConstitutiveTools{
          *     deformation gradient
          */
 
-        const unsigned int dim = ( unsigned int )( std::sqrt( ( double )cauchyStress.size( ) ) + 0.5 );
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+        constexpr unsigned int fot_dim = sot_dim * sot_dim;
 
-        if ( cauchyStress.size( ) != dim * dim ){
+        TARDIGRADE_ERROR_TOOLS_CHECK( cauchyStress.size( ) == sot_dim, "The Cauchy stress size is not consistent with the computed dimension\n    cauchyStress.size( ): " + std::to_string( cauchyStress.size( ) ) + "\n    dim * dim           : " + std::to_string( dim * dim ) + "\n" );
 
-            std::string message = "The Cauchy stress size is not consistent with the computed dimension\n";
-            message            += "    cauchyStress.size( ): " + std::to_string( cauchyStress.size( ) ) + "\n";
-            message            += "    dim * dim           : " + std::to_string( dim * dim ) + "\n";
+        TARDIGRADE_ERROR_TOOLS_CHECK( cauchyStress.size( ) == F.size( ), "The Cauchy stress and the deformation gradient have inconsistent sizes\n    cauchyStress.size( ): " + std::to_string( cauchyStress.size( ) ) + "\n    F.size( )           : " + std::to_string( F.size( ) ) + "\n" );
 
-            return new errorNode( __func__, message );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > cauchyStress_map( cauchyStress.data( ), dim, dim );
 
-        }
+        floatVector Finv = F;
 
-        if ( cauchyStress.size( ) != F.size( ) ){
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > Finv_map( Finv.data( ), dim, dim );
+        Finv_map = Finv_map.inverse( ).eval( );
 
-            std::string message = "The Cauchy stress and the deformation gradient have inconsistent sizes\n";
-            message            += "    cauchyStress.size( ): " + std::to_string( cauchyStress.size( ) ) + "\n";
-            message            += "    F.size( )           : " + std::to_string( F.size( ) ) + "\n";
+        floatType J = 1 / Finv_map.determinant( );
 
-            return new errorNode( __func__, message );
+        PK2 = floatVector( sot_dim, 0 );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > PK2_map( PK2.data( ), dim, dim );
 
-        }
+        PK2_map = ( J * Finv_map * cauchyStress_map * Finv_map.transpose( ) ).eval( );
 
-        floatType J = tardigradeVectorTools::determinant( F, dim, dim );
-
-        floatVector Finv = tardigradeVectorTools::inverse( F, dim, dim );
-
-        PK2 = J * tardigradeVectorTools::matrixMultiply( tardigradeVectorTools::matrixMultiply( Finv, cauchyStress, dim, dim, dim, dim, false, false ),
-                                                         Finv, dim, dim, dim, dim, false, true );
-
-        dPK2dCauchyStress = floatVector( dim * dim * dim * dim, 0 );
-        dPK2dF            = floatVector( dim * dim * dim * dim, 0 );
+        dPK2dCauchyStress = floatVector( fot_dim, 0 );
+        dPK2dF            = floatVector( fot_dim, 0 );
 
         for ( unsigned int A = 0; A < dim; A++ ){
 
