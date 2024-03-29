@@ -323,9 +323,7 @@ BOOST_AUTO_TEST_CASE( testDecomposeGreenLagrangeStrain, * boost::unit_test::tole
 
     floatVector badE = { -1, 0, 0, 0, 1, 0, 0, 0, 1 };
 
-    ret = tardigradeConstitutiveTools::decomposeGreenLagrangeStrain( badE, EbarOut, JOut );
-
-    BOOST_CHECK( ret );
+    BOOST_REQUIRE_THROW( tardigradeConstitutiveTools::decomposeGreenLagrangeStrain( badE, EbarOut, JOut ), std::nested_exception );
 
 }
 
@@ -1091,7 +1089,7 @@ BOOST_AUTO_TEST_CASE( testPullBackVelocityGradient, * boost::unit_test::toleranc
 
     BOOST_CHECK( ! error );
 
-    BOOST_TEST( pullBackL == pullBackLJ );
+    BOOST_TEST( pullBackL == pullBackLJ, CHECK_PER_ELEMENT );
 
     //Check dpbLdL
     floatType eps = 1e-6;
