@@ -2263,22 +2263,22 @@ namespace tardigradeConstitutiveTools{
          * \param &cauchyStress: The Cauchy stress \f$ \sigma_{ij} \f$
          */
 
-        const unsigned int dim = ( unsigned int )( std::sqrt( ( double )PK2.size( ) ) + 0.5 );
-        const unsigned int sot_dim = dim * dim;
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
         
-        TARDIGRADE_ERROR_TOOLS_CHECK( sot_dim == PK2.size( ), "The PK2 stress must have a size of " + std::to_string( dim * dim ) + " and has a size of " + std::to_string( PK2.size( ) ) )
+        TARDIGRADE_ERROR_TOOLS_CHECK( sot_dim == PK2.size( ), "The PK2 stress must have a size of " + std::to_string( sot_dim ) + " and has a size of " + std::to_string( PK2.size( ) ) )
 
         TARDIGRADE_ERROR_TOOLS_CHECK( PK2.size( ) == F.size( ), "The deformation gradient must have a size of " + std::to_string( PK2.size( ) ) + " and has a size of " + std::to_string( F.size( ) ) );
 
         cauchyStress = floatVector( sot_dim, 0 );
 
-        floatType J = tardigradeVectorTools::determinant( F, dim, dim );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > PK2_map( PK2.data( ), dim, dim );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F_map( F.data( ), dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > cauchyStress_map( cauchyStress.data( ), dim, dim );
 
-        cauchyStress = tardigradeVectorTools::matrixMultiply( F, PK2, dim, dim, dim, dim );
+        floatType J = F_map.determinant( );
 
-        cauchyStress = tardigradeVectorTools::matrixMultiply( cauchyStress, F, dim, dim, dim, dim, false, true );
-
-        cauchyStress /= J;
+        cauchyStress_map = ( F_map * PK2_map * F_map.transpose( ) / J ).eval( );
 
         return NULL;
 
@@ -2298,35 +2298,29 @@ namespace tardigradeConstitutiveTools{
          * \param &dCauchyStressdF: The gradient of the Cauchy stress w.r.t. the deformation gradient
          */
 
-        const unsigned int dim = ( unsigned int )( std::sqrt( ( double )PK2.size( ) ) + 0.5 );
-        const unsigned int sot_dim = dim * dim;
-        const unsigned int fot_dim = sot_dim * sot_dim;
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+        constexpr unsigned int fot_dim = sot_dim * sot_dim;
         
-        if ( dim * dim != PK2.size( ) ){
+        TARDIGRADE_ERROR_TOOLS_CHECK( dim * dim == PK2.size( ), "The PK2 stress must have a size of " + std::to_string( sot_dim ) + " and has a size of " + std::to_string( PK2.size( ) ) );
 
-            return new errorNode( "The PK2 stress must have a size of " + std::to_string( sot_dim ) + " and has a size of " + std::to_string( PK2.size( ) ) );
-
-        }
-
-        if ( PK2.size( ) != F.size( ) ){
-
-            return new errorNode( "The deformation gradient must have a size of " + std::to_string( PK2.size( ) ) + " and has a size of " + std::to_string( F.size( ) ) );
-
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( PK2.size( ) == F.size( ), "The deformation gradient must have a size of " + std::to_string( PK2.size( ) ) + " and has a size of " + std::to_string( F.size( ) ) );
 
         cauchyStress = floatVector( sot_dim, 0 );
+        floatVector dJdF( sot_dim, 0 );
 
-        floatType J = tardigradeVectorTools::determinant( F, dim, dim );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > PK2_map( PK2.data( ), dim, dim );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F_map( F.data( ), dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > cauchyStress_map( cauchyStress.data( ), dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > dJdF_map( dJdF.data( ), dim, dim );
 
-        floatVector dJdF = tardigradeVectorTools::computeDDetADA( F, dim, dim );
+        floatType J = F_map.determinant( );
 
-        cauchyStress = tardigradeVectorTools::matrixMultiply( F, PK2, dim, dim, dim, dim );
+        cauchyStress_map = ( F_map * PK2_map * F_map.transpose( ) / J ).eval( );
 
-        cauchyStress = tardigradeVectorTools::matrixMultiply( cauchyStress, F, dim, dim, dim, dim, false, true );
+        dJdF_map = ( J * F_map.inverse( ).transpose( ) ).eval( );
 
-        dCauchyStressdF = tardigradeVectorTools::matrixMultiply( -cauchyStress / ( J * J ), dJdF, sot_dim, 1, 1, sot_dim );
-
-        cauchyStress /= J;
+        dCauchyStressdF = tardigradeVectorTools::matrixMultiply( -cauchyStress / ( J ), dJdF, sot_dim, 1, 1, sot_dim );
 
         dCauchyStressdPK2 = floatVector( fot_dim, 0 );
 
