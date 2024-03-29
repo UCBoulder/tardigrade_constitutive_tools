@@ -2320,7 +2320,7 @@ namespace tardigradeConstitutiveTools{
 
         dJdF_map = ( J * F_map.inverse( ).transpose( ) ).eval( );
 
-        dCauchyStressdF = tardigradeVectorTools::matrixMultiply( -cauchyStress / ( J ), dJdF, sot_dim, 1, 1, sot_dim );
+        dCauchyStressdF = floatVector( fot_dim, 0 );
 
         dCauchyStressdPK2 = floatVector( fot_dim, 0 );
 
@@ -2336,13 +2336,11 @@ namespace tardigradeConstitutiveTools{
                     for ( unsigned int B = 0; B < dim; B++ ){
 
                         dCauchyStressdPK2[ dim * sot_dim * i + sot_dim * j + dim * A + B ] += F[ dim * i + A ] * F[ dim * j + B ] / J;
+                        dCauchyStressdF[ dim * sot_dim * i + sot_dim * j + dim * A + B ] -= cauchyStress[ dim * i + j ] * dJdF[ dim * A + B ] / J;
 
-                        for ( unsigned int I = 0; I < dim; I++ ){
+                        dCauchyStressdF[ dim * sot_dim * i + sot_dim * j + dim * i + A ] += PK2[ dim * A + B ] * F[ dim * j + B ] / J;
 
-                            dCauchyStressdF[ dim * sot_dim * i + sot_dim * j + dim * A + B ] += eye[ dim * i + A ] * PK2[ dim * B + I ] * F[ dim * j + I ] / J
-                                                                                              + F[ dim * i + I ] * PK2[ dim * I + B ] * eye[ dim * j + A ] / J;
-
-                        }
+                        dCauchyStressdF[ dim * sot_dim * i + sot_dim * j + dim * j + A ] += F[ dim * i + B ] * PK2[ dim * B + A ] / J;
 
                     }
 
