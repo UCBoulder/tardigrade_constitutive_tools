@@ -1652,7 +1652,9 @@ BOOST_AUTO_TEST_CASE( testEvolveFExponentialMap, * boost::unit_test::tolerance( 
 
     floatVector result, resultJ;
 
-    floatVector dFdL;
+    floatVector dFdL, dFdL2;
+
+    floatVector dFdLp, dFdFp;
 
     tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp, Lp, L, result, alpha );
 
@@ -1662,7 +1664,17 @@ BOOST_AUTO_TEST_CASE( testEvolveFExponentialMap, * boost::unit_test::tolerance( 
 
     BOOST_TEST( resultJ == answer, CHECK_PER_ELEMENT );
 
+    tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp, Lp, L, resultJ, dFdL2, dFdFp, dFdLp, alpha );
+
+    BOOST_TEST( resultJ == answer, CHECK_PER_ELEMENT );
+
+    BOOST_TEST( dFdL2 == dFdL, CHECK_PER_ELEMENT );
+
     floatVector dFdL_num( 81, 0 );
+
+    floatVector dFdLp_num( 81, 0 );
+
+    floatVector dFdFp_num( 81, 0 );
 
     floatType eps = 1e-6;
 
@@ -1693,5 +1705,61 @@ BOOST_AUTO_TEST_CASE( testEvolveFExponentialMap, * boost::unit_test::tolerance( 
     }
 
     BOOST_TEST( dFdL == dFdL_num, CHECK_PER_ELEMENT );
+
+    for ( unsigned int i = 0; i < 9; i++ ){
+
+        floatType delta = eps * std::fabs( Fp[ i ] ) + eps;
+
+        floatVector Fp_p = Fp;
+
+        floatVector Fp_m = Fp;
+
+        Fp_p[ i ] += delta;
+
+        Fp_m[ i ] -= delta;
+
+        floatVector vp, vm;
+
+        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp_p, Lp, L, vp, alpha=alpha );
+
+        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp_m, Lp, L, vm, alpha=alpha );
+
+        for ( unsigned int j = 0; j < 9; j++ ){
+
+            dFdFp_num[ 9 * j + i ] = ( vp[ j ] - vm[ j ] ) / ( 2 * delta );
+
+        }
+
+    }
+
+    BOOST_TEST( dFdFp == dFdFp_num, CHECK_PER_ELEMENT );
+
+    for ( unsigned int i = 0; i < 9; i++ ){
+
+        floatType delta = eps * std::fabs( Lp[ i ] ) + eps;
+
+        floatVector Lp_p = Lp;
+
+        floatVector Lp_m = Lp;
+
+        Lp_p[ i ] += delta;
+
+        Lp_m[ i ] -= delta;
+
+        floatVector vp, vm;
+
+        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp, Lp_p, L, vp, alpha=alpha );
+
+        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp, Lp_m, L, vm, alpha=alpha );
+
+        for ( unsigned int j = 0; j < 9; j++ ){
+
+            dFdLp_num[ 9 * j + i ] = ( vp[ j ] - vm[ j ] ) / ( 2 * delta );
+
+        }
+
+    }
+
+    BOOST_TEST( dFdLp == dFdLp_num, CHECK_PER_ELEMENT );
 
 }
