@@ -154,6 +154,9 @@ namespace tardigradeConstitutiveTools{
     void evolveFExponentialMap( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                                 floatVector &deformationGradient, floatVector &dFdL, const floatType alpha=0.5 );
 
+    void evolveFExponentialMap( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+                                floatVector &deformationGradient, floatVector &dFdL, floatVector &dFdFp, floatVector &dFdLp, const floatType alpha=0.5 );
+
     floatType mac(const floatType &x);
 
     floatType mac(const floatType &x, floatType &dmacdx);
