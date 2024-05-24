@@ -2514,23 +2514,110 @@ namespace tardigradeConstitutiveTools{
 
         floatVector _dPK2dCauchyStress, _dPK2dF;
 
-        errorOut error = pullBackCauchyStress( cauchyStress, F, PK2, _dPK2dCauchyStress, _dPK2dF );
-
-        if ( error ){
-
-            errorOut result = new errorNode( "pullBackCauchyStress", "Error when pulling back the Cauchy stress" );
-
-            result->addNext( error );
-
-            return result;
-
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( pullBackCauchyStress( cauchyStress, F, PK2, _dPK2dCauchyStress, _dPK2dF ) )
 
         dPK2dCauchyStress = tardigradeVectorTools::inflate( _dPK2dCauchyStress, PK2.size( ), cauchyStress.size( ) );
 
         dPK2dF = tardigradeVectorTools::inflate( _dPK2dF, PK2.size( ), F.size( ) );
 
         return NULL;
+
+    }
+
+    void evolveFExponentialMap( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+                                floatVector &deformationGradient, const floatType alpha ){
+        /*!
+         * Evolve the deformation gradient using the exponential map. Assumes the evolution equation is of the form
+         * 
+         * \f$ \dot{F}_{iI} = \ell_{ij} F_{jI} \f$
+         * 
+         * \param &Dt: The change in time
+         * \param &previousDeformationGradient: The previous value of the deformation gradient
+         * \param &Lp: The previous value of the velocity gradient
+         * \param &L: The current value of the velocity gradient
+         * \param &deformationGradient: The computed value of the deformation gradient
+         * \param &alpha: The integration parameter (0 is explicit and 1 is implicit)
+         */
+
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+
+        floatVector DtLalpha = Dt * ( ( 1 - alpha ) * Lp + alpha * L );
+
+        floatVector expDtLalpha;
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( tardigradeVectorTools::computeMatrixExponentialScalingAndSquaring( DtLalpha, dim, expDtLalpha ) )
+
+        deformationGradient = floatVector( sot_dim, 0 );
+
+        for ( unsigned int i = 0; i < dim; i++ ){
+
+            for ( unsigned int j = 0; j < dim; j++ ){
+
+                for ( unsigned int k = 0; k < dim; k++ ){
+
+                    deformationGradient[ dim * i + k ] += expDtLalpha[ dim * i + j ] * previousDeformationGradient[ dim * j + k ];
+
+                }
+
+            }
+
+        }
+
+    }
+
+    void evolveFExponentialMap( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+                                floatVector &deformationGradient, floatVector &dFdL, const floatType alpha ){
+        /*!
+         * Evolve the deformation gradient using the exponential map. Assumes the evolution equation is of the form
+         * 
+         * \f$ \dot{F}_{iI} = \ell_{ij} F_{jI} \f$
+         * 
+         * \param &Dt: The change in time
+         * \param &previousDeformationGradient: The previous value of the deformation gradient
+         * \param &Lp: The previous value of the velocity gradient
+         * \param &L: The current value of the velocity gradient
+         * \param &deformationGradient: The computed value of the deformation gradient
+         * \param &dFdL: The derivative of the deformation gradient w.r.t. the velocity gradient
+         * \param &alpha: The integration parameter (0 is explicit and 1 is implicit)
+         */
+
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+
+        floatVector DtLalpha = Dt * ( ( 1 - alpha ) * Lp + alpha * L );
+
+        floatVector expDtLalpha;
+
+        floatVector dExpDtLalphadL;
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( tardigradeVectorTools::computeMatrixExponentialScalingAndSquaring( DtLalpha, dim, expDtLalpha, dExpDtLalphadL ) )
+
+        dExpDtLalphadL *= Dt * alpha;
+
+        deformationGradient = floatVector( sot_dim, 0 );
+
+        dFdL = floatVector( sot_dim * sot_dim, 0 );
+
+        for ( unsigned int i = 0; i < dim; i++ ){
+
+            for ( unsigned int j = 0; j < dim; j++ ){
+
+                for ( unsigned int k = 0; k < dim; k++ ){
+
+                    deformationGradient[ dim * i + k ] += expDtLalpha[ dim * i + j ] * previousDeformationGradient[ dim * j + k ];
+
+                    for ( unsigned int ab = 0; ab < sot_dim; ab++ ){
+
+                        dFdL[ dim * sot_dim * i + sot_dim * k + ab ] += dExpDtLalphadL[ dim * sot_dim * i + sot_dim * j + ab ] * previousDeformationGradient[ dim * j + k ];
+
+                    }
+
+                }
+
+            }
+
+        }
 
     }
 
