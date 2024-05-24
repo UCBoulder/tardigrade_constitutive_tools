@@ -1627,3 +1627,71 @@ BOOST_AUTO_TEST_CASE( testPullBackCauchyStress, * boost::unit_test::tolerance( D
     BOOST_TEST( tardigradeVectorTools::appendVectors( dPK2dF ) == tardigradeVectorTools::appendVectors( dPK2dF_answer ), CHECK_PER_ELEMENT );
 
 }
+
+BOOST_AUTO_TEST_CASE( testEvolveFExponentialMap, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
+
+    floatType Dt = 2.3;
+
+    floatType alpha = 0.56;
+
+    floatVector Fp = { 0.99684486, -0.00318276, -0.0134401 ,
+                      -0.03494318,  0.97755447, -0.01110235,
+                      -0.02224434,  0.01770411,  1.01382113 };
+
+    floatVector Lp = { 0.21576496,  0.31364397, -0.45809941,
+                       0.12285551,  0.88064421,  0.20391149,
+                      -0.47599081,  0.63501654,  0.64909649 };
+
+    floatVector L = { -0.39293837,  0.42772133,  0.54629709,
+                      -0.10262954, -0.43893794,  0.15378708,
+                      -0.9615284 , -0.36965948,  0.0381362 };
+
+    floatVector answer = { 0.37969552,  0.83224808,  0.49670331,
+                          -0.50354658,  1.28580329,  0.63330098,
+                          -2.04019687, -0.62835261,  1.70048263 };
+
+    floatVector result, resultJ;
+
+    floatVector dFdL;
+
+    tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp, Lp, L, result, alpha );
+
+    BOOST_TEST( result == answer, CHECK_PER_ELEMENT );
+
+    tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp, Lp, L, resultJ, dFdL, alpha );
+
+    BOOST_TEST( resultJ == answer, CHECK_PER_ELEMENT );
+
+    floatVector dFdL_num( 81, 0 );
+
+    floatType eps = 1e-6;
+
+    for ( unsigned int i = 0; i < 9; i++ ){
+
+        floatType delta = eps * std::fabs( L[ i ] ) + eps;
+
+        floatVector L_p = L;
+
+        floatVector L_m = L;
+
+        L_p[ i ] += delta;
+
+        L_m[ i ] -= delta;
+
+        floatVector vp, vm;
+
+        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp, Lp, L_p, vp, alpha=alpha );
+
+        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp, Lp, L_m, vm, alpha=alpha );
+
+        for ( unsigned int j = 0; j < 9; j++ ){
+
+            dFdL_num[ 9 * j + i ] = ( vp[ j ] - vm[ j ] ) / ( 2 * delta );
+
+        }
+
+    }
+
+    BOOST_TEST( dFdL == dFdL_num, CHECK_PER_ELEMENT );
+
+}
