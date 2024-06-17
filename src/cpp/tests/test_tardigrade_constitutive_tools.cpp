@@ -1804,8 +1804,6 @@ BOOST_AUTO_TEST_CASE( test_computeDCurrentNormalVectorDF, * boost::unit_test::to
 
     floatVector n = normalVectorUtilityFunction( F, N );
 
-    std::cout << "n: "; tardigradeVectorTools::print( n );
-
     floatVector dNormalVectordF( 27, 0 );
 
     tardigradeConstitutiveTools::computeDCurrentNormalVectorDF( n, F, dNormalVectordF );
@@ -1839,5 +1837,89 @@ BOOST_AUTO_TEST_CASE( test_computeDCurrentNormalVectorDF, * boost::unit_test::to
     }
 
     BOOST_TEST( jacobian == dNormalVectordF, CHECK_PER_ELEMENT );
+
+}
+
+floatVector areaWeightedNormalVectorUtilityFunction( floatVector F, floatVector N, floatType dA ){
+
+    floatVector nda( 3 );
+
+    floatVector invF( 9, 0 );
+
+    Eigen::Map< const Eigen::Matrix< floatType, 3, 3, Eigen::RowMajor > > F_map( F.data( ), 3, 3 );
+
+    Eigen::Map< Eigen::Matrix< floatType, 3, 3, Eigen::RowMajor > > invF_map( invF.data( ), 3, 3 );
+
+    invF_map = F_map.inverse( ).eval( );
+
+    floatType J = F_map.determinant( );
+
+    for ( unsigned int i = 0; i < 3; i++ ){
+
+        for ( unsigned int I = 0; I < 3; I++ ){
+
+            nda[ i ] += J * invF[ 3 * I + i ] * N[ I ] * dA;
+
+        }
+
+    }
+
+    return nda;
+
+}
+
+BOOST_AUTO_TEST_CASE( test_computeDAreaWeightedCurrentNormalVectorDF, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
+
+    floatVector N = { 1, 2, 3 };
+
+    N = N / tardigradeVectorTools::l2norm( N );
+
+    floatVector F = { 1.01964692, -0.02138607, -0.02731485,
+                      0.00513148,  1.0219469 , -0.00768935,
+                      0.04807642,  0.01848297,  0.99809319 };
+
+    floatType dA = 2.56;
+
+    floatVector n = normalVectorUtilityFunction( F, N );
+
+    floatVector nda = areaWeightedNormalVectorUtilityFunction( F, N, dA );
+
+    floatType da = tardigradeVectorTools::l2norm( nda );
+
+    BOOST_TEST( n == ( nda / da ), CHECK_PER_ELEMENT );
+
+    floatVector dAreaWeightedNormalVectordF( 27, 0 );
+
+    tardigradeConstitutiveTools::computeDCurrentAreaWeightedNormalVectorDF( n, F, dAreaWeightedNormalVectordF );
+
+    floatType eps = 1e-6;
+
+    floatVector jacobian( 27, 0 );
+
+    for ( unsigned int i = 0; i < 9; i++ ){
+
+        floatType delta = eps * std::fabs( F[ i ] ) + eps;
+
+        floatVector Fp = F;
+
+        floatVector Fm = F;
+
+        Fp[ i ] += delta;
+
+        Fm[ i ] -= delta;
+
+        floatVector np = areaWeightedNormalVectorUtilityFunction( Fp, N, dA );
+
+        floatVector nm = areaWeightedNormalVectorUtilityFunction( Fm, N, dA );
+
+        for ( unsigned int j = 0; j < 3; j++ ){
+
+            jacobian[ 9 * j + i ] = ( np[ j ] - nm[ j ] ) / ( 2 * delta );
+
+        }
+
+    }
+
+    BOOST_TEST( jacobian == ( dAreaWeightedNormalVectordF * da ), CHECK_PER_ELEMENT );
 
 }
