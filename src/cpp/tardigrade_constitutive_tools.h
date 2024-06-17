@@ -230,6 +230,8 @@ namespace tardigradeConstitutiveTools{
 
     void computeDCurrentAreaWeightedNormalVectorDF( const floatVector &normalVector, const floatVector &F, floatVector &dAreaWeightedNormalVectordF );
 
+    void computeDCurrentAreaDF( const floatVector &normalVector, const floatVector &F, floatVector &dCurrentAreadF );
+
 }
 
 #endif

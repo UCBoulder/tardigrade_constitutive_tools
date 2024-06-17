@@ -2711,13 +2711,13 @@ namespace tardigradeConstitutiveTools{
 
         invF_map = F_map.inverse( );
 
-        floatVector Finv_n( dim, 0 );
+        floatVector invF_n( dim, 0 );
 
         for ( unsigned int B = 0; B < dim; B++ ){
 
             for ( unsigned int j = 0; j < dim; j++ ){
 
-                Finv_n[ B ] += invF[ dim * B + j ] * normalVector[ j ];
+                invF_n[ B ] += invF[ dim * B + j ] * normalVector[ j ];
 
             }
 
@@ -2729,7 +2729,7 @@ namespace tardigradeConstitutiveTools{
 
                 for ( unsigned int B = 0; B < dim; B++ ){
 
-                    dNormalVectordF[ dim * dim * i + dim * b + B ] += normalVector[ i ] * normalVector[ b ] * Finv_n[ B ]
+                    dNormalVectordF[ dim * dim * i + dim * b + B ] += normalVector[ i ] * normalVector[ b ] * invF_n[ B ]
                                                                     - normalVector[ b ] * invF[ dim * B + i ];
 
                 }
@@ -2780,6 +2780,54 @@ namespace tardigradeConstitutiveTools{
                                                                                 - normalVector[ b ] * invF[ dim * B + i ];
 
                 }
+
+            }
+
+        }
+
+    }
+
+    void computeDCurrentAreaDF( const floatVector &normalVector, const floatVector &F, floatVector &dCurrentAreadF ){
+        /*!
+         * Compute the derivative of the current area w.r.t. the deformation gradient
+         * 
+         * \param &normalVector: The current unit normal vector
+         * \param &F: The deformation gradient
+         * \param &dCurrentAreadF: The derivative of the current surface area w.r.t. F
+         */
+
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+
+        dCurrentAreadF = floatVector( sot_dim, 0 );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( F.size( ) == sot_dim, "The deformation gradient must be a second order tensor of size " + std::to_string( sot_dim ) + " and it has " + std::to_string( F.size( ) ) + " elements" );
+
+        floatVector invF( sot_dim, 0 );
+
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F_map( F.data( ), dim, dim );
+
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invF_map( invF.data( ), dim, dim );
+
+        invF_map = F_map.inverse( );
+
+        floatVector invF_n( dim, 0 );
+
+        for ( unsigned int B = 0; B < dim; B++ ){
+
+            for ( unsigned int i = 0; i < dim; i++ ){
+
+                invF_n[ B ] += invF[ dim * B + i ] * normalVector[ i ];
+
+            }
+
+        }
+
+        for ( unsigned int B = 0; B < dim; B++ ){
+
+            for ( unsigned int b = 0; b < dim; b++ ){
+
+                dCurrentAreadF[ dim * b + B ] += invF[ dim * B + b ] - normalVector[ b ] * invF_n[ B ];
 
             }
 
