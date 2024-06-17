@@ -1763,3 +1763,81 @@ BOOST_AUTO_TEST_CASE( testEvolveFExponentialMap, * boost::unit_test::tolerance( 
     BOOST_TEST( dFdLp == dFdLp_num, CHECK_PER_ELEMENT );
 
 }
+
+floatVector normalVectorUtilityFunction( floatVector F, floatVector N ){
+
+    floatVector n( 3 );
+
+    floatVector invF( 9, 0 );
+
+    Eigen::Map< const Eigen::Matrix< floatType, 3, 3, Eigen::RowMajor > > F_map( F.data( ), 3, 3 );
+
+    Eigen::Map< Eigen::Matrix< floatType, 3, 3, Eigen::RowMajor > > invF_map( invF.data( ), 3, 3 );
+
+    invF_map = F_map.inverse( ).eval( );
+
+    for ( unsigned int i = 0; i < 3; i++ ){
+
+        for ( unsigned int I = 0; I < 3; I++ ){
+
+            n[ i ] += invF[ 3 * I + i ] * N[ I ];
+
+        }
+
+    }
+
+    n /= tardigradeVectorTools::l2norm( n );
+
+    return n;
+
+}
+
+BOOST_AUTO_TEST_CASE( test_computeDCurrentNormalVectorDF, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
+
+    floatVector N = { 1, 2, 3 };
+
+    N = N / tardigradeVectorTools::l2norm( N );
+
+    floatVector F = { 1.01964692, -0.02138607, -0.02731485,
+                      0.00513148,  1.0219469 , -0.00768935,
+                      0.04807642,  0.01848297,  0.99809319 };
+
+    floatVector n = normalVectorUtilityFunction( F, N );
+
+    std::cout << "n: "; tardigradeVectorTools::print( n );
+
+    floatVector dNormalVectordF( 27, 0 );
+
+    tardigradeConstitutiveTools::computeDCurrentNormalVectorDF( n, F, dNormalVectordF );
+
+    floatType eps = 1e-6;
+
+    floatVector jacobian( 27, 0 );
+
+    for ( unsigned int i = 0; i < 9; i++ ){
+
+        floatType delta = eps * std::fabs( F[ i ] ) + eps;
+
+        floatVector Fp = F;
+
+        floatVector Fm = F;
+
+        Fp[ i ] += delta;
+
+        Fm[ i ] -= delta;
+
+        floatVector np = normalVectorUtilityFunction( Fp, N );
+
+        floatVector nm = normalVectorUtilityFunction( Fm, N );
+
+        for ( unsigned int j = 0; j < 3; j++ ){
+
+            jacobian[ 9 * j + i ] = ( np[ j ] - nm[ j ] ) / ( 2 * delta );
+
+        }
+
+    }
+
+    BOOST_TEST( jacobian == dNormalVectordF, CHECK_PER_ELEMENT );
+
+}
