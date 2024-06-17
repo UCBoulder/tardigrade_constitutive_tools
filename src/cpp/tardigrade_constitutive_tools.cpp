@@ -2740,4 +2740,51 @@ namespace tardigradeConstitutiveTools{
 
     }
 
+    void computeDCurrentAreaWeightedNormalVectorDF( const floatVector &normalVector, const floatVector &F, floatVector &dAreaWeightedNormalVectordF ){
+        /*!
+         * Compute the derivative of the area weighted normal vector w.r.t. the deformation gradient i.e.
+         * 
+         * \f$ \frac{\partial}{\partial F_{bB}} \left( n_i da \right) \f$
+         * 
+         * Note that if the user passes in the unit normal vector, then the result will be more convenient for the construction of
+         * the jacobian of a surface integral in the current configuration.
+         * 
+         * \param &normalVector: The normal vector (a unit vector is likely what is desired)
+         * \param &F: The deformation gradient
+         * \param &dAreaWeightedNormalVectordF: The derivative of the area weighted normal vector w.r.t. the deformation gradient
+         */
+
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+        constexpr unsigned int tot_dim = dim * dim * dim;
+
+        dAreaWeightedNormalVectordF = floatVector( tot_dim, 0 );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( F.size( ) == sot_dim, "The deformation gradient must be a second order tensor of size " + std::to_string( sot_dim ) + " and it has " + std::to_string( F.size( ) ) + " elements" );
+
+        floatVector invF( sot_dim, 0 );
+
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F_map( F.data( ), dim, dim );
+
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invF_map( invF.data( ), dim, dim );
+
+        invF_map = F_map.inverse( );
+
+        for ( unsigned int i = 0; i < dim; i++ ){
+
+            for ( unsigned int b = 0; b < dim; b++ ){
+
+                for ( unsigned int B = 0; B < dim; B++ ){
+
+                    dAreaWeightedNormalVectordF[ dim * dim * i + dim * b + B ] += normalVector[ i ] * invF[ dim * B + b ]
+                                                                                - normalVector[ b ] * invF[ dim * B + i ];
+
+                }
+
+            }
+
+        }
+
+    }
+
 }
