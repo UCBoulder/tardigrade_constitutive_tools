@@ -226,6 +226,8 @@ namespace tardigradeConstitutiveTools{
     errorOut pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2,
                                    floatMatrix &dPK2dCauchyStress, floatMatrix &dPK2dF );
 
+    void computeDCurrentNormalVectorDF( const floatVector &normalVector, const floatVector &F, floatVector &dNormalVectordF );
+
 }
 
 #endif

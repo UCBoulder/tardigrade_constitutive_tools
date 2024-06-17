@@ -2686,4 +2686,58 @@ namespace tardigradeConstitutiveTools{
 
     }
 
+    void computeDCurrentNormalVectorDF( const floatVector &normalVector, const floatVector &F, floatVector &dNormalVectordF ){
+        /*!
+         * Compute the derivative of the normal vector in the current configuration w.r.t. the deformation gradient
+         * 
+         * \param &normalVector: The unit normal vector in the current configuration
+         * \param &F: The deformation gradient
+         * \param &dNormalVectordF: The derivative of the normal vector w.r.t. the deformation gradient
+         */
+
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+        constexpr unsigned int tot_dim = dim * dim * dim;
+
+        dNormalVectordF = floatVector( tot_dim, 0 );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( F.size( ) == sot_dim, "The deformation gradient must be a second order tensor of size " + std::to_string( sot_dim ) + " and it has " + std::to_string( F.size( ) ) + " elements" );
+
+        floatVector invF( sot_dim, 0 );
+
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F_map( F.data( ), dim, dim );
+
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invF_map( invF.data( ), dim, dim );
+
+        invF_map = F_map.inverse( );
+
+        floatVector Finv_n( dim, 0 );
+
+        for ( unsigned int B = 0; B < dim; B++ ){
+
+            for ( unsigned int j = 0; j < dim; j++ ){
+
+                Finv_n[ B ] += invF[ dim * B + j ] * normalVector[ j ];
+
+            }
+
+        }
+
+        for ( unsigned int i = 0; i < dim; i++ ){
+
+            for ( unsigned int b = 0; b < dim; b++ ){
+
+                for ( unsigned int B = 0; B < dim; B++ ){
+
+                    dNormalVectordF[ dim * dim * i + dim * b + B ] += normalVector[ i ] * normalVector[ b ] * Finv_n[ B ]
+                                                                    - normalVector[ b ] * invF[ dim * B + i ];
+
+                }
+
+            }
+
+        }
+
+    }
+
 }
