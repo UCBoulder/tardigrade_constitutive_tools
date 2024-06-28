@@ -2835,4 +2835,130 @@ namespace tardigradeConstitutiveTools{
 
     }
 
+    void computeDCurrentNormalVectorDGradU( const floatVector &normalVector, const floatVector &gradU, floatVector &dNormalVectordGradU, const bool isCurrent ){
+        /*!
+         * Compute the derivative of the normal vector in the current configuration w.r.t. the displacement gradient
+         * 
+         * \param &normalVector: The unit normal vector in the current configuration
+         * \param &gradU: The displacement gradient
+         * \param &dNormalVectordF: The derivative of the normal vector w.r.t. the displacement gradient
+         * \param &isCurrent: Whether the displacement gradient is with respect to the reference or current configuration
+         */
+
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+        constexpr unsigned int tot_dim = dim * dim * dim;
+
+        floatVector F;
+
+        floatVector dFdGradU;
+
+        computeDeformationGradient( gradU, F, dFdGradU, isCurrent );
+
+        floatVector dNormalVectordF;
+
+        computeDCurrentNormalVectorDF( normalVector, F, dNormalVectordF );
+
+        dNormalVectordGradU = floatVector( tot_dim, 0 );
+
+        for ( unsigned int i = 0; i < dim; i++ ){
+
+            for ( unsigned int j = 0; j < sot_dim; j++ ){
+
+                for ( unsigned int k = 0; k < sot_dim; k++ ){
+
+                    dNormalVectordGradU[ sot_dim * i + k ] += dNormalVectordF[ sot_dim * i + j ] * dFdGradU[ sot_dim * j + k ];
+
+                }
+
+            }
+
+        }
+
+    }
+
+    void computeDCurrentAreaWeightedNormalVectorDGradU( const floatVector &normalVector, const floatVector &gradU, floatVector &dAreaWeightedNormalVectordGradU, const bool isCurrent ){
+        /*!
+         * Compute the derivative of the area weighted normal vector w.r.t. the displacement gradient
+         * 
+         * \f$ \frac{\partial}{\partial u_{i,j}} \left( n_i da \right) \f$
+         * 
+         * Note that if the user passes in the unit normal vector, then the result will be more convenient for the construction of
+         * the jacobian of a surface integral in the current configuration.
+         * 
+         * \param &normalVector: The normal vector (a unit vector is likely what is desired)
+         * \param &gradU: The displacement gradient
+         * \param &dAreaWeightedNormalVectordGradU: The derivative of the area weighted normal vector w.r.t. the displacement gradient
+         * \param &isCurrent: Whether the displacement gradient is with respect to the reference or current configuration
+         */
+
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+        constexpr unsigned int tot_dim = dim * dim * dim;
+
+        floatVector F;
+
+        floatVector dFdGradU;
+
+        computeDeformationGradient( gradU, F, dFdGradU, isCurrent );
+
+        floatVector dAreaWeightedNormalVectordF;
+
+        computeDCurrentAreaWeightedNormalVectorDF( normalVector, F, dAreaWeightedNormalVectordF );
+
+        dAreaWeightedNormalVectordGradU = floatVector( tot_dim, 0 );
+
+        for ( unsigned int i = 0; i < dim; i++ ){
+
+            for ( unsigned int j = 0; j < sot_dim; j++ ){
+
+                for ( unsigned int k = 0; k < sot_dim; k++ ){
+
+                    dAreaWeightedNormalVectordGradU[ sot_dim * i + k ] += dAreaWeightedNormalVectordF[ sot_dim * i + j ] * dFdGradU[ sot_dim * j + k ];
+
+                }
+
+            }
+
+        }
+
+    }
+
+    void computeDCurrentAreaDGradU( const floatVector &normalVector, const floatVector &gradU, floatVector &dCurrentAreadGradU, const bool isCurrent ){
+        /*!
+         * Compute the derivative of the current area w.r.t. the displacement gradient
+         * 
+         * \param &normalVector: The current unit normal vector
+         * \param &gradU: The displacement gradient
+         * \param &dCurrentAreadGradU: The derivative of the current surface area w.r.t. the displacement gradient
+         * \param &isCurrent: Whether the displacement gradient is with respect to the reference or current configuration
+         */
+
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+
+        floatVector F;
+
+        floatVector dFdGradU;
+
+        computeDeformationGradient( gradU, F, dFdGradU, isCurrent );
+
+        floatVector dCurrentAreadF;
+
+        computeDCurrentAreaDF( normalVector, F, dCurrentAreadF );
+
+        dCurrentAreadGradU = floatVector( sot_dim, 0 );
+
+        for ( unsigned int i = 0; i < sot_dim; i++ ){
+
+            for ( unsigned int j = 0; j < sot_dim; j++ ){
+
+                dCurrentAreadGradU[ j ] += dCurrentAreadF[ i ] * dFdGradU[ sot_dim * i + j ];
+
+            }
+
+        }
+
+    }
+
 }
