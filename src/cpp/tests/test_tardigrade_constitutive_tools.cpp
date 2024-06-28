@@ -1970,6 +1970,86 @@ BOOST_AUTO_TEST_CASE( test_computeDCurrentNormalVectorDF, * boost::unit_test::to
 
 }
 
+floatVector normalVectorUtilityFunction2( floatVector gradU, floatVector N ){
+
+    floatVector F;
+
+    tardigradeConstitutiveTools::computeDeformationGradient( gradU, F, true );
+
+    floatVector n( 3 );
+
+    floatVector invF( 9, 0 );
+
+    Eigen::Map< const Eigen::Matrix< floatType, 3, 3, Eigen::RowMajor > > F_map( F.data( ), 3, 3 );
+
+    Eigen::Map< Eigen::Matrix< floatType, 3, 3, Eigen::RowMajor > > invF_map( invF.data( ), 3, 3 );
+
+    invF_map = F_map.inverse( ).eval( );
+
+    for ( unsigned int i = 0; i < 3; i++ ){
+
+        for ( unsigned int I = 0; I < 3; I++ ){
+
+            n[ i ] += invF[ 3 * I + i ] * N[ I ];
+
+        }
+
+    }
+
+    n /= tardigradeVectorTools::l2norm( n );
+
+    return n;
+
+}
+
+BOOST_AUTO_TEST_CASE( test_computeDCurrentNormalVectorDGradU, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
+
+    floatVector N = { 1, 2, 3 };
+
+    N = N / tardigradeVectorTools::l2norm( N );
+
+    floatVector gradU = { 0.01964692, -0.02138607, -0.02731485,
+                          0.00513148,  0.0219469 , -0.00768935,
+                          0.04807642,  0.01848297, -0.00190681 };
+
+    floatVector n = normalVectorUtilityFunction2( gradU, N );
+
+    floatVector dNormalVectordGradU( 27, 0 );
+
+    tardigradeConstitutiveTools::computeDCurrentNormalVectorDGradU( n, gradU, dNormalVectordGradU );
+
+    floatType eps = 1e-6;
+
+    floatVector jacobian( 27, 0 );
+
+    for ( unsigned int i = 0; i < 9; i++ ){
+
+        floatType delta = eps * std::fabs( gradU[ i ] ) + eps;
+
+        floatVector gradUp = gradU;
+
+        floatVector gradUm = gradU;
+
+        gradUp[ i ] += delta;
+
+        gradUm[ i ] -= delta;
+
+        floatVector np = normalVectorUtilityFunction2( gradUp, N );
+
+        floatVector nm = normalVectorUtilityFunction2( gradUm, N );
+
+        for ( unsigned int j = 0; j < 3; j++ ){
+
+            jacobian[ 9 * j + i ] = ( np[ j ] - nm[ j ] ) / ( 2 * delta );
+
+        }
+
+    }
+
+    BOOST_TEST( jacobian == dNormalVectordGradU, CHECK_PER_ELEMENT );
+
+}
+
 floatVector areaWeightedNormalVectorUtilityFunction( floatVector F, floatVector N, floatType dA ){
 
     floatVector nda( 3 );
@@ -1998,7 +2078,71 @@ floatVector areaWeightedNormalVectorUtilityFunction( floatVector F, floatVector 
 
 }
 
+floatVector areaWeightedNormalVectorUtilityFunction2( floatVector gradU, floatVector N, floatType dA ){
+
+    floatVector F;
+
+    tardigradeConstitutiveTools::computeDeformationGradient( gradU, F, true );
+
+    floatVector nda( 3 );
+
+    floatVector invF( 9, 0 );
+
+    Eigen::Map< const Eigen::Matrix< floatType, 3, 3, Eigen::RowMajor > > F_map( F.data( ), 3, 3 );
+
+    Eigen::Map< Eigen::Matrix< floatType, 3, 3, Eigen::RowMajor > > invF_map( invF.data( ), 3, 3 );
+
+    invF_map = F_map.inverse( ).eval( );
+
+    floatType J = F_map.determinant( );
+
+    for ( unsigned int i = 0; i < 3; i++ ){
+
+        for ( unsigned int I = 0; I < 3; I++ ){
+
+            nda[ i ] += J * invF[ 3 * I + i ] * N[ I ] * dA;
+
+        }
+
+    }
+
+    return nda;
+
+}
+
 floatType areaUtilityFunction( floatVector F, floatVector N, floatType dA ){
+
+    floatVector nda( 3 );
+
+    floatVector invF( 9, 0 );
+
+    Eigen::Map< const Eigen::Matrix< floatType, 3, 3, Eigen::RowMajor > > F_map( F.data( ), 3, 3 );
+
+    Eigen::Map< Eigen::Matrix< floatType, 3, 3, Eigen::RowMajor > > invF_map( invF.data( ), 3, 3 );
+
+    invF_map = F_map.inverse( ).eval( );
+
+    floatType J = F_map.determinant( );
+
+    for ( unsigned int i = 0; i < 3; i++ ){
+
+        for ( unsigned int I = 0; I < 3; I++ ){
+
+            nda[ i ] += J * invF[ 3 * I + i ] * N[ I ] * dA;
+
+        }
+
+    }
+
+    return tardigradeVectorTools::l2norm( nda );
+
+}
+
+floatType areaUtilityFunction2( floatVector gradU, floatVector N, floatType dA ){
+
+    floatVector F;
+
+    tardigradeConstitutiveTools::computeDeformationGradient( gradU, F, true );
 
     floatVector nda( 3 );
 
@@ -2082,6 +2226,62 @@ BOOST_AUTO_TEST_CASE( test_computeDAreaWeightedCurrentNormalVectorDF, * boost::u
 
 }
 
+BOOST_AUTO_TEST_CASE( test_computeDAreaWeightedCurrentNormalVectorDGradU, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
+
+    floatVector N = { 1, 2, 3 };
+
+    N = N / tardigradeVectorTools::l2norm( N );
+
+    floatVector gradU = { 0.01964692, -0.02138607, -0.02731485,
+                          0.00513148,  0.0219469 , -0.00768935,
+                          0.04807642,  0.01848297, -0.00190681 };
+
+    floatType dA = 2.56;
+
+    floatVector n = normalVectorUtilityFunction2( gradU, N );
+
+    floatVector nda = areaWeightedNormalVectorUtilityFunction2( gradU, N, dA );
+
+    floatType da = tardigradeVectorTools::l2norm( nda );
+
+    BOOST_TEST( n == ( nda / da ), CHECK_PER_ELEMENT );
+
+    floatVector dAreaWeightedNormalVectordGradU( 27, 0 );
+
+    tardigradeConstitutiveTools::computeDCurrentAreaWeightedNormalVectorDGradU( n, gradU, dAreaWeightedNormalVectordGradU );
+
+    floatType eps = 1e-6;
+
+    floatVector jacobian( 27, 0 );
+
+    for ( unsigned int i = 0; i < 9; i++ ){
+
+        floatType delta = eps * std::fabs( gradU[ i ] ) + eps;
+
+        floatVector gradUp = gradU;
+
+        floatVector gradUm = gradU;
+
+        gradUp[ i ] += delta;
+
+        gradUm[ i ] -= delta;
+
+        floatVector np = areaWeightedNormalVectorUtilityFunction2( gradUp, N, dA );
+
+        floatVector nm = areaWeightedNormalVectorUtilityFunction2( gradUm, N, dA );
+
+        for ( unsigned int j = 0; j < 3; j++ ){
+
+            jacobian[ 9 * j + i ] = ( np[ j ] - nm[ j ] ) / ( 2 * delta );
+
+        }
+
+    }
+
+    BOOST_TEST( jacobian == ( dAreaWeightedNormalVectordGradU * da ), CHECK_PER_ELEMENT );
+
+}
+
 BOOST_AUTO_TEST_CASE( test_computeDCurrentAreaDF, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
 
     floatVector N = { 1, 2, 3 };
@@ -2129,5 +2329,55 @@ BOOST_AUTO_TEST_CASE( test_computeDCurrentAreaDF, * boost::unit_test::tolerance(
     }
 
     BOOST_TEST( jacobian == ( dCurrentAreadF * da ), CHECK_PER_ELEMENT );
+
+}
+
+BOOST_AUTO_TEST_CASE( test_computeDCurrentAreaDGradU, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
+
+    floatVector N = { 1, 2, 3 };
+
+    N = N / tardigradeVectorTools::l2norm( N );
+
+    floatVector gradU = { 0.01964692, -0.02138607, -0.02731485,
+                          0.00513148,  0.0219469 , -0.00768935,
+                          0.04807642,  0.01848297, -0.00190681 };
+
+    floatType dA = 2.56;
+
+    floatVector n = normalVectorUtilityFunction2( gradU, N );
+
+    floatVector nda = areaWeightedNormalVectorUtilityFunction2( gradU, N, dA );
+
+    floatType da = tardigradeVectorTools::l2norm( nda );
+
+    floatVector dCurrentAreadGradU( 9, 0 );
+
+    tardigradeConstitutiveTools::computeDCurrentAreaDGradU( n, gradU, dCurrentAreadGradU );
+
+    floatType eps = 1e-6;
+
+    floatVector jacobian( 9, 0 );
+
+    for ( unsigned int i = 0; i < 9; i++ ){
+
+        floatType delta = eps * std::fabs( gradU[ i ] ) + eps;
+
+        floatVector gradUp = gradU;
+
+        floatVector gradUm = gradU;
+
+        gradUp[ i ] += delta;
+
+        gradUm[ i ] -= delta;
+
+        floatType np = areaUtilityFunction2( gradUp, N, dA );
+
+        floatType nm = areaUtilityFunction2( gradUm, N, dA );
+
+        jacobian[ i ] = ( np - nm ) / ( 2 * delta );
+
+    }
+
+    BOOST_TEST( jacobian == ( dCurrentAreadGradU * da ), CHECK_PER_ELEMENT );
 
 }
