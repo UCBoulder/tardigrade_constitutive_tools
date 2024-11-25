@@ -41,7 +41,7 @@ namespace tardigradeConstitutiveTools{
         return 0;
     }
 
-    errorOut rotateMatrix(const floatVector &A, const floatVector &Q, floatVector &rotatedA){
+    void rotateMatrix(const floatVector &A, const floatVector &Q, floatVector &rotatedA){
         /*!
          * Rotate a matrix \f$A\f$ using the orthogonal matrix \f$Q\f$ with the form
          * 
@@ -74,7 +74,7 @@ namespace tardigradeConstitutiveTools{
             }
         }
 
-        return NULL;
+        return;
     }
 
     void computeDeformationGradient( const floatVector &displacementGradient, floatVector &F, const bool isCurrent ){
@@ -201,7 +201,7 @@ namespace tardigradeConstitutiveTools{
 
     }
 
-    errorOut computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C ){
+    void computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C ){
         /*!
          * Compute the Right Cauchy-Green deformation tensor ( \f$C\f$ )
          *
@@ -228,10 +228,10 @@ namespace tardigradeConstitutiveTools{
 
         C_map = ( F.transpose( ) * F ).eval( );
 
-        return NULL;
+        return;
     }
 
-    errorOut computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C, floatMatrix &dCdF ){
+    void computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C, floatMatrix &dCdF ){
         /*!
          * Compute the Right Cauchy-Green deformation tensor ( \f$C\f$ ) from the deformation gradient ( \f$F\f$ )
          * 
@@ -256,11 +256,11 @@ namespace tardigradeConstitutiveTools{
 
         dCdF = tardigradeVectorTools::inflate( _dCdF, sot_dim, sot_dim );
 
-        return NULL;
+        return;
 
     }
 
-    errorOut computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C, floatVector &dCdF ){
+    void computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C, floatVector &dCdF ){
         /*!
          * Compute the Right Cauchy-Green deformation tensor ( \f$C\f$ ) from the deformation gradient ( \f$F\f$ )
          * 
@@ -295,11 +295,11 @@ namespace tardigradeConstitutiveTools{
             }
         }
 
-        return NULL;
+        return;
 
     }
 
-    errorOut computeGreenLagrangeStrain( const floatVector &deformationGradient,
+    void computeGreenLagrangeStrain( const floatVector &deformationGradient,
                                          floatVector &E ){
         /*!
          * Compute the Green-Lagrange strain ( \f$E\f$ ) from the deformation gradient ( \f$F\f$ ). The operation is:
@@ -330,10 +330,10 @@ namespace tardigradeConstitutiveTools{
                 E[ dim * I + J ] *= 0.5;
             }
         }
-        return NULL;
+        return;
     }
 
-    errorOut computeGreenLagrangeStrain( const floatVector &deformationGradient, floatVector &E, floatMatrix &dEdF){
+    void computeGreenLagrangeStrain( const floatVector &deformationGradient, floatVector &E, floatMatrix &dEdF){
         /*!
          * Compute the Green-Lagrange strain ( \f$E\f$ ) from the deformation gradient ( \f$F\f$ ) and it's jacobian.
          *
@@ -353,11 +353,11 @@ namespace tardigradeConstitutiveTools{
 
         dEdF = tardigradeVectorTools::inflate( _dEdF, deformationGradient.size( ), deformationGradient.size( ) );
 
-        return NULL;
+        return;
 
     }
 
-    errorOut computeGreenLagrangeStrain( const floatVector &deformationGradient, floatVector &E, floatVector &dEdF){
+    void computeGreenLagrangeStrain( const floatVector &deformationGradient, floatVector &E, floatVector &dEdF){
         /*!
          * Compute the Green-Lagrange strain ( \f$E\f$ ) from the deformation gradient ( \f$F\f$ ) and it's jacobian.
          *
@@ -375,10 +375,10 @@ namespace tardigradeConstitutiveTools{
 
         TARDIGRADE_ERROR_TOOLS_CATCH( computeDGreenLagrangeStrainDF( deformationGradient, dEdF ) );
 
-        return NULL;
+        return;
     }
 
-    errorOut computeDGreenLagrangeStrainDF(const floatVector &deformationGradient, floatMatrix &dEdF){
+    void computeDGreenLagrangeStrainDF(const floatVector &deformationGradient, floatMatrix &dEdF){
         /*!
          * Compute the derivative of the Green-Lagrange strain ( \f$E\f$ )w.r.t. the deformation gradient ( \f$F\f$ ).
          *
@@ -398,11 +398,11 @@ namespace tardigradeConstitutiveTools{
 
         dEdF = tardigradeVectorTools::inflate( _dEdF, deformationGradient.size( ), deformationGradient.size( ) );
 
-        return NULL;
+        return;
 
     }
 
-    errorOut computeDGreenLagrangeStrainDF(const floatVector &deformationGradient, floatVector &dEdF){
+    void computeDGreenLagrangeStrainDF(const floatVector &deformationGradient, floatVector &dEdF){
         /*!
          * Compute the derivative of the Green-Lagrange strain ( \f$E\f$ )w.r.t. the deformation gradient ( \f$F\f$ ).
          *
@@ -428,10 +428,10 @@ namespace tardigradeConstitutiveTools{
             }
         }
 
-        return NULL;
+        return;
     }
 
-    errorOut decomposeGreenLagrangeStrain( const floatVector &E, floatVector &Ebar, floatType &J ){
+    void decomposeGreenLagrangeStrain( const floatVector &E, floatVector &Ebar, floatType &J ){
         /*!
          * Decompose the Green-Lagrange strain tensor ( \f$E\f$ ) into isochoric ( \f$\bar{E}\f$ ) and volumetric ( \f$J\f$ ) parts where
          *
@@ -465,10 +465,10 @@ namespace tardigradeConstitutiveTools{
        
         for ( unsigned int i = 0; i < dim; i++ ){ Ebar[ dim * i + i ] += 0.5*(1/pow(J, 2./3) - 1); }
 
-        return NULL;
+        return;
     }
 
-    errorOut decomposeGreenLagrangeStrain(const floatVector &E, floatVector &Ebar, floatType &J,
+    void decomposeGreenLagrangeStrain(const floatVector &E, floatVector &Ebar, floatType &J,
                                           floatVector &dEbardE, floatVector &dJdE){
         /*!
          * Decompose the Green-Lagrange strain tensor ( \f$E\f$ ) into isochoric ( \f$\bar{E}\f$ ) and volumetric ( \f$J\f$ ) parts where
@@ -534,10 +534,10 @@ namespace tardigradeConstitutiveTools{
 
         }
 
-        return NULL;
+        return;
     }
 
-    errorOut decomposeGreenLagrangeStrain(const floatVector &E, floatVector &Ebar, floatType &J,
+    void decomposeGreenLagrangeStrain(const floatVector &E, floatVector &Ebar, floatType &J,
                                           floatMatrix &dEbardE, floatVector &dJdE){
         /*!
          * Decompose the Green-Lagrange strain tensor ( \f$E\f$ ) into isochoric ( \f$\bar{E}\f$ ) and volumetric ( \f$J\f$ ) parts where
@@ -565,10 +565,10 @@ namespace tardigradeConstitutiveTools{
 
         dEbardE = tardigradeVectorTools::inflate( _dEbardE, sot_dim, sot_dim );
 
-        return NULL;
+        return;
     }
 
-    errorOut mapPK2toCauchy(const floatVector &PK2Stress, const floatVector &deformationGradient, floatVector &cauchyStress){
+    void mapPK2toCauchy(const floatVector &PK2Stress, const floatVector &deformationGradient, floatVector &cauchyStress){
         /*!
          * Map the PK2 stress ( \f$P^{II}\f$ ) to the current configuration resulting in the Cauchy stress ( \f$\sigma\f$ ).
          *
@@ -613,10 +613,10 @@ namespace tardigradeConstitutiveTools{
                 }
             }
         }
-        return NULL;
+        return;
     }
 
-    errorOut WLF(const floatType &temperature, const floatVector &WLFParameters, floatType &factor){
+    void WLF(const floatType &temperature, const floatVector &WLFParameters, floatType &factor){
         /*!
          * An implementation of the Williams-Landel-Ferry equation.
          *
@@ -639,10 +639,10 @@ namespace tardigradeConstitutiveTools{
 
         factor = pow(10., -C1*(temperature - Tr)/(C2 + (temperature - Tr)));
 
-        return NULL;
+        return;
     }
 
-    errorOut WLF(const floatType &temperature, const floatVector &WLFParameters, floatType &factor, floatType &dfactordT){
+    void WLF(const floatType &temperature, const floatVector &WLFParameters, floatType &factor, floatType &dfactordT){
         /*!
          * An implementation of the Williams-Landel-Ferry equation that also returns the gradient w.r.t. \f$T\f$
          *
@@ -660,10 +660,10 @@ namespace tardigradeConstitutiveTools{
 
         dfactordT = std::log(10)*factor*(-C1/(C2 + temperature - Tr) + (C1*(temperature - Tr)/pow(C2 + temperature - Tr, 2)));
 
-        return NULL;
+        return;
     }
 
-    errorOut computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt){
+    void computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt){
         /*!
          * Compute the total time derivative of the deformation gradient.
          *
@@ -691,10 +691,10 @@ namespace tardigradeConstitutiveTools{
                 }
             }
         }
-        return NULL;
+        return;
     }
 
-    errorOut computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt,
+    void computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt,
                          floatVector &dDFDtdL, floatVector &dDFDtdF){
         /*!
          * Compute the total time derivative of the deformation gradient
@@ -736,10 +736,10 @@ namespace tardigradeConstitutiveTools{
             }
         }
 
-        return NULL;
+        return;
     }
 
-    errorOut computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt,
+    void computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt,
                          floatMatrix &dDFDtdL, floatMatrix &dDFDtdF){
         /*!
          * Compute the total time derivative of the deformation gradient
@@ -770,10 +770,10 @@ namespace tardigradeConstitutiveTools{
 
         dDFDtdF = tardigradeVectorTools::inflate( _dDFDtdF, sot_dim, sot_dim );
 
-        return NULL;
+        return;
     }
 
-    errorOut midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    void midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                 floatVector &dA, floatVector &A, const floatVector &alpha ){
         /*!
          * Perform midpoint rule based evolution of a vector.
@@ -811,11 +811,11 @@ namespace tardigradeConstitutiveTools{
 
         }
 
-        return NULL;
+        return;
 
     }
 
-    errorOut midpointEvolutionFlatJ( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    void midpointEvolutionFlatJ( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                      floatVector &dA, floatVector &A, floatVector &DADADt, const floatVector &alpha ){
         /*!
          * Perform midpoint rule based evolution of a vector and return the jacobian.
@@ -848,11 +848,11 @@ namespace tardigradeConstitutiveTools{
 
         }
 
-        return NULL;
+        return;
 
     }
 
-    errorOut midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    void midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                 floatVector &dA, floatVector &A, floatMatrix &DADADt, const floatVector &alpha ){
         /*!
          * Perform midpoint rule based evolution of a vector and return the jacobian.
@@ -877,12 +877,12 @@ namespace tardigradeConstitutiveTools{
 
         DADADt = tardigradeVectorTools::inflate( _DADADt, A.size( ), A.size( ) );
 
-        return NULL;
+        return;
 
     }
 
 
-    errorOut midpointEvolutionFlatJ( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    void midpointEvolutionFlatJ( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                      floatVector &dA, floatVector &A, floatVector &DADADt, floatVector &DADADtp,
                                      const floatVector &alpha ){
         /*!
@@ -919,11 +919,11 @@ namespace tardigradeConstitutiveTools{
 
         }
 
-        return NULL;
+        return;
 
     }
 
-    errorOut midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    void midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                 floatVector &dA, floatVector &A, floatMatrix &DADADt, floatMatrix &DADADtp,
                                 const floatVector &alpha ){
         /*!
@@ -954,11 +954,11 @@ namespace tardigradeConstitutiveTools{
 
         DADADtp = tardigradeVectorTools::inflate( _DADADtp, A.size( ), A.size( ) );
 
-        return NULL;
+        return;
 
     }
 
-    errorOut midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    void midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                 floatVector &dA, floatVector &A, const floatType alpha ){
         /*!
          * Perform midpoint rule based evolution of a vector. Defaults to the trapezoidal rule.
@@ -980,7 +980,7 @@ namespace tardigradeConstitutiveTools{
 
     }
 
-    errorOut midpointEvolutionFlatJ( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    void midpointEvolutionFlatJ( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                      floatVector &dA, floatVector &A, floatVector &DADADt, const floatType alpha ){
         /*!
          * Perform midpoint rule based evolution of a vector. Defaults to the trapezoidal rule.
@@ -1003,7 +1003,7 @@ namespace tardigradeConstitutiveTools{
 
     }
 
-    errorOut midpointEvolutionFlatJ( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    void midpointEvolutionFlatJ( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                      floatVector &dA, floatVector &A, floatVector &DADADt, floatVector &DADADtp,
                                      const floatType alpha ){
         /*!
@@ -1030,7 +1030,7 @@ namespace tardigradeConstitutiveTools{
 
     }
 
-    errorOut midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    void midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                 floatVector &dA, floatVector &A, floatMatrix &DADADt, const floatType alpha ){
         /*!
          * Perform midpoint rule based evolution of a vector. Defaults to the trapezoidal rule.
@@ -1053,7 +1053,7 @@ namespace tardigradeConstitutiveTools{
 
     }
 
-    errorOut midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    void midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                 floatVector &dA, floatVector &A, floatMatrix &DADADt, floatMatrix &DADADtp,
                                 const floatType alpha ){
         /*!
@@ -1080,7 +1080,7 @@ namespace tardigradeConstitutiveTools{
 
     }
 
-    errorOut evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    void evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                      floatVector &dF, floatVector &deformationGradient, const floatType alpha, const unsigned int mode){
         /*!
          * Evolve the deformation gradient ( F ) using the midpoint integration method.
@@ -1163,11 +1163,11 @@ namespace tardigradeConstitutiveTools{
 
         deformationGradient = previousDeformationGradient + dF;
 
-        return NULL;
+        return;
 
     }
 
-    errorOut evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    void evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                      floatVector &deformationGradient, const floatType alpha, const unsigned int mode){
         /*!
          * Evolve the deformation gradient ( F ) using the midpoint integration method.
@@ -1196,7 +1196,7 @@ namespace tardigradeConstitutiveTools{
 
     }
 
-    errorOut evolveF( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    void evolveF( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                       floatVector &dF, floatVector &deformationGradient, floatMatrix &dFdL, const floatType alpha, const unsigned int mode ){
         /*!
          * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
@@ -1229,11 +1229,11 @@ namespace tardigradeConstitutiveTools{
 
         dFdL = tardigradeVectorTools::inflate( _dFdL, sot_dim, sot_dim );
 
-        return NULL;
+        return;
 
     }
 
-    errorOut evolveFFlatJ( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    void evolveFFlatJ( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                            floatVector &dF, floatVector &deformationGradient, floatVector &dFdL, const floatType alpha, const unsigned int mode ){
         /*!
          * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
@@ -1295,10 +1295,10 @@ namespace tardigradeConstitutiveTools{
                 }
             }
         }
-        return NULL;
+        return;
     }
 
-    errorOut evolveFFlatJ( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    void evolveFFlatJ( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                            floatVector &deformationGradient, floatVector &dFdL, const floatType alpha, const unsigned int mode ){
         /*!
          * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
@@ -1327,7 +1327,7 @@ namespace tardigradeConstitutiveTools{
 
     }
 
-    errorOut evolveF( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    void evolveF( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                       floatVector &deformationGradient, floatMatrix &dFdL, const floatType alpha, const unsigned int mode ){
         /*!
          * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
@@ -1356,7 +1356,7 @@ namespace tardigradeConstitutiveTools{
 
     }
 
-    errorOut evolveF( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    void evolveF( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                       floatVector &dF, floatVector &deformationGradient, floatMatrix &dFdL, floatMatrix &ddFdFp, floatMatrix &dFdFp, floatMatrix &dFdLp, const floatType alpha, const unsigned int mode ){
         /*!
          * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
@@ -1400,10 +1400,10 @@ namespace tardigradeConstitutiveTools{
         dFdFp  = tardigradeVectorTools::inflate( _dFdFp,  sot_dim, sot_dim );
         dFdLp  = tardigradeVectorTools::inflate( _dFdLp,  sot_dim, sot_dim );
 
-        return NULL;
+        return;
 
     }
-    errorOut evolveFFlatJ( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    void evolveFFlatJ( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                            floatVector &dF, floatVector &deformationGradient, floatVector &dFdL, floatVector &ddFdFp, floatVector &dFdFp, floatVector &dFdLp, const floatType alpha, const unsigned int mode ){
         /*!
          * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
@@ -1485,10 +1485,10 @@ namespace tardigradeConstitutiveTools{
         dFdFp = ddFdFp;
         for ( unsigned int i = 0; i < sot_dim; i++ ){ dFdFp[ sot_dim * i + i ] += 1; }
 
-        return NULL;
+        return;
     }
 
-    errorOut evolveFFlatJ( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    void evolveFFlatJ( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                            floatVector &deformationGradient, floatVector &dFdL, floatVector &dFdFp, floatVector &dFdLp, const floatType alpha, const unsigned int mode ){
         /*!
          * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
@@ -1520,7 +1520,7 @@ namespace tardigradeConstitutiveTools{
 
     }
 
-    errorOut evolveF( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    void evolveF( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                       floatVector &deformationGradient, floatMatrix &dFdL, floatMatrix &dFdFp, floatMatrix &dFdLp, const floatType alpha, const unsigned int mode ){
         /*!
          * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
@@ -1582,7 +1582,7 @@ namespace tardigradeConstitutiveTools{
         return mac( x );
     }
 
-    errorOut computeUnitNormal(const floatVector &A, floatVector &Anorm){
+    void computeUnitNormal(const floatVector &A, floatVector &Anorm){
         /*!
          * Compute the unit normal of a second order tensor (or strictly speaking
          * any tensor).
@@ -1602,10 +1602,10 @@ namespace tardigradeConstitutiveTools{
             Anorm = A/norm;
         }
 
-        return NULL;
+        return;
     }
 
-    errorOut computeUnitNormal(const floatVector &A, floatVector &Anorm, floatVector &dAnormdA){
+    void computeUnitNormal(const floatVector &A, floatVector &Anorm, floatVector &dAnormdA){
         /*!
          * Compute the unit normal of a second order tensor (or strictly speaking any
          * tensor) and the gradient of that unit normal w.r.t. the tensor.
@@ -1642,10 +1642,10 @@ namespace tardigradeConstitutiveTools{
 
         dAnormdA /= norm;
 
-        return NULL;
+        return;
     }
 
-    errorOut computeUnitNormal(const floatVector &A, floatVector &Anorm, floatMatrix &dAnormdA){
+    void computeUnitNormal(const floatVector &A, floatVector &Anorm, floatMatrix &dAnormdA){
         /*!
          * Compute the unit normal of a second order tensor (or strictly speaking any
          * tensor) and the gradient of that unit normal w.r.t. the tensor.
@@ -1663,10 +1663,10 @@ namespace tardigradeConstitutiveTools{
 
         dAnormdA = tardigradeVectorTools::inflate( _dAnormdA, A_size, A_size );
 
-        return NULL;
+        return;
     }
 
-    errorOut pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
+    void pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
                                       floatVector &pulledBackVelocityGradient){
         /*!
          * Pull back the velocity gradient to the configuration indicated by deformationGradient, i.e.
@@ -1695,10 +1695,10 @@ namespace tardigradeConstitutiveTools{
 
         pullBackL = ( F.inverse( ) * L * F ).eval( );
 
-        return NULL;
+        return;
     }
 
-    errorOut pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
+    void pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
                                       floatVector &pulledBackVelocityGradient, floatVector &dPullBackLdL,
                                       floatVector &dPullBackLdF){
         /*!
@@ -1761,10 +1761,10 @@ namespace tardigradeConstitutiveTools{
             }
         }
 
-        return NULL;
+        return;
     }
 
-    errorOut pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
+    void pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
                                       floatVector &pulledBackVelocityGradient, floatMatrix &dPullBackLdL,
                                       floatMatrix &dPullBackLdF){
         /*!
@@ -1798,10 +1798,10 @@ namespace tardigradeConstitutiveTools{
 
         dPullBackLdF = tardigradeVectorTools::inflate( _dPullBackLdF, sot_dim, sot_dim );
 
-        return NULL;
+        return;
     }
 
-    errorOut quadraticThermalExpansion(const floatType &temperature, const floatType &referenceTemperature,
+    void quadraticThermalExpansion(const floatType &temperature, const floatType &referenceTemperature,
                                        const floatVector &linearParameters, const floatVector &quadraticParameters,
                                        floatVector &thermalExpansion){
         /*!
@@ -1826,10 +1826,10 @@ namespace tardigradeConstitutiveTools{
         thermalExpansion = linearParameters * temperature          + quadraticParameters * temperature * temperature
                          - linearParameters * referenceTemperature - quadraticParameters * referenceTemperature * referenceTemperature;
 
-        return NULL;
+        return;
     }
 
-    errorOut quadraticThermalExpansion(const floatType &temperature, const floatType &referenceTemperature,
+    void quadraticThermalExpansion(const floatType &temperature, const floatType &referenceTemperature,
                                        const floatVector &linearParameters, const floatVector &quadraticParameters,
                                        floatVector &thermalExpansion, floatVector &thermalExpansionJacobian){
         /*!
@@ -1856,10 +1856,10 @@ namespace tardigradeConstitutiveTools{
 
         thermalExpansionJacobian = linearParameters + 2 * quadraticParameters * temperature;
 
-        return NULL;
+        return;
     }
 
-    errorOut pushForwardGreenLagrangeStrain(const floatVector &greenLagrangeStrain, const floatVector &deformationGradient,
+    void pushForwardGreenLagrangeStrain(const floatVector &greenLagrangeStrain, const floatVector &deformationGradient,
                                             floatVector &almansiStrain){
         /*!
          * Push forward the Green-Lagrange strain to the current configuration.
@@ -1890,10 +1890,10 @@ namespace tardigradeConstitutiveTools{
         //Map the Green-Lagrange strain to the current configuration
         e = ( invF.transpose( ) * E * invF ).eval( );
 
-        return NULL;
+        return;
     }
 
-    errorOut pushForwardGreenLagrangeStrain(const floatVector &greenLagrangeStrain, const floatVector &deformationGradient,
+    void pushForwardGreenLagrangeStrain(const floatVector &greenLagrangeStrain, const floatVector &deformationGradient,
                                             floatVector &almansiStrain, floatVector &dAlmansiStraindE, floatVector &dAlmansiStraindF){
         /*!
          * Push forward the Green-Lagrange strain to the current configuration
@@ -1947,10 +1947,10 @@ namespace tardigradeConstitutiveTools{
             }
         }
 
-        return NULL;
+        return;
     }
 
-    errorOut pushForwardGreenLagrangeStrain(const floatVector &greenLagrangeStrain, const floatVector &deformationGradient,
+    void pushForwardGreenLagrangeStrain(const floatVector &greenLagrangeStrain, const floatVector &deformationGradient,
                                             floatVector &almansiStrain, floatMatrix &dAlmansiStraindE, floatMatrix &dAlmansiStraindF){
         /*!
          * Push forward the Green-Lagrange strain to the current configuration
@@ -1983,11 +1983,11 @@ namespace tardigradeConstitutiveTools{
         dAlmansiStraindE = tardigradeVectorTools::inflate( _dAlmansiStraindE, sot_dim, sot_dim );
         dAlmansiStraindF = tardigradeVectorTools::inflate( _dAlmansiStraindF, sot_dim, sot_dim );
 
-        return NULL;
+        return;
 
     } 
 
-    errorOut pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
+    void pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
                                     floatVector &greenLagrangeStrain ){
         /*!
          * Pull back the almansi strain to the configuration indicated by the deformation gradient.
@@ -2011,10 +2011,10 @@ namespace tardigradeConstitutiveTools{
 
         E = ( F.transpose( ) * e * F ).eval( );
 
-        return NULL;
+        return;
     }
 
-    errorOut pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
+    void pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
                                     floatVector &greenLagrangeStrain, floatVector &dEde, floatVector &dEdF ){
         /*!
          * Pull back the almansi strain to the configuration indicated by the deformation gradient.
@@ -2053,10 +2053,10 @@ namespace tardigradeConstitutiveTools{
             }
         }
 
-        return NULL;
+        return;
     }
 
-    errorOut pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
+    void pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
                                     floatVector &greenLagrangeStrain, floatMatrix &dEde, floatMatrix &dEdF ){
         /*!
          * Pull back the almansi strain to the configuration indicated by the deformation gradient.
@@ -2082,10 +2082,10 @@ namespace tardigradeConstitutiveTools{
         dEde = tardigradeVectorTools::inflate( _dEde, sot_dim, sot_dim );
         dEdF = tardigradeVectorTools::inflate( _dEdF, sot_dim, sot_dim );
 
-        return NULL;
+        return;
     }
 
-    errorOut computeSymmetricPart( const floatVector &A, floatVector &symmA, unsigned int &dim ){
+    void computeSymmetricPart( const floatVector &A, floatVector &symmA, unsigned int &dim ){
         /*!
          * Compute the symmetric part of a second order tensor ( \f$A\f$ ) and return it.
          *
@@ -2112,10 +2112,10 @@ namespace tardigradeConstitutiveTools{
             }
         }
     
-        return NULL;
+        return;
     }
 
-    errorOut computeSymmetricPart( const floatVector &A, floatVector &symmA ){
+    void computeSymmetricPart( const floatVector &A, floatVector &symmA ){
         /*!
          * Compute the symmetric part of a second order tensor ( \f$A\f$ ) and return it.
          *
@@ -2129,7 +2129,7 @@ namespace tardigradeConstitutiveTools{
         return computeSymmetricPart( A, symmA, dim );
     }
 
-    errorOut computeSymmetricPart( const floatVector &A, floatVector &symmA, floatMatrix &dSymmAdA ){
+    void computeSymmetricPart( const floatVector &A, floatVector &symmA, floatMatrix &dSymmAdA ){
         /*!
          * Compute the symmetric part of a second order tensor ( \f$A\f$ ) and return it.
          *
@@ -2156,11 +2156,11 @@ namespace tardigradeConstitutiveTools{
             }
         }
         
-        return NULL;
+        return;
    
     }
 
-    errorOut computeSymmetricPart( const floatVector &A, floatVector &symmA, floatVector &dSymmAdA ){
+    void computeSymmetricPart( const floatVector &A, floatVector &symmA, floatVector &dSymmAdA ){
         /*!
          * Compute the symmetric part of a second order tensor ( \f$A\f$ ) and return it.
          *
@@ -2189,10 +2189,10 @@ namespace tardigradeConstitutiveTools{
             }
         }
         
-        return NULL;
+        return;
     }
 
-    errorOut pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress ){
+    void pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress ){
         /*!
          * Push the Second Piola-Kirchhoff stress forward to the current configuration resulting in the Cauchy stress
          * 
@@ -2220,11 +2220,11 @@ namespace tardigradeConstitutiveTools{
 
         cauchyStress_map = ( F_map * PK2_map * F_map.transpose( ) / J ).eval( );
 
-        return NULL;
+        return;
 
     }
 
-    errorOut pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress,
+    void pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress,
                                    floatVector &dCauchyStressdPK2, floatVector &dCauchyStressdF ){
         /*!
          * Push the Second Piola-Kirchhoff stress forward to the current configuration resulting in the Cauchy stress
@@ -2290,11 +2290,11 @@ namespace tardigradeConstitutiveTools{
 
         } 
 
-        return NULL;
+        return;
 
     }
 
-    errorOut pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress,
+    void pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress,
                                    floatMatrix &dCauchyStressdPK2, floatMatrix &dCauchyStressdF ){
         /*!
          * Push the Second Piola-Kirchhoff stress forward to the current configuration resulting in the Cauchy stress
@@ -2316,11 +2316,11 @@ namespace tardigradeConstitutiveTools{
 
         dCauchyStressdF   = tardigradeVectorTools::inflate( _dCauchyStressdF,   cauchyStress.size( ), F.size( ) );
 
-        return NULL;
+        return;
 
     }
 
-    errorOut pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2 ){
+    void pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2 ){
         /*!
          * Pull back the Cauchy stress to an earlier configuration resulting in the second Piola-Kirchhoff stress
          * 
@@ -2356,11 +2356,11 @@ namespace tardigradeConstitutiveTools{
 
         PK2_map = ( J * Finv_map * cauchyStress_map * Finv_map.transpose( ) ).eval( );
 
-        return NULL;
+        return;
 
     }
     
-    errorOut pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2, 
+    void pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2, 
                                    floatVector &dPK2dCauchyStress, floatVector &dPK2dF ){
         /*!
          * Pull back the Cauchy stress to an earlier configuration resulting in the second Piola-Kirchhoff stress
@@ -2427,11 +2427,11 @@ namespace tardigradeConstitutiveTools{
 
         }
 
-        return NULL;
+        return;
 
     }
 
-    errorOut pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2, 
+    void pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2, 
                                    floatMatrix &dPK2dCauchyStress, floatMatrix &dPK2dF ){
         /*!
          * Pull back the Cauchy stress to an earlier configuration resulting in the second Piola-Kirchhoff stress
@@ -2460,7 +2460,7 @@ namespace tardigradeConstitutiveTools{
 
         dPK2dF = tardigradeVectorTools::inflate( _dPK2dF, PK2.size( ), F.size( ) );
 
-        return NULL;
+        return;
 
     }
 

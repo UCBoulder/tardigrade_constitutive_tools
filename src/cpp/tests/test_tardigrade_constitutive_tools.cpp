@@ -16,7 +16,6 @@
 #define DEFAULT_TEST_TOLERANCE 1e-6
 #define CHECK_PER_ELEMENT boost::test_tools::per_element( )
 
-typedef tardigradeConstitutiveTools::errorOut errorOut;
 typedef tardigradeConstitutiveTools::floatType floatType;
 typedef tardigradeConstitutiveTools::floatVector floatVector;
 typedef tardigradeConstitutiveTools::floatMatrix floatMatrix;
@@ -75,9 +74,9 @@ BOOST_AUTO_TEST_CASE( testRotateMatrix, * boost::unit_test::tolerance( DEFAULT_T
                                     -1.68701666,  6.92240128, 12.8622303 };
 
     floatVector rotatedA;
-    errorOut ret = tardigradeConstitutiveTools::rotateMatrix( A, Q, rotatedA );
+    tardigradeConstitutiveTools::rotateMatrix( A, Q, rotatedA );
 
-    BOOST_CHECK( ! ret );
+    
 
     BOOST_TEST( rotatedA == rotatedA_answer, CHECK_PER_ELEMENT );
 
@@ -91,9 +90,9 @@ BOOST_AUTO_TEST_CASE( testRotateMatrix, * boost::unit_test::tolerance( DEFAULT_T
     }
 
     floatVector App;
-    ret = tardigradeConstitutiveTools::rotateMatrix( rotatedA, QT, App );
+    tardigradeConstitutiveTools::rotateMatrix( rotatedA, QT, App );
 
-    BOOST_CHECK( ! ret );
+    
 
     BOOST_TEST( A == App, CHECK_PER_ELEMENT );
 
@@ -187,10 +186,9 @@ BOOST_AUTO_TEST_CASE( testComputeGreenLagrangeStrain, * boost::unit_test::tolera
     floatVector F = { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
     floatVector E;
 
-    tardigradeConstitutiveTools::errorOut ret;
-    ret = tardigradeConstitutiveTools::computeGreenLagrangeStrain( F, E );
+    tardigradeConstitutiveTools::computeGreenLagrangeStrain( F, E );
 
-    BOOST_CHECK( ! ret );
+    
 
     floatVector E_answer_1( 9, 0 );
 
@@ -200,9 +198,9 @@ BOOST_AUTO_TEST_CASE( testComputeGreenLagrangeStrain, * boost::unit_test::tolera
           0.55131477, 0.71946897, 0.42310646,
           0.98076420, 0.68482974, 0.4809319 };
 
-    ret = tardigradeConstitutiveTools::computeGreenLagrangeStrain( F, E );
+    tardigradeConstitutiveTools::computeGreenLagrangeStrain( F, E );
 
-    BOOST_CHECK( ! ret );
+    
 
     floatVector E_answer_2 = { 0.37545786,  0.63379879,  0.43147034,
                                0.63379879,  0.03425154,  0.34933978,
@@ -212,9 +210,9 @@ BOOST_AUTO_TEST_CASE( testComputeGreenLagrangeStrain, * boost::unit_test::tolera
 
     floatVector EJ;
     floatMatrix dEdF;
-    ret = tardigradeConstitutiveTools::computeGreenLagrangeStrain( F, EJ, dEdF );
+    tardigradeConstitutiveTools::computeGreenLagrangeStrain( F, EJ, dEdF );
 
-    BOOST_CHECK( ! ret );
+    
 
     BOOST_TEST( E == EJ, CHECK_PER_ELEMENT );
 
@@ -226,11 +224,11 @@ BOOST_AUTO_TEST_CASE( testComputeGreenLagrangeStrain, * boost::unit_test::tolera
 
         floatVector EJp, EJm;
 
-        ret = tardigradeConstitutiveTools::computeGreenLagrangeStrain( F + delta, EJp );
+        tardigradeConstitutiveTools::computeGreenLagrangeStrain( F + delta, EJp );
 
-        ret = tardigradeConstitutiveTools::computeGreenLagrangeStrain( F - delta, EJm );
+        tardigradeConstitutiveTools::computeGreenLagrangeStrain( F - delta, EJm );
 
-        BOOST_CHECK( ! ret );
+        
 
         floatVector gradCol = ( EJp - EJm )/(2*delta[ i ]);
 
@@ -255,19 +253,19 @@ BOOST_AUTO_TEST_CASE( testDecomposeGreenLagrangeStrain, * boost::unit_test::tole
     floatVector Fbar = F/pow( J, 1./3 );
 
     floatVector E, Ebar;
-    errorOut ret = tardigradeConstitutiveTools::computeGreenLagrangeStrain( Fbar, Ebar );
+    tardigradeConstitutiveTools::computeGreenLagrangeStrain( Fbar, Ebar );
 
-    BOOST_CHECK( ! ret );
+    
 
-    ret = tardigradeConstitutiveTools::computeGreenLagrangeStrain( F, E );
+    tardigradeConstitutiveTools::computeGreenLagrangeStrain( F, E );
 
-    BOOST_CHECK( ! ret );
+    
 
     floatType JOut;
     floatVector EbarOut;
-    ret = tardigradeConstitutiveTools::decomposeGreenLagrangeStrain( E, EbarOut, JOut );
+    tardigradeConstitutiveTools::decomposeGreenLagrangeStrain( E, EbarOut, JOut );
 
-    BOOST_CHECK( ! ret );
+    
 
     BOOST_TEST( J == JOut );
 
@@ -277,9 +275,9 @@ BOOST_AUTO_TEST_CASE( testDecomposeGreenLagrangeStrain, * boost::unit_test::tole
     floatType JOut2;
     floatMatrix dEbardE;
     floatVector dJdE;
-    ret = tardigradeConstitutiveTools::decomposeGreenLagrangeStrain( E, EbarOut2, JOut2, dEbardE, dJdE );
+    tardigradeConstitutiveTools::decomposeGreenLagrangeStrain( E, EbarOut2, JOut2, dEbardE, dJdE );
 
-    BOOST_CHECK( ! ret );
+    
 
     BOOST_TEST( EbarOut == EbarOut2, CHECK_PER_ELEMENT );
 
@@ -291,11 +289,11 @@ BOOST_AUTO_TEST_CASE( testDecomposeGreenLagrangeStrain, * boost::unit_test::tole
         delta[ i ] =  fabs( eps*E[ i ] );
 
         floatType Jp, Jm;
-        ret = tardigradeConstitutiveTools::decomposeGreenLagrangeStrain( E + delta, EbarOut2, Jp );
-        BOOST_CHECK( ! ret );
+        tardigradeConstitutiveTools::decomposeGreenLagrangeStrain( E + delta, EbarOut2, Jp );
+        
 
-        ret = tardigradeConstitutiveTools::decomposeGreenLagrangeStrain( E - delta, EbarOut2, Jm );
-        BOOST_CHECK( ! ret );
+        tardigradeConstitutiveTools::decomposeGreenLagrangeStrain( E - delta, EbarOut2, Jm );
+        
 
         BOOST_TEST( ( Jp - Jm )/(2*delta[ i ]) == dJdE[ i ] );
     }
@@ -306,13 +304,13 @@ BOOST_AUTO_TEST_CASE( testDecomposeGreenLagrangeStrain, * boost::unit_test::tole
 
         floatVector Ebarp, Ebarm;
 
-        ret = tardigradeConstitutiveTools::decomposeGreenLagrangeStrain( E + delta, Ebarp, JOut2 );
+        tardigradeConstitutiveTools::decomposeGreenLagrangeStrain( E + delta, Ebarp, JOut2 );
 
-        BOOST_CHECK( ! ret );
+        
 
-        ret = tardigradeConstitutiveTools::decomposeGreenLagrangeStrain( E - delta, Ebarm, JOut2 );
+        tardigradeConstitutiveTools::decomposeGreenLagrangeStrain( E - delta, Ebarm, JOut2 );
 
-        BOOST_CHECK( ! ret );
+        
 
         floatVector gradCol = ( Ebarp - Ebarm )/(2*delta[ i ]);
 
@@ -347,9 +345,9 @@ BOOST_AUTO_TEST_CASE( testMapPK2toCauchy, * boost::unit_test::tolerance( DEFAULT
                                    0.16490963, -0.57481137, -0.92071407,
                                   -0.21450698, -1.22714923, -1.73532173 };
 
-    errorOut error = tardigradeConstitutiveTools::mapPK2toCauchy( PK2, F, cauchy );
+    tardigradeConstitutiveTools::mapPK2toCauchy( PK2, F, cauchy );
 
-    BOOST_CHECK( ! error );
+    
 
     BOOST_TEST( cauchy == cauchy_answer, CHECK_PER_ELEMENT );
 
@@ -399,14 +397,14 @@ BOOST_AUTO_TEST_CASE( testComputeDGreenLagrangeStrainDF, * boost::unit_test::tol
 
     floatMatrix dEdF;
 
-    errorOut error = tardigradeConstitutiveTools::computeDGreenLagrangeStrainDF( F, dEdF );
+    tardigradeConstitutiveTools::computeDGreenLagrangeStrainDF( F, dEdF );
 
-    BOOST_CHECK( ! error );
+    
 
     floatVector E, E2;
-    error = tardigradeConstitutiveTools::computeGreenLagrangeStrain( F, E );
+    tardigradeConstitutiveTools::computeGreenLagrangeStrain( F, E );
 
-    BOOST_CHECK( ! error );
+    
 
     floatType eps = 1e-6;
     for ( unsigned int i=0; i<F.size( ); i++ ){
@@ -415,13 +413,13 @@ BOOST_AUTO_TEST_CASE( testComputeDGreenLagrangeStrainDF, * boost::unit_test::tol
         delta[ i ] = eps * fabs( F[ i ] ) + eps;
 
         floatVector Ep, Em;
-        error = tardigradeConstitutiveTools::computeGreenLagrangeStrain( F + delta, Ep );
+        tardigradeConstitutiveTools::computeGreenLagrangeStrain( F + delta, Ep );
 
-        BOOST_CHECK( !error );
+        
 
-        error = tardigradeConstitutiveTools::computeGreenLagrangeStrain( F - delta, Em );
+        tardigradeConstitutiveTools::computeGreenLagrangeStrain( F - delta, Em );
 
-        BOOST_CHECK( !error );
+        
 
         floatVector gradCol = ( Ep - Em )/(2*delta[ i ]);
 
@@ -449,31 +447,31 @@ BOOST_AUTO_TEST_CASE( testMidpointEvolution, * boost::unit_test::tolerance( DEFA
     floatVector dA, A;
 
     //Test implicit integration
-    errorOut error = tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, 0 );
+    tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, 0 );
 
-    BOOST_CHECK( ! error );
+    
 
     BOOST_TEST( dA == Dt * DADt, CHECK_PER_ELEMENT );
 
     //Test explicit integration
-    error = tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, 1 );
+    tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, 1 );
 
-    BOOST_CHECK( ! error );
+    
 
     BOOST_TEST( dA == Dt*DApDt, CHECK_PER_ELEMENT );
 
     //Test midpoint integration
-    error = tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA, A );
+    tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA, A );
 
-    BOOST_CHECK( ! error );
+    
 
     BOOST_TEST(  A == Ap + Dt*0.5*( DApDt + DADt ), CHECK_PER_ELEMENT );
 
     BOOST_TEST( dA == Dt*0.5*( DApDt + DADt ), CHECK_PER_ELEMENT );
 
-    error = tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, alphaVec );
+    tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, alphaVec );
 
-    BOOST_CHECK( ! error );
+    
 
     floatVector A_answer  = { 20.5, 23., 25.5, 28. };
     floatVector dA_answer = { 11.5, 13., 14.5, 16. };
@@ -489,11 +487,11 @@ BOOST_AUTO_TEST_CASE( testMidpointEvolution, * boost::unit_test::tolerance( DEFA
 
     floatMatrix DADADt;
 
-    error = tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, alphaVec );
+    tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, alphaVec );
 
-    error = tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA0, A0, DADADt, alphaVec );
+    tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA0, A0, DADADt, alphaVec );
 
-    BOOST_CHECK( ! error );
+    
 
     BOOST_TEST( A0 == A, CHECK_PER_ELEMENT );
 
@@ -507,13 +505,13 @@ BOOST_AUTO_TEST_CASE( testMidpointEvolution, * boost::unit_test::tolerance( DEFA
 
         floatVector Aip, Aim, dAip, dAim;
 
-        error = tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt + delta, dAip, Aip, alphaVec );
+        tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt + delta, dAip, Aip, alphaVec );
 
-        BOOST_CHECK( !error );
+        
 
-        error = tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt - delta, dAim, Aim, alphaVec );
+        tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt - delta, dAim, Aim, alphaVec );
 
-        BOOST_CHECK( !error );
+        
 
         floatVector gradCol = ( Aip - Aim )/(2*delta[ i ]);
 
@@ -537,7 +535,7 @@ BOOST_AUTO_TEST_CASE( testMidpointEvolution, * boost::unit_test::tolerance( DEFA
 
     floatMatrix DADADt1, DADADtp;
 
-    BOOST_CHECK( !tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA1, A1, DADADt1, DADADtp, alphaVec ) );
+    tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA1, A1, DADADt1, DADADtp, alphaVec );
 
     BOOST_TEST( A1 == A, CHECK_PER_ELEMENT );
 
@@ -557,9 +555,9 @@ BOOST_AUTO_TEST_CASE( testMidpointEvolution, * boost::unit_test::tolerance( DEFA
 
         floatVector _Ap, _Am;
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt + delta, DADt, _dAp, _Ap, alphaVec ) );
+        tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt + delta, DADt, _dAp, _Ap, alphaVec );
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt - delta, DADt, _dAm, _Am, alphaVec ) );
+        tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt - delta, DADt, _dAm, _Am, alphaVec );
 
         for ( unsigned int j = 0; j < Ap.size( ); j++ ){
 
@@ -595,18 +593,18 @@ BOOST_AUTO_TEST_CASE( testComputeDFDt, * boost::unit_test::tolerance( DEFAULT_TE
 
     floatVector DFDt;
 
-    errorOut error = tardigradeConstitutiveTools::computeDFDt( L, F, DFDt );
+    tardigradeConstitutiveTools::computeDFDt( L, F, DFDt );
 
-    BOOST_CHECK( ! error );
+    
 
     BOOST_TEST( DFDt == answer, CHECK_PER_ELEMENT );
 
     //Test the jacobians
     floatVector DFDtJ;
     floatMatrix dDFDtdL, dDFDtdF;
-    error = tardigradeConstitutiveTools::computeDFDt( L, F, DFDtJ, dDFDtdL, dDFDtdF );
+    tardigradeConstitutiveTools::computeDFDt( L, F, DFDtJ, dDFDtdL, dDFDtdF );
 
-    BOOST_CHECK( ! error );
+    
 
     BOOST_TEST( DFDt == DFDtJ, CHECK_PER_ELEMENT );
 
@@ -620,13 +618,13 @@ BOOST_AUTO_TEST_CASE( testComputeDFDt, * boost::unit_test::tolerance( DEFAULT_TE
 
         floatVector DFDtp, DFDtm;
 
-        error = tardigradeConstitutiveTools::computeDFDt( L + delta, F, DFDtp );
+        tardigradeConstitutiveTools::computeDFDt( L + delta, F, DFDtp );
 
-        BOOST_CHECK( ! error );
+        
 
-        error = tardigradeConstitutiveTools::computeDFDt( L - delta, F, DFDtm );
+        tardigradeConstitutiveTools::computeDFDt( L - delta, F, DFDtm );
 
-        BOOST_CHECK( ! error );
+        
 
         floatVector gradCol = ( DFDtp - DFDtm )/(2*delta[ i ]);
 
@@ -638,15 +636,15 @@ BOOST_AUTO_TEST_CASE( testComputeDFDt, * boost::unit_test::tolerance( DEFAULT_TE
         delta = floatVector( F.size( ), 0 );
         delta[ i ] = eps*fabs( F[ i ] ) + eps;
 
-        error = tardigradeConstitutiveTools::computeDFDt( L, F + delta, DFDtp );
+        tardigradeConstitutiveTools::computeDFDt( L, F + delta, DFDtp );
 
-        BOOST_CHECK( ! error );
+        
 
         gradCol = ( DFDtJ - DFDt )/delta[ i ];
 
-        error = tardigradeConstitutiveTools::computeDFDt( L, F - delta, DFDtm );
+        tardigradeConstitutiveTools::computeDFDt( L, F - delta, DFDtm );
 
-        BOOST_CHECK( ! error );
+        
 
         gradCol = ( DFDtp - DFDtm )/(2*delta[ i ]);
 
@@ -680,7 +678,7 @@ BOOST_AUTO_TEST_CASE( testEvolveF, * boost::unit_test::tolerance( DEFAULT_TEST_T
 
     //Test 1 ( mode 1 fully explicit )
     floatVector dF, F;
-    BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, F, 1, 1 ) );
+    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, F, 1, 1 );
 
     floatVector answer = { 4.39551129, 2.53782698, 1.84614498,
                            4.81201673, 3.75047725, 2.48674399,
@@ -688,14 +686,14 @@ BOOST_AUTO_TEST_CASE( testEvolveF, * boost::unit_test::tolerance( DEFAULT_TEST_T
 
     BOOST_TEST( answer == F, CHECK_PER_ELEMENT );
 
-    BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dF, F, 1, 1 ) );
+    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dF, F, 1, 1 );
 
     BOOST_TEST( answer == F, CHECK_PER_ELEMENT );
 
     BOOST_TEST( ( answer - Fp ) == dF, CHECK_PER_ELEMENT );
 
     //Test 2 ( mode 1 fully implicit )
-    BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, F, 0, 1 ) );
+    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, F, 0, 1 );
 
     answer = {  0.63522182, -0.1712192 , -0.00846781,
                -0.81250979, -0.19375022, -0.20193394,
@@ -703,14 +701,14 @@ BOOST_AUTO_TEST_CASE( testEvolveF, * boost::unit_test::tolerance( DEFAULT_TEST_T
 
     BOOST_TEST( answer == F, CHECK_PER_ELEMENT );
 
-    BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dF, F, 0, 1 ) );
+    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dF, F, 0, 1 );
 
     BOOST_TEST( answer == F, CHECK_PER_ELEMENT );
 
     BOOST_TEST( ( answer - Fp ) == dF, CHECK_PER_ELEMENT );
 
     //Test 3 ( mode 1 midpoint rule )
-    BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, F, 0.5, 1 ) );
+    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, F, 0.5, 1 );
 
     answer = {  0.20004929, -0.4409338 , -0.18955924,
                -3.59005736, -2.17210401, -1.55661536,
@@ -718,7 +716,7 @@ BOOST_AUTO_TEST_CASE( testEvolveF, * boost::unit_test::tolerance( DEFAULT_TEST_T
 
     BOOST_TEST( answer == F, CHECK_PER_ELEMENT );
 
-    BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dF, F, 0.5, 1 ) );
+    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dF, F, 0.5, 1 );
 
     BOOST_TEST( answer == F, CHECK_PER_ELEMENT );
 
@@ -727,13 +725,13 @@ BOOST_AUTO_TEST_CASE( testEvolveF, * boost::unit_test::tolerance( DEFAULT_TEST_T
     //Tests 4 and 5 ( mode 1 jacobian )
     floatVector dFJ, FJ;
     floatMatrix dFdL;
-    BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dFJ, FJ, dFdL, 0.5, 1 ) );
+    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dFJ, FJ, dFdL, 0.5, 1 );
 
     BOOST_TEST( answer == FJ, CHECK_PER_ELEMENT );
 
     floatMatrix dFdL_alt, ddFdFp, dFdFp, dFdLp;
 
-    BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dFJ, FJ, dFdL_alt, ddFdFp, dFdFp, dFdLp, 0.5, 1 ) );
+    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dFJ, FJ, dFdL_alt, ddFdFp, dFdFp, dFdLp, 0.5, 1 );
 
     BOOST_TEST( answer == FJ, CHECK_PER_ELEMENT );
 
@@ -752,9 +750,9 @@ BOOST_AUTO_TEST_CASE( testEvolveF, * boost::unit_test::tolerance( DEFAULT_TEST_T
 
         floatVector _Fp, _Fm;
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L + delta, _Fp, 0.5, 1 ) );
+        tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L + delta, _Fp, 0.5, 1 );
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L - delta, _Fm, 0.5, 1 ) );
+        tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L - delta, _Fm, 0.5, 1 );
 
         for ( unsigned int j = 0; j < L.size( ); j++ ){
 
@@ -776,9 +774,9 @@ BOOST_AUTO_TEST_CASE( testEvolveF, * boost::unit_test::tolerance( DEFAULT_TEST_T
 
         floatVector _Fp, _Fm;
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp + delta, Lp, L, _Fp, 0.5, 1 ) );
+        tardigradeConstitutiveTools::evolveF( Dt, Fp + delta, Lp, L, _Fp, 0.5, 1 );
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp - delta, Lp, L, _Fm, 0.5, 1 ) );
+        tardigradeConstitutiveTools::evolveF( Dt, Fp - delta, Lp, L, _Fm, 0.5, 1 );
 
         for ( unsigned int j = 0; j < L.size( ); j++ ){
 
@@ -788,9 +786,9 @@ BOOST_AUTO_TEST_CASE( testEvolveF, * boost::unit_test::tolerance( DEFAULT_TEST_T
 
         floatVector _dFp, _dFm;
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp + delta, Lp, L, _dFp, _Fp, 0.5, 1 ) );
+        tardigradeConstitutiveTools::evolveF( Dt, Fp + delta, Lp, L, _dFp, _Fp, 0.5, 1 );
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp - delta, Lp, L, _dFm, _Fm, 0.5, 1 ) );
+        tardigradeConstitutiveTools::evolveF( Dt, Fp - delta, Lp, L, _dFm, _Fm, 0.5, 1 );
 
         for ( unsigned int j = 0; j < L.size( ); j++ ){
 
@@ -813,9 +811,9 @@ BOOST_AUTO_TEST_CASE( testEvolveF, * boost::unit_test::tolerance( DEFAULT_TEST_T
 
         floatVector _Fp, _Fm;
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp + delta, L, _Fp, 0.5, 1 ) );
+        tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp + delta, L, _Fp, 0.5, 1 );
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp - delta, L, _Fm, 0.5, 1 ) );
+        tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp - delta, L, _Fm, 0.5, 1 );
 
         for ( unsigned int j = 0; j < L.size( ); j++ ){
 
@@ -828,7 +826,7 @@ BOOST_AUTO_TEST_CASE( testEvolveF, * boost::unit_test::tolerance( DEFAULT_TEST_T
     BOOST_TEST( tardigradeVectorTools::appendVectors( dFdLp ) == tardigradeVectorTools::appendVectors( dFdLp_answer ), CHECK_PER_ELEMENT );
 
     //Test 6 ( mode 2 fully explicit )
-    BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, F, 1, 2 ) );
+    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, F, 1, 2 );
 
     answer = { 3.03173544, 1.1881084 , 2.77327313,
                3.92282144, 2.58424672, 3.75584617,
@@ -836,12 +834,12 @@ BOOST_AUTO_TEST_CASE( testEvolveF, * boost::unit_test::tolerance( DEFAULT_TEST_T
 
     BOOST_TEST( answer == F, CHECK_PER_ELEMENT );
 
-    BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dF, F, 1, 2 ) );
+    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dF, F, 1, 2 );
 
     BOOST_TEST( ( answer - Fp ) == dF, CHECK_PER_ELEMENT );
 
     //Test 7 ( mode 2 fully implicit )
-    BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, F, 0, 2 ) );
+    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, F, 0, 2 );
 
     answer = {  0.65045472, -0.42475879, -0.09274688,
                -0.25411831, -0.08867872, -0.16467241,
@@ -849,12 +847,12 @@ BOOST_AUTO_TEST_CASE( testEvolveF, * boost::unit_test::tolerance( DEFAULT_TEST_T
 
     BOOST_TEST( answer == F, CHECK_PER_ELEMENT );
 
-    BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dF, F, 0, 2 ) );
+    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dF, F, 0, 2 );
 
     BOOST_TEST( ( answer - Fp ) == dF, CHECK_PER_ELEMENT );
 
     //Test 8 ( mode 2 midpoint rule )
-    BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, F, 0.5, 2 ) );
+    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, F, 0.5, 2 );
 
     answer = { -0.02066217, -1.43862233, -0.42448874,
                -0.96426544, -1.72139966, -0.83831629,
@@ -862,18 +860,18 @@ BOOST_AUTO_TEST_CASE( testEvolveF, * boost::unit_test::tolerance( DEFAULT_TEST_T
 
     BOOST_TEST( answer == F, CHECK_PER_ELEMENT );
 
-    BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dF, F, 0.5, 2 ) );
+    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dF, F, 0.5, 2 );
 
     BOOST_TEST( answer == F, CHECK_PER_ELEMENT );
 
     BOOST_TEST( ( answer - Fp ) == dF, CHECK_PER_ELEMENT );
 
     //Tests 9 and 10 ( mode 2 jacobian )
-    BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dFJ, FJ, dFdL, 0.5, 2 ) );
+    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dFJ, FJ, dFdL, 0.5, 2 );
 
     BOOST_TEST( F == FJ, CHECK_PER_ELEMENT );
 
-    BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dFJ, FJ, dFdL_alt, ddFdFp, dFdFp, dFdLp, 0.5, 2 ) );
+    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dFJ, FJ, dFdL_alt, ddFdFp, dFdFp, dFdLp, 0.5, 2 );
 
     BOOST_TEST( answer == FJ, CHECK_PER_ELEMENT );
 
@@ -890,9 +888,9 @@ BOOST_AUTO_TEST_CASE( testEvolveF, * boost::unit_test::tolerance( DEFAULT_TEST_T
 
         floatVector _Fp, _Fm;
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L + delta, _Fp, 0.5, 2 ) );
+        tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L + delta, _Fp, 0.5, 2 );
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L - delta, _Fm, 0.5, 2 ) );
+        tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L - delta, _Fm, 0.5, 2 );
 
         for ( unsigned int j = 0; j < L.size( ); j++ ){
 
@@ -914,9 +912,9 @@ BOOST_AUTO_TEST_CASE( testEvolveF, * boost::unit_test::tolerance( DEFAULT_TEST_T
 
         floatVector _Fp, _Fm;
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp + delta, Lp, L, _Fp, 0.5, 2 ) );
+        tardigradeConstitutiveTools::evolveF( Dt, Fp + delta, Lp, L, _Fp, 0.5, 2 );
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp - delta, Lp, L, _Fm, 0.5, 2 ) );
+        tardigradeConstitutiveTools::evolveF( Dt, Fp - delta, Lp, L, _Fm, 0.5, 2 );
 
         for ( unsigned int j = 0; j < L.size( ); j++ ){
 
@@ -926,9 +924,9 @@ BOOST_AUTO_TEST_CASE( testEvolveF, * boost::unit_test::tolerance( DEFAULT_TEST_T
 
         floatVector _dFp, _dFm;
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp + delta, Lp, L, _dFp, _Fp, 0.5, 2 ) );
+        tardigradeConstitutiveTools::evolveF( Dt, Fp + delta, Lp, L, _dFp, _Fp, 0.5, 2 );
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp - delta, Lp, L, _dFm, _Fm, 0.5, 2 ) );
+        tardigradeConstitutiveTools::evolveF( Dt, Fp - delta, Lp, L, _dFm, _Fm, 0.5, 2 );
 
         for ( unsigned int j = 0; j < L.size( ); j++ ){
 
@@ -951,9 +949,9 @@ BOOST_AUTO_TEST_CASE( testEvolveF, * boost::unit_test::tolerance( DEFAULT_TEST_T
 
         floatVector _Fp, _Fm;
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp + delta, L, _Fp, 0.5, 2 ) );
+        tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp + delta, L, _Fp, 0.5, 2 );
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp - delta, L, _Fm, 0.5, 2 ) );
+        tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp - delta, L, _Fm, 0.5, 2 );
 
         for ( unsigned int j = 0; j < L.size( ); j++ ){
 
@@ -999,9 +997,9 @@ BOOST_AUTO_TEST_CASE( testComputeUnitNormal, * boost::unit_test::tolerance( DEFA
     floatVector A = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     floatVector Anorm;
 
-    errorOut error = tardigradeConstitutiveTools::computeUnitNormal( A, Anorm );
+    tardigradeConstitutiveTools::computeUnitNormal( A, Anorm );
 
-    BOOST_CHECK( ! error );
+    
 
     BOOST_CHECK( tardigradeVectorTools::inner( Anorm, Anorm ) == 1. );
 
@@ -1009,9 +1007,9 @@ BOOST_AUTO_TEST_CASE( testComputeUnitNormal, * boost::unit_test::tolerance( DEFA
     floatVector AnormJ;
     floatMatrix dAnormdA;
 
-    error = tardigradeConstitutiveTools::computeUnitNormal( A, AnormJ, dAnormdA );
+    tardigradeConstitutiveTools::computeUnitNormal( A, AnormJ, dAnormdA );
 
-    BOOST_CHECK( ! error );
+    
 
     //Check the normalized value
     BOOST_TEST( AnormJ == Anorm, CHECK_PER_ELEMENT );
@@ -1023,13 +1021,13 @@ BOOST_AUTO_TEST_CASE( testComputeUnitNormal, * boost::unit_test::tolerance( DEFA
         delta[ i ] = eps*fabs( A[ i ] ) + eps;
 
         floatVector Anormp, Anormm;
-        error = tardigradeConstitutiveTools::computeUnitNormal( A + delta, Anormp );
+        tardigradeConstitutiveTools::computeUnitNormal( A + delta, Anormp );
 
-        BOOST_CHECK( ! error );
+        
 
-        error = tardigradeConstitutiveTools::computeUnitNormal( A - delta, Anormm );
+        tardigradeConstitutiveTools::computeUnitNormal( A - delta, Anormm );
 
-        BOOST_CHECK( ! error );
+        
 
         floatVector gradCol = ( Anormp - Anormm )/(2*delta[ i ]);
 
@@ -1040,15 +1038,15 @@ BOOST_AUTO_TEST_CASE( testComputeUnitNormal, * boost::unit_test::tolerance( DEFA
 
     A = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-    error = tardigradeConstitutiveTools::computeUnitNormal( A, Anorm );
+    tardigradeConstitutiveTools::computeUnitNormal( A, Anorm );
 
-    BOOST_CHECK( ! error );
+    
 
     BOOST_TEST( Anorm == A, CHECK_PER_ELEMENT );
 
-    error = tardigradeConstitutiveTools::computeUnitNormal( A, Anorm, dAnormdA );
+    tardigradeConstitutiveTools::computeUnitNormal( A, Anorm, dAnormdA );
 
-    BOOST_CHECK( ! error );
+    
 
     BOOST_TEST( Anorm == A, CHECK_PER_ELEMENT );
 
@@ -1074,9 +1072,9 @@ BOOST_AUTO_TEST_CASE( testPullBackVelocityGradient, * boost::unit_test::toleranc
                                        20.19439192,  10.22175689,   7.88052809,
                                       -38.85113898, -18.79212468, -14.76285795 };
 
-    errorOut error = tardigradeConstitutiveTools::pullBackVelocityGradient( velocityGradient, deformationGradient, pullBackL );
+    tardigradeConstitutiveTools::pullBackVelocityGradient( velocityGradient, deformationGradient, pullBackL );
 
-    BOOST_CHECK( ! error );
+    
 
     BOOST_TEST( pullBackL == expectedPullBackL, CHECK_PER_ELEMENT );
 
@@ -1084,10 +1082,10 @@ BOOST_AUTO_TEST_CASE( testPullBackVelocityGradient, * boost::unit_test::toleranc
     floatMatrix dpbLdL, dpbLdF;
 
     //Test of the jacobian
-    error = tardigradeConstitutiveTools::pullBackVelocityGradient( velocityGradient, deformationGradient, pullBackLJ,
+    tardigradeConstitutiveTools::pullBackVelocityGradient( velocityGradient, deformationGradient, pullBackLJ,
                                                         dpbLdL, dpbLdF );
 
-    BOOST_CHECK( ! error );
+    
 
     BOOST_TEST( pullBackL == pullBackLJ, CHECK_PER_ELEMENT );
 
@@ -1099,13 +1097,13 @@ BOOST_AUTO_TEST_CASE( testPullBackVelocityGradient, * boost::unit_test::toleranc
 
         floatVector Lp, Lm;
 
-        error = tardigradeConstitutiveTools::pullBackVelocityGradient( velocityGradient + delta, deformationGradient, Lp );
+        tardigradeConstitutiveTools::pullBackVelocityGradient( velocityGradient + delta, deformationGradient, Lp );
 
-        BOOST_CHECK( ! error );
+        
 
-        error = tardigradeConstitutiveTools::pullBackVelocityGradient( velocityGradient - delta, deformationGradient, Lm );
+        tardigradeConstitutiveTools::pullBackVelocityGradient( velocityGradient - delta, deformationGradient, Lm );
 
-        BOOST_CHECK( ! error );
+        
 
         floatVector gradCol = ( Lp - Lm )/(2*delta[ i ]);
 
@@ -1121,13 +1119,13 @@ BOOST_AUTO_TEST_CASE( testPullBackVelocityGradient, * boost::unit_test::toleranc
 
         floatVector Lp, Lm;
 
-        error = tardigradeConstitutiveTools::pullBackVelocityGradient( velocityGradient, deformationGradient + delta, Lp );
+        tardigradeConstitutiveTools::pullBackVelocityGradient( velocityGradient, deformationGradient + delta, Lp );
 
-        BOOST_CHECK( ! error );
+        
 
-        error = tardigradeConstitutiveTools::pullBackVelocityGradient( velocityGradient, deformationGradient - delta, Lm );
+        tardigradeConstitutiveTools::pullBackVelocityGradient( velocityGradient, deformationGradient - delta, Lm );
 
-        BOOST_CHECK( ! error );
+        
 
         floatVector gradCol = ( Lp - Lm )/(2*delta[ i ]);
 
@@ -1153,11 +1151,11 @@ BOOST_AUTO_TEST_CASE( testQuadraticThermalExpansion, * boost::unit_test::toleran
     floatVector answer = { 27825., 33398., 38971., 44544. };
 
     floatVector thermalExpansion;
-    errorOut error = tardigradeConstitutiveTools::quadraticThermalExpansion(     temperature, referenceTemperature,
+    tardigradeConstitutiveTools::quadraticThermalExpansion(     temperature, referenceTemperature,
                                                                   linearParameters,  quadraticParameters,
                                                                   thermalExpansion );
 
-    BOOST_CHECK( ! error );
+    
 
     BOOST_TEST( thermalExpansion == answer, CHECK_PER_ELEMENT );
 
@@ -1165,25 +1163,25 @@ BOOST_AUTO_TEST_CASE( testQuadraticThermalExpansion, * boost::unit_test::toleran
     floatType eps = 1e-6;
     floatType delta = eps*temperature + eps;
 
-    error = tardigradeConstitutiveTools::quadraticThermalExpansion(      temperature,     referenceTemperature,
+    tardigradeConstitutiveTools::quadraticThermalExpansion(      temperature,     referenceTemperature,
                                                           linearParameters,      quadraticParameters,
                                                          thermalExpansionJ, thermalExpansionJacobian );
 
-    BOOST_CHECK( ! error );
+    
 
     BOOST_TEST( thermalExpansionJ == answer, CHECK_PER_ELEMENT );
 
-    error = tardigradeConstitutiveTools::quadraticThermalExpansion( temperature + delta,   referenceTemperature,
+    tardigradeConstitutiveTools::quadraticThermalExpansion( temperature + delta,   referenceTemperature,
                                                              linearParameters,    quadraticParameters,
                                                             thermalExpansionJp );
 
-    BOOST_CHECK( ! error );
     
-    error = tardigradeConstitutiveTools::quadraticThermalExpansion( temperature - delta,   referenceTemperature,
+    
+    tardigradeConstitutiveTools::quadraticThermalExpansion( temperature - delta,   referenceTemperature,
                                                              linearParameters,    quadraticParameters,
                                                             thermalExpansionJm );
 
-    BOOST_CHECK( ! error );
+    
 
 
     BOOST_TEST( thermalExpansionJacobian == ( thermalExpansionJp - thermalExpansionJm )/(2 * delta), CHECK_PER_ELEMENT );
@@ -1200,29 +1198,29 @@ BOOST_AUTO_TEST_CASE( testPushForwardGreenLagrangeStrain, * boost::unit_test::to
                                         -0.45871432,  0.2175795 ,  0.54013937 };
 
     floatVector greenLagrangeStrain;
-    errorOut error = tardigradeConstitutiveTools::computeGreenLagrangeStrain( deformationGradient, greenLagrangeStrain );
+    tardigradeConstitutiveTools::computeGreenLagrangeStrain( deformationGradient, greenLagrangeStrain );
 
-    BOOST_CHECK( ! error );
+    
 
     floatVector almansiStrain = { -0.33393717,  0.0953188 , -0.29053383,
                                    0.0953188 ,  0.35345526,  0.11588247,
                                   -0.29053383,  0.11588247, -0.56150741 };
 
     floatVector result;
-    error = tardigradeConstitutiveTools::pushForwardGreenLagrangeStrain( greenLagrangeStrain, deformationGradient,
+    tardigradeConstitutiveTools::pushForwardGreenLagrangeStrain( greenLagrangeStrain, deformationGradient,
                                                               result );
 
-    BOOST_CHECK( ! error );
+    
 
     BOOST_TEST( result == almansiStrain, CHECK_PER_ELEMENT );
 
     //Test the jacobian
     floatVector resultJ;
     floatMatrix dedE, dedF;
-    error = tardigradeConstitutiveTools::pushForwardGreenLagrangeStrain( greenLagrangeStrain, deformationGradient,
+    tardigradeConstitutiveTools::pushForwardGreenLagrangeStrain( greenLagrangeStrain, deformationGradient,
                                                               resultJ, dedE, dedF );
 
-    BOOST_CHECK( ! error );
+    
 
     BOOST_TEST( result == resultJ, CHECK_PER_ELEMENT );
 
@@ -1234,13 +1232,13 @@ BOOST_AUTO_TEST_CASE( testPushForwardGreenLagrangeStrain, * boost::unit_test::to
 
         floatVector Rp, Rm;
 
-        error = tardigradeConstitutiveTools::pushForwardGreenLagrangeStrain( greenLagrangeStrain + delta, deformationGradient, Rp );
+        tardigradeConstitutiveTools::pushForwardGreenLagrangeStrain( greenLagrangeStrain + delta, deformationGradient, Rp );
 
-        BOOST_CHECK( ! error );
+        
 
-        error = tardigradeConstitutiveTools::pushForwardGreenLagrangeStrain( greenLagrangeStrain - delta, deformationGradient, Rm );
+        tardigradeConstitutiveTools::pushForwardGreenLagrangeStrain( greenLagrangeStrain - delta, deformationGradient, Rm );
 
-        BOOST_CHECK( ! error );
+        
 
         floatVector grad = ( Rp - Rm )/(2*delta[ i ]);
 
@@ -1256,13 +1254,13 @@ BOOST_AUTO_TEST_CASE( testPushForwardGreenLagrangeStrain, * boost::unit_test::to
 
         floatVector Rp, Rm;
 
-        error = tardigradeConstitutiveTools::pushForwardGreenLagrangeStrain( greenLagrangeStrain, deformationGradient + delta, Rp );
+        tardigradeConstitutiveTools::pushForwardGreenLagrangeStrain( greenLagrangeStrain, deformationGradient + delta, Rp );
 
-        BOOST_CHECK( ! error );
+        
 
-        error = tardigradeConstitutiveTools::pushForwardGreenLagrangeStrain( greenLagrangeStrain, deformationGradient - delta, Rm );
+        tardigradeConstitutiveTools::pushForwardGreenLagrangeStrain( greenLagrangeStrain, deformationGradient - delta, Rm );
 
-        BOOST_CHECK( ! error );
+        
 
         floatVector grad = ( Rp - Rm )/(2*delta[ i ]);
 
@@ -1291,9 +1289,9 @@ BOOST_AUTO_TEST_CASE( testPullBackAlmansiStrain, * boost::unit_test::tolerance( 
                             1.67911302, -0.83554021,  3.47033811 };
 
     floatVector result;
-    errorOut error = tardigradeConstitutiveTools::pullBackAlmansiStrain( almansiStrain, deformationGradient, result );
+    tardigradeConstitutiveTools::pullBackAlmansiStrain( almansiStrain, deformationGradient, result );
 
-    BOOST_CHECK( ! error );
+    
 
     BOOST_TEST( answer == result, CHECK_PER_ELEMENT );
 
@@ -1301,9 +1299,9 @@ BOOST_AUTO_TEST_CASE( testPullBackAlmansiStrain, * boost::unit_test::tolerance( 
     floatVector resultJ;
     floatMatrix dEde, dEdF;
 
-    error = tardigradeConstitutiveTools::pullBackAlmansiStrain( almansiStrain, deformationGradient, resultJ, dEde, dEdF );
+    tardigradeConstitutiveTools::pullBackAlmansiStrain( almansiStrain, deformationGradient, resultJ, dEde, dEdF );
 
-    BOOST_CHECK( ! error );
+    
 
     BOOST_TEST( answer == resultJ, CHECK_PER_ELEMENT );
 
@@ -1315,13 +1313,13 @@ BOOST_AUTO_TEST_CASE( testPullBackAlmansiStrain, * boost::unit_test::tolerance( 
 
         floatVector Rp, Rm;
 
-        error = tardigradeConstitutiveTools::pullBackAlmansiStrain( almansiStrain + delta, deformationGradient, Rp );
+        tardigradeConstitutiveTools::pullBackAlmansiStrain( almansiStrain + delta, deformationGradient, Rp );
 
-        BOOST_CHECK( ! error );
+        
 
-        error = tardigradeConstitutiveTools::pullBackAlmansiStrain( almansiStrain - delta, deformationGradient, Rm );
+        tardigradeConstitutiveTools::pullBackAlmansiStrain( almansiStrain - delta, deformationGradient, Rm );
 
-        BOOST_CHECK( ! error );
+        
 
         floatVector gradCol = ( Rp - Rm ) / ( 2 * delta[ i ] );
 
@@ -1337,13 +1335,13 @@ BOOST_AUTO_TEST_CASE( testPullBackAlmansiStrain, * boost::unit_test::tolerance( 
 
         floatVector Rp, Rm;
 
-        error = tardigradeConstitutiveTools::pullBackAlmansiStrain( almansiStrain, deformationGradient + delta, Rp );
+        tardigradeConstitutiveTools::pullBackAlmansiStrain( almansiStrain, deformationGradient + delta, Rp );
 
-        BOOST_CHECK( ! error );
+        
 
-        error = tardigradeConstitutiveTools::pullBackAlmansiStrain( almansiStrain, deformationGradient - delta, Rm );
+        tardigradeConstitutiveTools::pullBackAlmansiStrain( almansiStrain, deformationGradient - delta, Rm );
 
-        BOOST_CHECK( ! error );
+        
 
         floatVector gradCol = ( Rp - Rm ) / ( 2 * delta[ i ] );
 
@@ -1365,9 +1363,9 @@ BOOST_AUTO_TEST_CASE( testComputeRightCauchyGreen, * boost::unit_test::tolerance
 
     floatVector result;
 
-    errorOut error = tardigradeConstitutiveTools::computeRightCauchyGreen( deformationGradient, result );
+    tardigradeConstitutiveTools::computeRightCauchyGreen( deformationGradient, result );
 
-    BOOST_CHECK( ! error );
+    
 
     BOOST_TEST( result == answer, CHECK_PER_ELEMENT );
 
@@ -1376,9 +1374,9 @@ BOOST_AUTO_TEST_CASE( testComputeRightCauchyGreen, * boost::unit_test::tolerance
     floatVector resultJ;
     floatMatrix dCdF;
 
-    error = tardigradeConstitutiveTools::computeRightCauchyGreen( deformationGradient, resultJ, dCdF );
+    tardigradeConstitutiveTools::computeRightCauchyGreen( deformationGradient, resultJ, dCdF );
 
-    BOOST_CHECK( ! error );
+    
 
     BOOST_TEST( resultJ == answer, CHECK_PER_ELEMENT );
 
@@ -1389,13 +1387,13 @@ BOOST_AUTO_TEST_CASE( testComputeRightCauchyGreen, * boost::unit_test::tolerance
 
         floatVector Rp, Rm;
 
-        error = tardigradeConstitutiveTools::computeRightCauchyGreen( deformationGradient + delta, Rp );
+        tardigradeConstitutiveTools::computeRightCauchyGreen( deformationGradient + delta, Rp );
 
-        BOOST_CHECK( ! error );
+        
 
-        error = tardigradeConstitutiveTools::computeRightCauchyGreen( deformationGradient - delta, Rm );
+        tardigradeConstitutiveTools::computeRightCauchyGreen( deformationGradient - delta, Rm );
 
-        BOOST_CHECK( ! error );
+        
 
         floatVector gradCol = ( Rp - Rm ) / ( 2 * delta[ i ] );
 
@@ -1419,18 +1417,18 @@ BOOST_AUTO_TEST_CASE( testComputeSymmetricPart, * boost::unit_test::tolerance( D
 
     floatVector result;
 
-    errorOut error = tardigradeConstitutiveTools::computeSymmetricPart( A, result );
+    tardigradeConstitutiveTools::computeSymmetricPart( A, result );
 
-    BOOST_CHECK( ! error );
+    
 
     BOOST_TEST( result == answer, CHECK_PER_ELEMENT );
 
     floatVector resultJ;
     floatMatrix dSymmAdA;
 
-    error = tardigradeConstitutiveTools::computeSymmetricPart( A, resultJ, dSymmAdA );
+    tardigradeConstitutiveTools::computeSymmetricPart( A, resultJ, dSymmAdA );
 
-    BOOST_CHECK( ! error );
+    
 
     BOOST_TEST( result == answer, CHECK_PER_ELEMENT );
 
@@ -1438,9 +1436,9 @@ BOOST_AUTO_TEST_CASE( testComputeSymmetricPart, * boost::unit_test::tolerance( D
 
     floatVector dSymmAdAv;
 
-    error = tardigradeConstitutiveTools::computeSymmetricPart( A, resultJv, dSymmAdAv );
+    tardigradeConstitutiveTools::computeSymmetricPart( A, resultJv, dSymmAdAv );
 
-    BOOST_CHECK( ! error );
+    
 
     BOOST_TEST( resultJv == answer, CHECK_PER_ELEMENT );
 
@@ -1453,13 +1451,13 @@ BOOST_AUTO_TEST_CASE( testComputeSymmetricPart, * boost::unit_test::tolerance( D
 
         floatVector Rp, Rm;
 
-        error = tardigradeConstitutiveTools::computeSymmetricPart( A + delta, Rp );
+        tardigradeConstitutiveTools::computeSymmetricPart( A + delta, Rp );
 
-        BOOST_CHECK( ! error );
+        
 
-        error = tardigradeConstitutiveTools::computeSymmetricPart( A - delta, Rm );
+        tardigradeConstitutiveTools::computeSymmetricPart( A - delta, Rm );
 
-        BOOST_CHECK( ! error );
+        
 
         floatVector gradCol = ( Rp - Rm ) / ( 2 * delta[ i ] );
 
@@ -1485,7 +1483,7 @@ BOOST_AUTO_TEST_CASE( testPushForwardPK2Stress, * boost::unit_test::tolerance( D
 
     floatVector result;
 
-    BOOST_CHECK( !tardigradeConstitutiveTools::pushForwardPK2Stress( PK2, F, result ) );
+    tardigradeConstitutiveTools::pushForwardPK2Stress( PK2, F, result );
 
     BOOST_TEST( result == cauchyStressAnswer, CHECK_PER_ELEMENT );
 
@@ -1493,7 +1491,7 @@ BOOST_AUTO_TEST_CASE( testPushForwardPK2Stress, * boost::unit_test::tolerance( D
 
     floatMatrix dCauchyStressdPK2, dCauchyStressdF;
 
-    BOOST_CHECK( !tardigradeConstitutiveTools::pushForwardPK2Stress( PK2, F, result2, dCauchyStressdPK2, dCauchyStressdF ) );
+    tardigradeConstitutiveTools::pushForwardPK2Stress( PK2, F, result2, dCauchyStressdPK2, dCauchyStressdF );
 
     BOOST_TEST( result2 == cauchyStressAnswer, CHECK_PER_ELEMENT );
 
@@ -1511,9 +1509,9 @@ BOOST_AUTO_TEST_CASE( testPushForwardPK2Stress, * boost::unit_test::tolerance( D
 
         floatVector cp, cm;
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::pushForwardPK2Stress( PK2 + delta, F, cp ) );
+        tardigradeConstitutiveTools::pushForwardPK2Stress( PK2 + delta, F, cp );
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::pushForwardPK2Stress( PK2 - delta, F, cm ) );
+        tardigradeConstitutiveTools::pushForwardPK2Stress( PK2 - delta, F, cm );
 
         for ( unsigned int j = 0; j < PK2.size( ); j++ ){
 
@@ -1533,9 +1531,9 @@ BOOST_AUTO_TEST_CASE( testPushForwardPK2Stress, * boost::unit_test::tolerance( D
 
         floatVector cp, cm;
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::pushForwardPK2Stress( PK2, F + delta, cp ) );
+        tardigradeConstitutiveTools::pushForwardPK2Stress( PK2, F + delta, cp );
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::pushForwardPK2Stress( PK2, F - delta, cm ) );
+        tardigradeConstitutiveTools::pushForwardPK2Stress( PK2, F - delta, cm );
 
         for ( unsigned int j = 0; j < F.size( ); j++ ){
 
@@ -1565,7 +1563,7 @@ BOOST_AUTO_TEST_CASE( testPullBackCauchyStress, * boost::unit_test::tolerance( D
 
     floatVector result, result2;
 
-    BOOST_CHECK( !tardigradeConstitutiveTools::pullBackCauchyStress( cauchyStress, F, result ) );
+    tardigradeConstitutiveTools::pullBackCauchyStress( cauchyStress, F, result );
 
     BOOST_TEST( result == answer, CHECK_PER_ELEMENT );
 
@@ -1577,8 +1575,8 @@ BOOST_AUTO_TEST_CASE( testPullBackCauchyStress, * boost::unit_test::tolerance( D
 
     floatType eps = 1e-6;
 
-    BOOST_CHECK( !tardigradeConstitutiveTools::pullBackCauchyStress( cauchyStress, F, result2,
-                                                                     dPK2dCauchyStress, dPK2dF ) );
+    tardigradeConstitutiveTools::pullBackCauchyStress( cauchyStress, F, result2,
+                                                       dPK2dCauchyStress, dPK2dF );
 
     BOOST_TEST( result2 == answer, CHECK_PER_ELEMENT );
 
@@ -1590,9 +1588,9 @@ BOOST_AUTO_TEST_CASE( testPullBackCauchyStress, * boost::unit_test::tolerance( D
 
         floatVector resultP, resultM;
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::pullBackCauchyStress( cauchyStress + delta, F, resultP ) );
+        tardigradeConstitutiveTools::pullBackCauchyStress( cauchyStress + delta, F, resultP );
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::pullBackCauchyStress( cauchyStress - delta, F, resultM ) );
+        tardigradeConstitutiveTools::pullBackCauchyStress( cauchyStress - delta, F, resultM );
 
         for ( unsigned int j = 0; j < answer.size( ); j++ ){
 
@@ -1610,9 +1608,9 @@ BOOST_AUTO_TEST_CASE( testPullBackCauchyStress, * boost::unit_test::tolerance( D
 
         floatVector resultP, resultM;
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::pullBackCauchyStress( cauchyStress, F + delta, resultP ) );
+        tardigradeConstitutiveTools::pullBackCauchyStress( cauchyStress, F + delta, resultP );
 
-        BOOST_CHECK( !tardigradeConstitutiveTools::pullBackCauchyStress( cauchyStress, F - delta, resultM ) );
+        tardigradeConstitutiveTools::pullBackCauchyStress( cauchyStress, F - delta, resultM );
 
         for ( unsigned int j = 0; j < answer.size( ); j++ ){
 
