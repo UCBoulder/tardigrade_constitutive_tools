@@ -20,6 +20,8 @@
 
 #include<tardigrade_constitutive_tools.h>
 
+#include<algorithm>
+
 namespace tardigradeConstitutiveTools{
 
     floatType deltaDirac(const unsigned int i, const unsigned int j){
@@ -39,7 +41,7 @@ namespace tardigradeConstitutiveTools{
         return 0;
     }
 
-    errorOut rotateMatrix(const floatVector &A, const floatVector &Q, floatVector &rotatedA){
+    void rotateMatrix(const floatVector &A, const floatVector &Q, floatVector &rotatedA){
         /*!
          * Rotate a matrix \f$A\f$ using the orthogonal matrix \f$Q\f$ with the form
          * 
@@ -53,15 +55,11 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Check the size of A
-        if (A.size() != Q.size()){
-            return new errorNode("rotateMatrix", "A and Q must have the same number of values");
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( A.size( ) == Q.size( ), "A and Q must have the same number of values" );
 
         //Set the dimension to be the square-root of the size of A
-        unsigned int dim = std::sqrt(A.size());
-        if (A.size() % dim != 0){
-            return new errorNode("rotateMatrix", "A must be square");
-        }
+        const unsigned int dim = std::sqrt(A.size());
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( A.size() % dim ) == 0, "A must be square");
 
         //Resize rotated A
         rotatedA.resize(A.size());
@@ -76,10 +74,134 @@ namespace tardigradeConstitutiveTools{
             }
         }
 
-        return NULL;
+        return;
     }
 
-    errorOut computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C ){
+    void computeDeformationGradient( const floatVector &displacementGradient, floatVector &F, const bool isCurrent ){
+        /*!
+         * Compute the deformation gradient from the gradient of the displacement
+         *
+         * If isCurrent = false
+         *
+         * \f$ \bf{F} = \frac{\partial \bf{u}}{\partial \bf{X} } u_i + \bf{I} \f$
+         *
+         * else if isCurrent = true
+         *
+         * \f$ \bf{F} = \left(\bf{I} - \frac{\partial \bf{u}}{\partial \bf{x}}\right)^{-1} \f$
+         *
+         * \param &displacementGradient: The gradient of the displacement with respect to either the
+         *     current or previous position.
+         * \param &F: The deformation gradient
+         * \param &isCurrent: Boolean indicating whether the gradient is taken w.r.t. the current (true)
+         *     or reference (false) position.
+         */
+
+        const unsigned int dim = ( unsigned int )std::pow( displacementGradient.size( ), 0.5 );
+        const unsigned int sot_dim = dim * dim;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( displacementGradient.size( ) == sot_dim, "The displacement gradienthas " + std::to_string( displacementGradient.size( ) ) + " values but the dimension has been determined to be " + std::to_string( dim ) + "." );
+
+        F = floatVector( sot_dim, 0 );
+
+        std::copy( displacementGradient.begin( ),
+                   displacementGradient.end( ),
+                   F.begin( ) );
+
+        if ( isCurrent ){
+
+            std::transform( F.cbegin( ), F.cend( ), F.begin( ), std::negate< floatType >( ) );
+
+            for ( unsigned int i = 0; i < dim; i++ ){ F[ dim * i + i ] += 1; }
+
+            Eigen::Map< Eigen::Matrix< floatType, -1, -1 > > map( F.data( ), dim, dim );
+            map = map.inverse( ).eval( );
+
+        }
+        else{
+
+            for ( unsigned int i = 0; i < dim; i++ ){ F[ dim * i + i ] += 1.; }
+
+        }
+
+        return;
+
+    }
+
+    void computeDeformationGradient( const floatVector &displacementGradient, floatVector &F, floatVector &dFdGradU, const bool isCurrent ){
+        /*!
+         * Compute the deformation gradient from the gradient of the displacement
+         *
+         * If isCurrent = false
+         *
+         * \f$ \bf{F} = \frac{\partial \bf{u}}{\partial \bf{X} } u_i + \bf{I} \f$
+         *
+         * else if isCurrent = true
+         *
+         * \f$ \bf{F} = \left(\bf{I} - \frac{\partial \bf{u}}{\partial \bf{x}}\right)^{-1} \f$
+         *
+         * \param &displacementGradient: The gradient of the displacement with respect to either the
+         *     current or previous position.
+         * \param &F: The deformation gradient
+         * \param &dFdGradU: The derivative of the deformation gradient w.r.t. the displacement gradient
+         * \param &isCurrent: Boolean indicating whether the gradient is taken w.r.t. the current (true)
+         *     or reference (false) position.
+         */
+
+        const unsigned int dim = ( unsigned int )std::pow( displacementGradient.size( ), 0.5 );
+        const unsigned int sot_dim = dim * dim;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( displacementGradient.size( ) == sot_dim, "The displacement gradienthas " + std::to_string( displacementGradient.size( ) ) + " values but the dimension has been determined to be " + std::to_string( dim ) + "." );
+
+        F = floatVector( sot_dim, 0 );
+
+        dFdGradU = floatVector( sot_dim * sot_dim, 0 );
+
+        std::copy( displacementGradient.begin( ),
+                   displacementGradient.end( ),
+                   F.begin( ) );
+
+        if ( isCurrent ){
+
+            std::transform( F.cbegin( ), F.cend( ), F.begin( ), std::negate< floatType >( ) );
+
+            for ( unsigned int i = 0; i < dim; i++ ){ F[ dim * i + i ] += 1; }
+
+            Eigen::Map< Eigen::Matrix< floatType, -1, -1 > > map( F.data( ), dim, dim );
+            map = map.inverse( ).eval( );
+
+            for ( unsigned int i = 0; i < dim; i++ ){
+
+                for ( unsigned int j = 0; j < dim; j++ ){
+
+                    for ( unsigned int k = 0; k < dim; k++ ){
+
+                        for ( unsigned int l = 0; l < dim; l++ ){
+
+                            dFdGradU[ dim * sot_dim * i + sot_dim * j + dim * k + l ]
+                                = F[ dim * i + k ] * F[ dim * l + j ];
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+        else{
+
+            for ( unsigned int i = 0; i < dim; i++ ){ F[ dim * i + i ] += 1.; }
+
+            for ( unsigned int i = 0; i < sot_dim; i++ ){ dFdGradU[ sot_dim * i + i ] += 1; }
+
+        }
+
+        return;
+
+    }
+
+    void computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C ){
         /*!
          * Compute the Right Cauchy-Green deformation tensor ( \f$C\f$ )
          *
@@ -94,19 +216,51 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3D
-        unsigned int dim = 3;
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        if ( deformationGradient.size( ) != dim * dim ){
-            return new errorNode( "computeRightCauchyGreen",
-			          "The deformation gradient must be 3D" );
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( deformationGradient.size( ) == sot_dim, "The deformation gradient must be 3D" );
 
-        C = tardigradeVectorTools::matrixMultiply( deformationGradient, deformationGradient, dim, dim, dim, dim, 1, 0 );
+        C = floatVector( sot_dim, 0 );
 
-        return NULL;
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F( deformationGradient.data( ), dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > C_map( C.data( ), dim, dim );
+
+        C_map = ( F.transpose( ) * F ).eval( );
+
+        return;
     }
 
-    errorOut computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C, floatMatrix &dCdF ){
+    void computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C, floatMatrix &dCdF ){
+        /*!
+         * Compute the Right Cauchy-Green deformation tensor ( \f$C\f$ ) from the deformation gradient ( \f$F\f$ )
+         * 
+         * \f$C_{IJ} = F_{iI} F_{iJ}\f$
+         * 
+         * \param &deformationGradient: A reference to the deformation gradient ( \f$F\f$ )
+         * \param &C: The resulting Right Cauchy-Green deformation tensor ( \f$C\f$ )
+         * \param &dCdF: The Jacobian of the Right Cauchy-Green deformation tensor
+         *     with regards to the deformation gradient ( \f$\frac{\partial C}{\partial F}\f$ ).
+         *
+         * The deformation gradient is organized as F11, F12, F13, F21, F22, F23, F31, F32, F33
+         *
+         * The Right Cauchy-Green deformation tensor is organized as C11, C12, C13, C21, C22, C23, C31, C32, C33
+         */
+
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+
+        floatVector _dCdF;
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeRightCauchyGreen( deformationGradient, C, _dCdF ) );
+
+        dCdF = tardigradeVectorTools::inflate( _dCdF, sot_dim, sot_dim );
+
+        return;
+
+    }
+
+    void computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C, floatVector &dCdF ){
         /*!
          * Compute the Right Cauchy-Green deformation tensor ( \f$C\f$ ) from the deformation gradient ( \f$F\f$ )
          * 
@@ -123,39 +277,29 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3D
-        unsigned int dim = 3;
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        errorOut error = computeRightCauchyGreen( deformationGradient, C );
-
-        if ( error ){
-            errorOut result = new errorNode( "computeRightCauchyGreen (jacobian)",
-                                             "Error in computation of Right Cauchy green deformation tensor" );
-            result->addNext( error );
-            return result;
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeRightCauchyGreen( deformationGradient, C ) );
         
         //Assemble the Jacobian
-        floatVector eye( dim * dim );
-        tardigradeVectorTools::eye( eye );
         
-        dCdF = floatMatrix( C.size( ), floatVector( deformationGradient.size( ), 0 ) );
+        dCdF = floatVector( sot_dim * sot_dim, 0 );
         
         for ( unsigned int I = 0; I < dim; I++ ){
             for ( unsigned int J = 0; J < dim; J++ ){
                 for ( unsigned int k = 0; k < dim; k++ ){
-                    for ( unsigned int K =0 ; K < dim; K++ ){
-                        dCdF[ dim * I + J ][ dim * k + K ] = eye[ dim * I + K ] * deformationGradient[ dim * k + J ]
-                                                           + deformationGradient[ dim * k + I ] * eye[ dim * J + K ];
-                    }
+                    dCdF[ dim * sot_dim * I + sot_dim * J + dim * k + I ] += deformationGradient[ dim * k + J ];
+                    dCdF[ dim * sot_dim * I + sot_dim * J + dim * k + J ] += deformationGradient[ dim * k + I ];
                 }
             }
         }
 
-        return NULL;
+        return;
 
     }
 
-    errorOut computeGreenLagrangeStrain( const floatVector &deformationGradient,
+    void computeGreenLagrangeStrain( const floatVector &deformationGradient,
                                          floatVector &E ){
         /*!
          * Compute the Green-Lagrange strain ( \f$E\f$ ) from the deformation gradient ( \f$F\f$ ). The operation is:
@@ -172,26 +316,24 @@ namespace tardigradeConstitutiveTools{
          * The Green-Lagrange strain is organized as E11, E12, E13, E21, E22, E23, E31, E32, E33
          */
 
-        if ( deformationGradient.size( ) != 9 ){
-            return new errorNode( "computeGreenLagrangeStrain", "The deformation gradient must be 3D." );
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( deformationGradient.size( ) == 9, "The deformation gradient must be 3D." );
 
-        const unsigned int dim=3;
+        constexpr unsigned int dim=3;
         E.resize( dim * dim );
 
         for ( unsigned int I = 0; I < dim; I++ ){
+            E[ dim * I + I ] -= 1;
             for ( unsigned int J = 0; J < dim; J++ ){
-                E[ dim * I + J ] = -deltaDirac( I, J );
                 for ( unsigned int i = 0; i < dim; i++ ){
                     E[ dim * I + J ] += deformationGradient[ dim * i + I ] * deformationGradient[ dim * i + J ];
                 }
                 E[ dim * I + J ] *= 0.5;
             }
         }
-        return NULL;
+        return;
     }
 
-    errorOut computeGreenLagrangeStrain( const floatVector &deformationGradient, floatVector &E, floatMatrix &dEdF){
+    void computeGreenLagrangeStrain( const floatVector &deformationGradient, floatVector &E, floatMatrix &dEdF){
         /*!
          * Compute the Green-Lagrange strain ( \f$E\f$ ) from the deformation gradient ( \f$F\f$ ) and it's jacobian.
          *
@@ -205,25 +347,38 @@ namespace tardigradeConstitutiveTools{
          * The Green-Lagrange strain is organized as E11, E12, E13, E21, E22, E23, E31, E32, E33
          */
 
-        errorOut error = computeGreenLagrangeStrain( deformationGradient, E );
+        floatVector _dEdF;
 
-        if ( error ){
-            errorOut result = new errorNode( "computeGreenLagrangeStrain (jacobian)", "Error in computation of Green-Lagrange strain" );
-            result->addNext( error );
-            return result;
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeGreenLagrangeStrain( deformationGradient, E, _dEdF ) );
 
-        error = computeDGreenLagrangeStrainDF( deformationGradient, dEdF );
+        dEdF = tardigradeVectorTools::inflate( _dEdF, deformationGradient.size( ), deformationGradient.size( ) );
 
-        if ( error ){
-            errorOut result = new errorNode( "computeGreenLagrangeStrain (jacobian)", "Error in computation of Green-Lagrange strain jacobian" );
-            result->addNext( error );
-            return result;
-        }
-        return NULL;
+        return;
+
     }
 
-    errorOut computeDGreenLagrangeStrainDF(const floatVector &deformationGradient, floatMatrix &dEdF){
+    void computeGreenLagrangeStrain( const floatVector &deformationGradient, floatVector &E, floatVector &dEdF){
+        /*!
+         * Compute the Green-Lagrange strain ( \f$E\f$ ) from the deformation gradient ( \f$F\f$ ) and it's jacobian.
+         *
+         * \param &deformationGradient: A reference to the deformation gradient ( \f$F\f$ ).
+         * \param &E: The resulting Green-Lagrange strain ( \f$E\f$ ).
+         * \param &dEdF: The jacobian of the Green-Lagrange strain w.r.t. the
+         *     deformation gradient ( \f$\frac{\partial E}{\partial F}\f$ ).
+         *
+         * The deformation gradient is organized as  F11, F12, F13, F21, F22, F23, F31, F32, F33
+         *
+         * The Green-Lagrange strain is organized as E11, E12, E13, E21, E22, E23, E31, E32, E33
+         */
+        
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeGreenLagrangeStrain( deformationGradient, E ) );
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeDGreenLagrangeStrainDF( deformationGradient, dEdF ) );
+
+        return;
+    }
+
+    void computeDGreenLagrangeStrainDF(const floatVector &deformationGradient, floatMatrix &dEdF){
         /*!
          * Compute the derivative of the Green-Lagrange strain ( \f$E\f$ )w.r.t. the deformation gradient ( \f$F\f$ ).
          *
@@ -237,26 +392,46 @@ namespace tardigradeConstitutiveTools{
          * The deformation gradient is organized as  F11, F12, F13, F21, F22, F23, F31, F32, F33
          */
 
-        if ( deformationGradient.size( ) != 9 ){
-            return new errorNode( "decomposeGreenLagrangeStrain", "the Green-Lagrange strain must be 3D" );
-        }
+        floatVector _dEdF;
 
-        dEdF = floatMatrix( deformationGradient.size(), floatVector( deformationGradient.size( ), 0 ) );
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeDGreenLagrangeStrainDF( deformationGradient, _dEdF ) );
+
+        dEdF = tardigradeVectorTools::inflate( _dEdF, deformationGradient.size( ), deformationGradient.size( ) );
+
+        return;
+
+    }
+
+    void computeDGreenLagrangeStrainDF(const floatVector &deformationGradient, floatVector &dEdF){
+        /*!
+         * Compute the derivative of the Green-Lagrange strain ( \f$E\f$ )w.r.t. the deformation gradient ( \f$F\f$ ).
+         *
+         * \f$\frac{\partial E_{IJ}}{\partial F_{kK}} = 0.5 ( \delta_{IK} F_{kJ} + F_{kI} \delta_{JK})\f$
+         *
+         * Where \f$F\f$ is the deformation gradient and \f$\delta\f$ is the kronecker delta.
+         *
+         * \param &deformationGradient: A reference to the deformation gradient ( \f$F\f$ ).
+         * \param &dEdF: The resulting gradient ( \f$\frac{\partial E}{\partial F}\f$ ).
+         *
+         * The deformation gradient is organized as  F11, F12, F13, F21, F22, F23, F31, F32, F33
+         */
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( deformationGradient.size( ) == 9, "the Green-Lagrange strain must be 3D" );
+
+        dEdF = floatVector( 81, 0 );
         for ( unsigned int I = 0; I < 3; I++ ){
             for ( unsigned int J = 0; J < 3; J++ ){
                 for ( unsigned int k = 0; k < 3; k++ ){
-                    for (unsigned int K = 0; K < 3; K++ ){
-                        dEdF[ 3 * I + J ][ 3 * k + K ] = 0.5 * ( deltaDirac( I, K ) * deformationGradient[ 3 * k + J ]
-                                                       + deformationGradient[ 3 * k + I ] * deltaDirac( J, K ) );
-                    }
+                    dEdF[ 3 * 9 * I + 9 * J + 3 * k + I ] += 0.5 * deformationGradient[ 3 * k + J ];
+                    dEdF[ 3 * 9 * I + 9 * J + 3 * k + J ] += 0.5 * deformationGradient[ 3 * k + I ];
                 }
             }
         }
 
-        return NULL;
+        return;
     }
 
-    errorOut decomposeGreenLagrangeStrain( const floatVector &E, floatVector &Ebar, floatType &J ){
+    void decomposeGreenLagrangeStrain( const floatVector &E, floatVector &Ebar, floatType &J ){
         /*!
          * Decompose the Green-Lagrange strain tensor ( \f$E\f$ ) into isochoric ( \f$\bar{E}\f$ ) and volumetric ( \f$J\f$ ) parts where
          *
@@ -270,24 +445,99 @@ namespace tardigradeConstitutiveTools{
          * \param &J: The Jacobian of deformation ( \f$J\f$ )
          */
 
-        if (E.size() != 9){
-            return new errorNode("decomposeGreenLagrangeStrain", "the Green-Lagrange strain must be 3D");
-        }
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( E.size() == sot_dim, "the Green-Lagrange strain must be 3D");
 
         //Construct the identity tensor
-        floatVector eye = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+        floatVector F_squared = 2 * E;
+        for ( unsigned int i = 0; i < dim; i++ ){ F_squared[ dim * i + i ] += 1; }
 
-        floatType Jsq = tardigradeVectorTools::determinant(2*E + eye, 3, 3);
-        if (Jsq<=0){
-            return new errorNode("decomposeGreenLagrangeStrain", "the determinant of the Green-Lagrange strain is negative");
-        }
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F_squared_map( F_squared.data( ), dim, dim );
+
+        floatType Jsq = F_squared_map.determinant( );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( Jsq > 0, "the determinant of the Green-Lagrange strain is negative");
 
         J = sqrt(Jsq);
-        Ebar = E/(pow(J, 2./3)) + 0.5*(1/pow(J, 2./3) - 1)*eye;
-        return NULL;
+        Ebar = E/(pow(J, 2./3));
+       
+        for ( unsigned int i = 0; i < dim; i++ ){ Ebar[ dim * i + i ] += 0.5*(1/pow(J, 2./3) - 1); }
+
+        return;
     }
 
-    errorOut decomposeGreenLagrangeStrain(const floatVector &E, floatVector &Ebar, floatType &J,
+    void decomposeGreenLagrangeStrain(const floatVector &E, floatVector &Ebar, floatType &J,
+                                          floatVector &dEbardE, floatVector &dJdE){
+        /*!
+         * Decompose the Green-Lagrange strain tensor ( \f$E\f$ ) into isochoric ( \f$\bar{E}\f$ ) and volumetric ( \f$J\f$ ) parts where
+         *
+         * \f$J = det(F) = sqrt(det(2*E + I))\f$
+         *
+         * \f$\bar{E}_{IJ} = 0.5*((1/(J**(2/3))) F_{iI} F_{iJ} - I_{IJ}) = (1/(J**(2/3)))*E_{IJ} + 0.5(1/(J**(2/3)) - 1)*I_{IJ}\f$
+         *
+         * \param &E: The Green-Lagrange strain tensor ( \f$E\f$ )
+         * \param &Ebar: The isochoric Green-Lagrange strain tensor ( \f$\bar{E}\f$ ).
+         *     format = E11, E12, E13, E21, E22, E23, E31, E32, E33
+         * \param &J: The Jacobian of deformation ( \f$J\f$ )
+         * \param &dEbardE: The derivative of the isochoric Green-Lagrange strain
+         *     tensor w.r.t. the total strain tensor ( \f$\frac{\partial \bar{E}}{\partial E}\f$ ).
+         * \param &dJdE: The derivative of the jacobian of deformation w.r.t. the
+         *     Green-Lagrange strain tensor ( \f$\frac{\partial J}{\partial E}\f$ ).
+         */
+
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( decomposeGreenLagrangeStrain(E, Ebar, J) );
+
+        //Compute the derivative of the jacobian of deformation w.r.t. the Green-Lagrange strain
+        dJdE = 2 * E;
+        for ( unsigned int i = 0; i < 3; i++ ){ dJdE[ dim * i + i ] += 1; };
+
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > dJdE_map( dJdE.data( ), dim, dim );
+
+        dJdE_map = ( J * dJdE_map.inverse( ) ).eval( );
+
+        //Compute the derivative of the isochoric part of the Green-Lagrange strain w.r.t. the Green-Lagrange strain
+        floatVector eye( sot_dim );
+        for ( unsigned int i = 0; i < dim; i++ ){ eye[ dim * i + i ] = 1.; };
+        floatMatrix EYE = tardigradeVectorTools::eye<floatType>(9);
+
+        floatType invJ23 = 1./pow(J, 2./3);
+        floatType invJ53 = 1./pow(J, 5./3);
+
+        dEbardE = floatVector( sot_dim * sot_dim, 0 );
+
+        for ( unsigned int i = 0; i < sot_dim; i++ ){
+            dEbardE[ sot_dim * i + i ] += invJ23;
+        }
+
+        for ( unsigned int i = 0; i < dim; i++ ){
+
+            for ( unsigned int j = 0; j < dim; j++ ){
+
+                for ( unsigned int k = 0; k < dim; k++ ){
+
+                    dEbardE[ sot_dim * dim * i + sot_dim * i + dim * j + k ] -= (1./3) * invJ53 * dJdE[ dim * j + k ];
+
+                    for ( unsigned int l = 0; l < dim; l++ ){
+
+                        dEbardE[ sot_dim * dim * i + sot_dim * j + dim * k + l ] -= (2./3) * invJ53 * E[ dim * i + j ] * dJdE[ dim * k + l ];
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        return;
+    }
+
+    void decomposeGreenLagrangeStrain(const floatVector &E, floatVector &Ebar, floatType &J,
                                           floatMatrix &dEbardE, floatVector &dJdE){
         /*!
          * Decompose the Green-Lagrange strain tensor ( \f$E\f$ ) into isochoric ( \f$\bar{E}\f$ ) and volumetric ( \f$J\f$ ) parts where
@@ -306,29 +556,19 @@ namespace tardigradeConstitutiveTools{
          *     Green-Lagrange strain tensor ( \f$\frac{\partial J}{\partial E}\f$ ).
          */
 
-        errorOut error = decomposeGreenLagrangeStrain(E, Ebar, J);
-        if (error){
-            errorOut result = new errorNode("decomposeGreenLagrangeStrain", "Error in computation of the isochoric volumetric split");
-            result->addNext(error);
-            return result;
-        }
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        //Compute the derivative of the jacobian of deformation w.r.t. the Green-Lagrange strain
-        floatVector eye = {1, 0, 0, 0, 1, 0, 0, 0, 1};
-        dJdE = J * tardigradeVectorTools::inverse(2*E + eye, 3, 3);
+        floatVector _dEbardE;
 
-        //Compute the derivative of the isochoric part of the Green-Lagrange strain w.r.t. the Green-Lagrange strain
-        floatMatrix EYE = tardigradeVectorTools::eye<floatType>(9);
+        TARDIGRADE_ERROR_TOOLS_CATCH( decomposeGreenLagrangeStrain( E, Ebar, J, _dEbardE, dJdE ) );
 
-        floatType invJ23 = 1./pow(J, 2./3);
-        floatType invJ53 = 1./pow(J, 5./3);
+        dEbardE = tardigradeVectorTools::inflate( _dEbardE, sot_dim, sot_dim );
 
-        dEbardE = invJ23*EYE - (2./3)*invJ53*tardigradeVectorTools::dyadic(E, dJdE) - (1./3)*invJ53*tardigradeVectorTools::dyadic(eye, dJdE);
-
-        return NULL;
+        return;
     }
 
-    errorOut mapPK2toCauchy(const floatVector &PK2Stress, const floatVector &deformationGradient, floatVector &cauchyStress){
+    void mapPK2toCauchy(const floatVector &PK2Stress, const floatVector &deformationGradient, floatVector &cauchyStress){
         /*!
          * Map the PK2 stress ( \f$P^{II}\f$ ) to the current configuration resulting in the Cauchy stress ( \f$\sigma\f$ ).
          *
@@ -341,33 +581,42 @@ namespace tardigradeConstitutiveTools{
          * \param &cauchyStress: The Cauchy stress (\f$\sigma\f$ ).
          */
 
-        if (PK2Stress.size() != 9){
-            return new errorNode("mapPK2toCauchy", "The cauchy stress must have nine components (3D)");
-        }
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        if (deformationGradient.size() != PK2Stress.size()){
-            return new errorNode("mapPK2toCauchy", "The deformation gradient and the PK2 stress don't have the same size");
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( PK2Stress.size( ) == sot_dim, "The cauchy stress must have nine components (3D)");
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( deformationGradient.size() == PK2Stress.size(), "The deformation gradient and the PK2 stress don't have the same size");
 
         //Compute the determinant of the deformation gradient
-        floatType detF = tardigradeVectorTools::determinant(deformationGradient, 3, 3);
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > map( deformationGradient.data( ), dim, dim );
+        floatType detF = map.determinant( );
 
         //Initialize the Cauchy stress
-        cauchyStress = floatVector(PK2Stress.size(), 0);
+        floatVector temp_sot( sot_dim, 0 );
+        cauchyStress = floatVector( sot_dim, 0);
 
-        for (unsigned int i=0; i<3; i++){
-            for (unsigned int j=0; j<3; j++){
-                for (unsigned int I=0; I<3; I++){
-                    for (unsigned int J=0; J<3; J++){
-                        cauchyStress[3*i + j] += deformationGradient[3*i + I]*PK2Stress[3*I + J]*deformationGradient[3*j + J]/detF;
-                    }
+        for (unsigned int i=0; i<dim; i++){
+            for (unsigned int I=0; I<dim; I++){
+                for (unsigned int j=0; j<dim; j++){
+                    temp_sot[ dim * i + j ] += deformationGradient[ 3 * i + I ] * PK2Stress[ 3 * I + j ];
                 }
             }
         }
-        return NULL;
+
+        temp_sot /= detF;
+
+        for ( unsigned int i = 0; i < dim; i++ ){
+            for ( unsigned int j = 0; j < dim; j++ ){
+                for ( unsigned int I = 0; I < dim; I++ ){
+                        cauchyStress[ dim * i + j ] += temp_sot[ dim * i + I ]*deformationGradient[ 3 * j + I ];
+                }
+            }
+        }
+        return;
     }
 
-    errorOut WLF(const floatType &temperature, const floatVector &WLFParameters, floatType &factor){
+    void WLF(const floatType &temperature, const floatVector &WLFParameters, floatType &factor){
         /*!
          * An implementation of the Williams-Landel-Ferry equation.
          *
@@ -380,24 +629,20 @@ namespace tardigradeConstitutiveTools{
          * \param &factor: The shift factor
          */
 
-        if (WLFParameters.size() != 3){
-            return new errorNode("WLF", "The parameters have the wrong number of terms");
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( WLFParameters.size() == 3, "The parameters have the wrong number of terms");
 
         floatType Tr = WLFParameters[0];
         floatType C1 = WLFParameters[1];
         floatType C2 = WLFParameters[2];
 
-        if (tardigradeVectorTools::fuzzyEquals(C2 + (temperature - Tr), 0.)){
-            return new errorNode("WLF", "Zero in the denominator");
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( !tardigradeVectorTools::fuzzyEquals(C2 + (temperature - Tr), 0.), "Zero in the denominator");
 
         factor = pow(10., -C1*(temperature - Tr)/(C2 + (temperature - Tr)));
 
-        return NULL;
+        return;
     }
 
-    errorOut WLF(const floatType &temperature, const floatVector &WLFParameters, floatType &factor, floatType &dfactordT){
+    void WLF(const floatType &temperature, const floatVector &WLFParameters, floatType &factor, floatType &dfactordT){
         /*!
          * An implementation of the Williams-Landel-Ferry equation that also returns the gradient w.r.t. \f$T\f$
          *
@@ -407,12 +652,7 @@ namespace tardigradeConstitutiveTools{
          * \param &dfactordT: The derivative of the shift factor w.r.t. the temperature ( \f$\frac{\partial factor}{\partial T}\f$ )
          */
 
-        errorOut error = WLF(temperature, WLFParameters, factor);
-        if (error){
-            errorOut result = new errorNode("WLF", "error in computation of WLF factor");
-            result->addNext(error);
-            return result;
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( WLF(temperature, WLFParameters, factor) );
 
         floatType Tr = WLFParameters[0];
         floatType C1 = WLFParameters[1];
@@ -420,10 +660,10 @@ namespace tardigradeConstitutiveTools{
 
         dfactordT = std::log(10)*factor*(-C1/(C2 + temperature - Tr) + (C1*(temperature - Tr)/pow(C2 + temperature - Tr, 2)));
 
-        return NULL;
+        return;
     }
 
-    errorOut computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt){
+    void computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt){
         /*!
          * Compute the total time derivative of the deformation gradient.
          *
@@ -435,15 +675,12 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3D
-        unsigned int dim = 3;
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        if (velocityGradient.size() != deformationGradient.size()){
-            return new errorNode("computeDFDt", "The velocity gradient and deformation gradient must have the same size");
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( velocityGradient.size() == deformationGradient.size(), "The velocity gradient and deformation gradient must have the same size");
 
-        if (velocityGradient.size() != dim*dim){
-            return new errorNode("computeDFDt", "The velocity gradient doesn't have enough entries");
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( velocityGradient.size() == sot_dim, "The velocity gradient doesn't have enough entries");
 
         DFDt = floatVector(velocityGradient.size(), 0);
 
@@ -454,10 +691,55 @@ namespace tardigradeConstitutiveTools{
                 }
             }
         }
-        return NULL;
+        return;
     }
 
-    errorOut computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt,
+    void computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt,
+                         floatVector &dDFDtdL, floatVector &dDFDtdF){
+        /*!
+         * Compute the total time derivative of the deformation gradient
+         * and return the partial derivatives w.r.t. L and F.
+         *
+         * \f$\dot{F}_{iI} = L_{ij} F_{jI}\f$
+         * \f$\frac{\partial \dot{F}_{iI}}{\partial L_{kl}} = \delta_{ik} F{lI}\f$
+         * \f$\frac{\partial \dot{F}_{iI}}{\partial F_{kK}} = L_{ik} \delta{IK}\f$
+         *
+         * \param &velocityGradient: The velocity gradient \f$L_{ij}\f$
+         * \param &deformationGradient: The deformation gradient \f$F_{iI}\f$
+         * \param &DFDt: The total time derivative of the deformation gradient
+         * \param &dDFDtdL: The derivative of the total time derivative of the deformation gradient
+         *     with respect to the velocity gradient.
+         * \param &dDFDtdF: The derivative of the total time derivative of the deformation gradient
+         *     with respect to the deformation gradient.
+         */
+
+        //Assume 3D
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeDFDt(velocityGradient, deformationGradient, DFDt) );
+
+        //Form the identity tensor
+        floatVector eye(dim*dim, 0);
+        tardigradeVectorTools::eye(eye);
+
+        //Form the partial w.r.t. L and F
+        dDFDtdL = floatVector( sot_dim * sot_dim, 0 );
+        dDFDtdF = floatVector( sot_dim * sot_dim, 0 );;
+
+        for (unsigned int i=0; i<dim; i++){
+            for (unsigned int I=0; I<dim; I++){
+                for (unsigned int k=0; k<dim; k++){
+                    dDFDtdL[ sot_dim * dim * i + sot_dim * I + dim * i + k] = deformationGradient[ dim * k + I ];
+                    dDFDtdF[ sot_dim * dim * i + sot_dim * I + dim * k + I] = velocityGradient[ dim * i + k ];
+                }
+            }
+        }
+
+        return;
+    }
+
+    void computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt,
                          floatMatrix &dDFDtdL, floatMatrix &dDFDtdF){
         /*!
          * Compute the total time derivative of the deformation gradient
@@ -477,39 +759,21 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3D
-        unsigned int dim = 3;
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        errorOut error = computeDFDt(velocityGradient, deformationGradient, DFDt);
+        floatVector _dDFDtdL, _dDFDtdF;
 
-        if (error){
-            errorOut result = new errorNode("computeDFDt (jacobian)", "error in computation of DFDt");
-            result->addNext(error);
-            return result;
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeDFDt( velocityGradient, deformationGradient, DFDt, _dDFDtdL, _dDFDtdF ) );
 
-        //Form the identity tensor
-        floatVector eye(dim*dim, 0);
-        tardigradeVectorTools::eye(eye);
+        dDFDtdL = tardigradeVectorTools::inflate( _dDFDtdL, sot_dim, sot_dim );
 
-        //Form the partial w.r.t. L and F
-        dDFDtdL = floatMatrix(dim*dim, floatVector(dim*dim, 0));
-        dDFDtdF = dDFDtdL;
+        dDFDtdF = tardigradeVectorTools::inflate( _dDFDtdF, sot_dim, sot_dim );
 
-        for (unsigned int i=0; i<dim; i++){
-            for (unsigned int I=0; I<dim; I++){
-                for (unsigned int k=0; k<dim; k++){
-                    for (unsigned int l=0; l<dim; l++){ //Note that we will use l = K for efficiency
-                        dDFDtdL[dim*i + I][dim*k + l] = eye[dim*i + k] * deformationGradient[dim*l + I];
-                        dDFDtdF[dim*i + I][dim*k + l] = velocityGradient[dim*i + k] * eye[dim*I + l];
-                    }
-                }
-            }
-        }
-
-        return NULL;
+        return;
     }
 
-    errorOut midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    void midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                 floatVector &dA, floatVector &A, const floatVector &alpha ){
         /*!
          * Perform midpoint rule based evolution of a vector.
@@ -527,17 +791,9 @@ namespace tardigradeConstitutiveTools{
          * \param &alpha: The integration parameter.
          */
 
-        if ( ( Ap.size( ) != DApDt.size( ) ) || ( Ap.size( ) != DADt.size( ) ) ){
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( Ap.size( ) == DApDt.size( ) ) && ( Ap.size( ) == DADt.size( ) ), "The size of the previous value of the vector and the two rates are not equal" );
 
-            return new errorNode( __func__, "The size of the previous value of the vector and the two rates are not equal" );
-
-        }
-
-        if ( Ap.size( ) != alpha.size( ) ){
-
-            return new errorNode( __func__, "The size of the alpha vector is not the same size as the previous vector value" );
-
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( Ap.size( ) == alpha.size( ), "The size of the alpha vector is not the same size as the previous vector value" );
 
         dA = floatVector( Ap.size( ), 0 );
 
@@ -547,11 +803,7 @@ namespace tardigradeConstitutiveTools{
 
         for ( auto ai = alpha.begin( ); ai != alpha.end( ); ai++, i++ ){
 
-            if ( ( ( *ai ) < 0) || ( ( *ai ) > 1 ) ){
-
-                return new errorNode( __func__, "Alpha must be between 0 and 1" );
-
-            }
+            TARDIGRADE_ERROR_TOOLS_CHECK( ( ( *ai ) >= 0) && ( ( *ai ) <= 1 ), "Alpha must be between 0 and 1" );
 
             dA[ i ] = Dt * ( *ai * DApDt[ i ] + ( 1 - *ai ) * DADt[ i ] );
 
@@ -559,11 +811,48 @@ namespace tardigradeConstitutiveTools{
 
         }
 
-        return NULL;
+        return;
 
     }
 
-    errorOut midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    void midpointEvolutionFlatJ( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+                                     floatVector &dA, floatVector &A, floatVector &DADADt, const floatVector &alpha ){
+        /*!
+         * Perform midpoint rule based evolution of a vector and return the jacobian.
+         *
+         * alpha=0 (implicit)
+         *
+         * alpha=1 (explicit)
+         *
+         * \param &Dt: The change in time.
+         * \param &Ap: The previous value of the vector
+         * \param &DApDt: The previous time rate of change of the vector.
+         * \param &DADt: The current time rate of change of the vector.
+         * \param &dA: The change in value of the vector.
+         * \param &A: The current value of the vector.
+         * \param &DADADt: The gradient of A w.r.t. the current rate of change.
+         * \param &alpha: The integration parameter.
+         */
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, alpha ) )
+
+        const unsigned int A_size = A.size( );
+
+        DADADt = floatVector( A_size * A_size, 0 );
+
+        unsigned int i = 0;
+
+        for ( auto ai = alpha.begin( ); ai != alpha.end( ); ai++, i++ ){
+
+            DADADt[ A_size * i + i ] = Dt * ( 1 - *ai );
+
+        }
+
+        return;
+
+    }
+
+    void midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                 floatVector &dA, floatVector &A, floatMatrix &DADADt, const floatVector &alpha ){
         /*!
          * Perform midpoint rule based evolution of a vector and return the jacobian.
@@ -576,39 +865,65 @@ namespace tardigradeConstitutiveTools{
          * \param &Ap: The previous value of the vector
          * \param &DApDt: The previous time rate of change of the vector.
          * \param &DADt: The current time rate of change of the vector.
-         * \param &A: The change in value of the vector.
+         * \param &dA: The change in value of the vector.
          * \param &A: The current value of the vector.
          * \param &DADADt: The gradient of A w.r.t. the current rate of change.
          * \param &alpha: The integration parameter.
          */
 
-        errorOut error = midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, alpha );
+        floatVector _DADADt;
 
-        if ( error ){
+        TARDIGRADE_ERROR_TOOLS_CATCH( midpointEvolutionFlatJ( Dt, Ap, DApDt, DADt, dA, A, _DADADt, alpha ) )
 
-            errorOut result = new errorNode( __func__, "Error in computation of the integrated term" );
+        DADADt = tardigradeVectorTools::inflate( _DADADt, A.size( ), A.size( ) );
 
-            result->addNext( error );
+        return;
 
-            return result;
+    }
 
-        }
 
-        DADADt = floatMatrix( A.size( ), floatVector( A.size( ), 0 ) );
+    void midpointEvolutionFlatJ( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+                                     floatVector &dA, floatVector &A, floatVector &DADADt, floatVector &DADADtp,
+                                     const floatVector &alpha ){
+        /*!
+         * Perform midpoint rule based evolution of a vector and return the jacobian.
+         *
+         * alpha=0 (implicit)
+         *
+         * alpha=1 (explicit)
+         *
+         * Note that the gradient of A w.r.t. Ap is identity and the gradient of dA w.r.t. Ap is zero
+         *
+         * \param &Dt: The change in time.
+         * \param &Ap: The previous value of the vector
+         * \param &DApDt: The previous time rate of change of the vector.
+         * \param &DADt: The current time rate of change of the vector.
+         * \param &dA: The change in value of the vector.
+         * \param &A: The current value of the vector.
+         * \param &DADADt: The gradient of A w.r.t. the current rate of change.
+         * \param &DADADtp: The gradient of A w.r.t. the previous rate of change.
+         * \param &alpha: The integration parameter.
+         */
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( midpointEvolutionFlatJ( Dt, Ap, DApDt, DADt, dA, A, DADADt, alpha ) );
+
+        const unsigned int A_size = A.size( );
+
+        DADADtp = floatVector( A_size * A_size, 0 );
 
         unsigned int i = 0;
 
         for ( auto ai = alpha.begin( ); ai != alpha.end( ); ai++, i++ ){
 
-            DADADt[ i ][ i ] = Dt * ( 1 - *ai );
+            DADADtp[ A_size * i + i ] = Dt * ( *ai );
 
         }
 
-        return NULL;
+        return;
 
     }
 
-    errorOut midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    void midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                 floatVector &dA, floatVector &A, floatMatrix &DADADt, floatMatrix &DADADtp,
                                 const floatVector &alpha ){
         /*!
@@ -624,40 +939,26 @@ namespace tardigradeConstitutiveTools{
          * \param &Ap: The previous value of the vector
          * \param &DApDt: The previous time rate of change of the vector.
          * \param &DADt: The current time rate of change of the vector.
-         * \param &A: The change in value of the vector.
+         * \param &dA: The change in value of the vector.
          * \param &A: The current value of the vector.
          * \param &DADADt: The gradient of A w.r.t. the current rate of change.
          * \param &DADADtp: The gradient of A w.r.t. the previous rate of change.
          * \param &alpha: The integration parameter.
          */
 
-        errorOut error = midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, DADADt, alpha );
+        floatVector _DADADt, _DADADtp;
 
-        if ( error ){
+        TARDIGRADE_ERROR_TOOLS_CATCH( midpointEvolutionFlatJ( Dt, Ap, DApDt, DADt, dA, A, _DADADt, _DADADtp, alpha ) );
 
-            errorOut result = new errorNode( __func__, "Error in computation of the integrated term" );
+        DADADt  = tardigradeVectorTools::inflate( _DADADt,  A.size( ), A.size( ) );
 
-            result->addNext( error );
+        DADADtp = tardigradeVectorTools::inflate( _DADADtp, A.size( ), A.size( ) );
 
-            return result;
-
-        }
-
-        DADADtp = floatMatrix( A.size( ), floatVector( A.size( ), 0 ) );
-
-        unsigned int i = 0;
-
-        for ( auto ai = alpha.begin( ); ai != alpha.end( ); ai++, i++ ){
-
-            DADADtp[ i ][ i ] = Dt * ( *ai );
-
-        }
-
-        return NULL;
+        return;
 
     }
 
-    errorOut midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    void midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                 floatVector &dA, floatVector &A, const floatType alpha ){
         /*!
          * Perform midpoint rule based evolution of a vector. Defaults to the trapezoidal rule.
@@ -679,7 +980,57 @@ namespace tardigradeConstitutiveTools{
 
     }
 
-    errorOut midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    void midpointEvolutionFlatJ( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+                                     floatVector &dA, floatVector &A, floatVector &DADADt, const floatType alpha ){
+        /*!
+         * Perform midpoint rule based evolution of a vector. Defaults to the trapezoidal rule.
+         *
+         * alpha=0 (implicit)
+         *
+         * alpha=1 (explicit)
+         *
+         * \param &Dt: The change in time.
+         * \param &Ap: The previous value of the vector
+         * \param &DApDt: The previous time rate of change of the vector.
+         * \param *DADt: The current time rate of change of the vector.
+         * \param &dA: The change in the vector
+         * \param &A: The current value of the vector.
+         * \param &DADADt: The derivative of the vector w.r.t. the rate of change of the vector.
+         * \param alpha: The integration parameter.
+         */
+
+        return midpointEvolutionFlatJ( Dt, Ap, DApDt, DADt, dA, A, DADADt, alpha * floatVector( Ap.size( ), 1 ) );
+
+    }
+
+    void midpointEvolutionFlatJ( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+                                     floatVector &dA, floatVector &A, floatVector &DADADt, floatVector &DADADtp,
+                                     const floatType alpha ){
+        /*!
+         * Perform midpoint rule based evolution of a vector. Defaults to the trapezoidal rule.
+         *
+         * alpha=0 (implicit)
+         *
+         * alpha=1 (explicit)
+         * 
+         * Note that the gradient of A w.r.t. Ap is identity and the gradient of dA w.r.t. Ap is zero
+         *
+         * \param &Dt: The change in time.
+         * \param &Ap: The previous value of the vector
+         * \param &DApDt: The previous time rate of change of the vector.
+         * \param *DADt: The current time rate of change of the vector.
+         * \param &dA: The change in the vector
+         * \param &A: The current value of the vector.
+         * \param &DADADt: The derivative of the vector w.r.t. the rate of change of the vector.
+         * \param &DADADtp: The derivative of the vector w.r.t. the previous rate of change of the vector.
+         * \param alpha: The integration parameter.
+         */
+
+        return midpointEvolutionFlatJ( Dt, Ap, DApDt, DADt, dA, A, DADADt, DADADtp, alpha * floatVector( Ap.size( ), 1 ) );
+
+    }
+
+    void midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                 floatVector &dA, floatVector &A, floatMatrix &DADADt, const floatType alpha ){
         /*!
          * Perform midpoint rule based evolution of a vector. Defaults to the trapezoidal rule.
@@ -702,7 +1053,7 @@ namespace tardigradeConstitutiveTools{
 
     }
 
-    errorOut midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    void midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                 floatVector &dA, floatVector &A, floatMatrix &DADADt, floatMatrix &DADADtp,
                                 const floatType alpha ){
         /*!
@@ -729,7 +1080,7 @@ namespace tardigradeConstitutiveTools{
 
     }
 
-    errorOut evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    void evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                      floatVector &dF, floatVector &deformationGradient, const floatType alpha, const unsigned int mode){
         /*!
          * Evolve the deformation gradient ( F ) using the midpoint integration method.
@@ -754,34 +1105,32 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assumes 3D
-        const unsigned int dim = 3;
-        if ( previousDeformationGradient.size( ) != dim * dim ){
-            return new errorNode( "evolveF", "The deformation gradient doesn't have enough terms (require 9 for 3D)" );
-        }
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        if ( Lp.size( ) != previousDeformationGradient.size( ) ){
-            return new errorNode( "evolveF", "The previous velocity gradient and deformation gradient aren't the same size" );
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( previousDeformationGradient.size( ) == sot_dim, "The deformation gradient doesn't have enough terms (require 9 for 3D)" );
 
-        if ( previousDeformationGradient.size( ) != L.size( ) ){
-            return new errorNode( "evolveF", "The previous deformation gradient and the current velocity gradient aren't the same size" );
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( Lp.size( ) == previousDeformationGradient.size( ), "The previous velocity gradient and deformation gradient aren't the same size" );
 
-        if ( ( mode != 1 ) && ( mode != 2 ) ){
-            return new errorNode( "evolveF", "The mode of evolution is not recognized" );
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( previousDeformationGradient.size( ) == L.size( ), "The previous deformation gradient and the current velocity gradient aren't the same size" );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( mode == 1 ) || ( mode == 2 ), "The mode of evolution is not recognized" );
 
         //Compute L^{t + \alpha}
         floatVector LtpAlpha = alpha * Lp + ( 1 - alpha ) * L;
 
         //Compute the right hand side
 
-        floatVector RHS;
+        floatVector RHS( sot_dim, 0 );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > Fp( previousDeformationGradient.data( ), dim, dim );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > Lt( LtpAlpha.data( ), dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > RHS_map( RHS.data( ), dim, dim );
+
         if ( mode == 1 ){
-            RHS = tardigradeVectorTools::matrixMultiply( LtpAlpha, previousDeformationGradient, dim, dim, dim, dim );
+            RHS_map = ( Lt * Fp ).eval( );
         }
         if ( mode == 2 ){
-            RHS = tardigradeVectorTools::matrixMultiply( previousDeformationGradient, LtpAlpha, dim, dim, dim, dim );
+            RHS_map = ( Fp * Lt ).eval( );
         }
 
         RHS *= Dt;
@@ -791,27 +1140,34 @@ namespace tardigradeConstitutiveTools{
 
         tardigradeVectorTools::eye( eye );
 
-        floatVector LHS = eye - Dt * ( 1 - alpha ) * L;
-        floatVector invLHS = tardigradeVectorTools::inverse( LHS, dim, dim );
+        floatVector invLHS = -Dt * ( 1 - alpha ) * L;
+        for ( unsigned int i = 0; i < dim; i++ ){ invLHS[ dim * i + i ] += 1; }
+
+        dF = floatVector( sot_dim, 0 );
+
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invLHS_map( invLHS.data( ), dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > dF_map( dF.data( ), dim, dim );
+
+        invLHS_map = invLHS_map.inverse( ).eval( );
 
         if ( mode == 1 ){
 
-            dF = tardigradeVectorTools::matrixMultiply( invLHS, RHS, dim, dim, dim, dim );
+            dF_map = ( invLHS_map * RHS_map ).eval( );
 
         }
         if ( mode == 2 ){
 
-            dF = tardigradeVectorTools::matrixMultiply( RHS, invLHS, dim, dim, dim, dim );
+            dF_map = ( RHS_map * invLHS_map ).eval( );
 
         }
 
         deformationGradient = previousDeformationGradient + dF;
 
-        return NULL;
+        return;
 
     }
 
-    errorOut evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    void evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                      floatVector &deformationGradient, const floatType alpha, const unsigned int mode){
         /*!
          * Evolve the deformation gradient ( F ) using the midpoint integration method.
@@ -840,7 +1196,7 @@ namespace tardigradeConstitutiveTools{
 
     }
 
-    errorOut evolveF( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    void evolveF( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                       floatVector &dF, floatVector &deformationGradient, floatMatrix &dFdL, const floatType alpha, const unsigned int mode ){
         /*!
          * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
@@ -864,36 +1220,65 @@ namespace tardigradeConstitutiveTools{
          * \param mode: The form of the ODE. See above for details.
          */
 
+        constexpr unsigned int dim = 3;
+        const unsigned int sot_dim = dim * dim;
+
+        floatVector _dFdL;
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( evolveFFlatJ( Dt, previousDeformationGradient, Lp, L, dF, deformationGradient, _dFdL, alpha, mode ) );
+
+        dFdL = tardigradeVectorTools::inflate( _dFdL, sot_dim, sot_dim );
+
+        return;
+
+    }
+
+    void evolveFFlatJ( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+                           floatVector &dF, floatVector &deformationGradient, floatVector &dFdL, const floatType alpha, const unsigned int mode ){
+        /*!
+         * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
+         *
+         * mode 1:
+         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left(1 - \alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \alpha \dot{F}_{iI}^{t} \right]\f$
+         * \f$\frac{\partial F_{jI}^{t + 1}}{\partial L_{kl}^{t+1}} = \left[\delta_{kj} - \Delta t \left(1 - \alpha\right) L_{kj}\right]^{-1} \Delta t \left(1 - \alpha\right) F_{lI}^{t + 1}\f$
+         *
+         * mode 2:
+         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \alpha \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( 1- \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
+         * \f$\frac{\partial F_{iJ}^{t + 1}}{\partial L_{KL}} = \Delta t (1 - \alpha) F_{iK}^{t + 1} \left[\delta_{JL} - \right ]\f$
+         *
+         * \param &Dt: The change in time.
+         * \param &previousDeformationGradient: The previous value of the deformation gradient
+         * \param &Lp: The previous velocity gradient.
+         * \param &L: The current velocity gradient.
+         * \param &dF: The change in the deformation gradient \f$\Delta \bf{F}\f$ such that \f$F_{iI}^{t+1} = F_{iI}^t + \Delta F_{iI}\f$
+         * \param &deformationGradient: The computed current deformation gradient.
+         * \param &dFdL: The derivative of the deformation gradient w.r.t. the velocity gradient
+         * \param alpha: The integration parameter ( 0 for implicit, 1 for explicit )
+         * \param mode: The form of the ODE. See above for details.
+         */
+
         //Assumes 3D
-        const unsigned int dim = 3;
-        errorOut error = evolveF( Dt, previousDeformationGradient, Lp, L, dF, deformationGradient, alpha, mode);
+        constexpr unsigned int dim = 3;
+        const unsigned int sot_dim = dim * dim;
 
-        if ( error ){
-
-            errorOut result = new errorNode( __func__, "Error when computing the evolved deformation gradient" );
-            result->addNext( error );
-            return result;
-
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( evolveF( Dt, previousDeformationGradient, Lp, L, dF, deformationGradient, alpha, mode) );
 
         //Compute the left hand side
-        floatVector eye( dim * dim );
+        floatVector invLHS = -Dt * ( 1 - alpha ) * L;
+        for ( unsigned int i = 0; i < dim; i++ ){ invLHS[ dim * i + i ] += 1; }
 
-        tardigradeVectorTools::eye( eye );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invLHS_map( invLHS.data( ), dim, dim );
 
-        floatVector LHS = eye - Dt * ( 1 - alpha ) * L;
-
-        //Compute the inverse of the left-hand side
-        floatVector invLHS = tardigradeVectorTools::inverse( LHS, dim, dim );
+        invLHS_map = invLHS_map.inverse( ).eval( );
 
         //Compute the jacobian
-        dFdL = floatMatrix( deformationGradient.size( ), floatVector( L.size( ), 0 ) );
+        dFdL = floatVector( sot_dim * sot_dim, 0 );
         if ( mode == 1 ){
             for ( unsigned int j = 0; j < dim; j++ ){
                 for ( unsigned int I = 0; I < dim; I++ ){
                     for ( unsigned int k = 0; k < dim; k++ ){
                         for ( unsigned int l = 0; l < dim; l++ ){
-                            dFdL[ dim * j + I ][ dim * k + l ] += Dt * ( 1 - alpha ) * invLHS[ dim * j + k ] * deformationGradient[ dim * l + I ];
+                            dFdL[ dim * sot_dim * j + sot_dim * I + dim * k + l ] += Dt * ( 1 - alpha ) * invLHS[ dim * j + k ] * deformationGradient[ dim * l + I ];
                         }
                     }
                 }
@@ -904,16 +1289,45 @@ namespace tardigradeConstitutiveTools{
                 for ( unsigned int I = 0; I < dim; I++ ){
                     for ( unsigned int K = 0; K < dim; K++ ){
                         for ( unsigned int _L = 0; _L < dim; _L++ ){
-                            dFdL[ dim * j + I ][ dim * K + _L ] += Dt * ( 1 - alpha ) * invLHS[ dim * _L + I ] * deformationGradient[ dim * j + K ];
+                            dFdL[ dim * sot_dim * j + sot_dim * I + dim * K + _L ] += Dt * ( 1 - alpha ) * invLHS[ dim * _L + I ] * deformationGradient[ dim * j + K ];
                         }
                     }
                 }
             }
         }
-        return NULL;
+        return;
     }
 
-    errorOut evolveF( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    void evolveFFlatJ( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+                           floatVector &deformationGradient, floatVector &dFdL, const floatType alpha, const unsigned int mode ){
+        /*!
+         * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
+         *
+         * mode 1:
+         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left(1 - \alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \alpha \dot{F}_{iI}^{t} \right]\f$
+         * \f$\frac{\partial F_{jI}^{t + 1}}{\partial L_{kl}^{t+1}} = \left[\delta_{kj} - \Delta t \left(1 - \alpha\right) L_{kj}\right]^{-1} \Delta t \left(1 - \alpha\right) F_{lI}^{t + 1}\f$
+         *
+         * mode 2:
+         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \alpha \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( 1- \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
+         * \f$\frac{\partial F_{iJ}^{t + 1}}{\partial L_{KL}} = \Delta t (1 - \alpha) F_{iK}^{t + 1} \left[\delta_{JL} - \right ]\f$
+         *
+         * \param &Dt: The change in time.
+         * \param &previousDeformationGradient: The previous value of the deformation gradient
+         * \param &Lp: The previous velocity gradient.
+         * \param &L: The current velocity gradient.
+         * \param &deformationGradient: The computed current deformation gradient.
+         * \param &dFdL: The derivative of the deformation gradient w.r.t. the velocity gradient
+         * \param alpha: The integration parameter ( 0 for implicit, 1 for explicit )
+         * \param mode: The form of the ODE. See above for details.
+         */
+
+        floatVector dF;
+
+        return evolveFFlatJ( Dt, previousDeformationGradient, Lp, L, dF, deformationGradient, dFdL, alpha, mode );
+
+    }
+
+    void evolveF( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                       floatVector &deformationGradient, floatMatrix &dFdL, const floatType alpha, const unsigned int mode ){
         /*!
          * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
@@ -942,7 +1356,7 @@ namespace tardigradeConstitutiveTools{
 
     }
 
-    errorOut evolveF( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    void evolveF( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                       floatVector &dF, floatVector &deformationGradient, floatMatrix &dFdL, floatMatrix &ddFdFp, floatMatrix &dFdFp, floatMatrix &dFdLp, const floatType alpha, const unsigned int mode ){
         /*!
          * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
@@ -970,16 +1384,57 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assumes 3D
-        const unsigned int dim = 3;
-        errorOut error = evolveF( Dt, previousDeformationGradient, Lp, L, dF, deformationGradient, alpha, mode);
+        constexpr unsigned int dim = 3;
+        const unsigned int sot_dim = dim * dim;
 
-        if ( error ){
+        floatVector _dFdL;
+        floatVector _ddFdFp;
+        floatVector _dFdFp;
+        floatVector _dFdLp;
 
-            errorOut result = new errorNode( __func__, "Error when computing the evolved deformation gradient" );
-            result->addNext( error );
-            return result;
+        TARDIGRADE_ERROR_TOOLS_CATCH( evolveFFlatJ( Dt, previousDeformationGradient, Lp, L,
+                                                    dF, deformationGradient, _dFdL, _ddFdFp, _dFdFp, _dFdLp, alpha, mode ) );
 
-        }
+        dFdL   = tardigradeVectorTools::inflate( _dFdL,   sot_dim, sot_dim );
+        ddFdFp = tardigradeVectorTools::inflate( _ddFdFp, sot_dim, sot_dim );
+        dFdFp  = tardigradeVectorTools::inflate( _dFdFp,  sot_dim, sot_dim );
+        dFdLp  = tardigradeVectorTools::inflate( _dFdLp,  sot_dim, sot_dim );
+
+        return;
+
+    }
+    void evolveFFlatJ( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+                           floatVector &dF, floatVector &deformationGradient, floatVector &dFdL, floatVector &ddFdFp, floatVector &dFdFp, floatVector &dFdLp, const floatType alpha, const unsigned int mode ){
+        /*!
+         * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
+         *
+         * mode 1:
+         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left(1 - \alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \alpha \dot{F}_{iI}^{t} \right]\f$
+         * \f$\frac{\partial F_{jI}^{t + 1}}{\partial L_{kl}^{t+1}} = \left[\delta_{kj} - \Delta t \left(1 - \alpha\right) L_{kj}\right]^{-1} \Delta t \left(1 - \alpha\right) F_{lI}^{t + 1}\f$
+         *
+         * mode 2:
+         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \alpha \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( 1- \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
+         * \f$\frac{\partial F_{iJ}^{t + 1}}{\partial L_{KL}} = \Delta t (1 - \alpha) F_{iK}^{t + 1} \left[\delta_{JL} - \right ]\f$
+         *
+         * \param &Dt: The change in time.
+         * \param &previousDeformationGradient: The previous value of the deformation gradient
+         * \param &Lp: The previous velocity gradient.
+         * \param &L: The current velocity gradient.
+         * \param &dF: The change in the deformation gradient \f$\Delta \bf{F}\f$ such that \f$F_{iI}^{t+1} = F_{iI}^t + \Delta F_{iI}\f$
+         * \param &deformationGradient: The computed current deformation gradient.
+         * \param &dFdL: The derivative of the deformation gradient w.r.t. the velocity gradient
+         * \param &ddFdFp: The derivative of the change in the deformation gradient w.r.t. the previous deformation gradient
+         * \param &dFdFp: The derivative of the deformation gradient w.r.t. the previous deformation gradient
+         * \param &dFdLp: The derivative of the deformation gradient w.r.t. the previous velocity gradient
+         * \param alpha: The integration parameter ( 0 for implicit, 1 for explicit )
+         * \param mode: The form of the ODE. See above for details.
+         */
+
+        //Assumes 3D
+        constexpr unsigned int dim = 3;
+        const unsigned int sot_dim = dim * dim;
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( evolveF( Dt, previousDeformationGradient, Lp, L, dF, deformationGradient, alpha, mode) );
 
         //Compute L^{t + \alpha}
         floatVector LtpAlpha = alpha * Lp + ( 1 - alpha ) * L;
@@ -989,25 +1444,25 @@ namespace tardigradeConstitutiveTools{
 
         tardigradeVectorTools::eye( eye );
 
-        floatVector LHS = eye - Dt * ( 1 - alpha ) * L;
+        floatVector invLHS = -Dt * ( 1 - alpha ) * L;
+        for ( unsigned int i = 0; i < dim; i++ ){ invLHS[ dim * i + i ] += 1; }
 
-        //Compute the inverse of the left-hand side
-        floatVector invLHS = tardigradeVectorTools::inverse( LHS, dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invLHS_map( invLHS.data( ), dim, dim );
+
+        invLHS_map = invLHS_map.inverse( ).eval( );
 
         //Compute the jacobian
-        dFdL   = floatMatrix( deformationGradient.size( ), floatVector( previousDeformationGradient.size( ), 0 ) ); 
-        ddFdFp = floatMatrix( deformationGradient.size( ), floatVector( previousDeformationGradient.size( ), 0 ) );
-        dFdLp  = floatMatrix( deformationGradient.size( ), floatVector( Lp.size( ), 0 ) );
+        dFdL   = floatVector( sot_dim * sot_dim, 0 );
+        ddFdFp = floatVector( sot_dim * sot_dim, 0 );
+        dFdLp  = floatVector( sot_dim * sot_dim, 0 );
         if ( mode == 1 ){
             for ( unsigned int j = 0; j < dim; j++ ){
                 for ( unsigned int I = 0; I < dim; I++ ){
                     for ( unsigned int k = 0; k < dim; k++ ){
                         for ( unsigned int l = 0; l < dim; l++ ){
-                            dFdL[ dim * j + I ][ dim * k + l ]  += Dt * ( 1 - alpha ) * invLHS[ dim * j + k ] * deformationGradient[ dim * l + I ];
-                            dFdLp[ dim * j + I ][ dim * k + l ] += invLHS[ dim * j + k ] * Dt * alpha * previousDeformationGradient[ dim * l + I ];
-                            for ( unsigned int a = 0; a < dim; a++ ){
-                                ddFdFp[ dim * j + I ][ dim * k + l ] += Dt * invLHS[ dim * j + a ] * LtpAlpha[ dim * a + k ] * eye[ dim * I + l ];
-                            }
+                            dFdL[ dim * sot_dim * j + sot_dim * I + dim * k + l ]  += Dt * ( 1 - alpha ) * invLHS[ dim * j + k ] * deformationGradient[ dim * l + I ];
+                            dFdLp[ dim * sot_dim * j + sot_dim * I + dim * k + l ] += invLHS[ dim * j + k ] * Dt * alpha * previousDeformationGradient[ dim * l + I ];
+                            ddFdFp[ dim * sot_dim * j + sot_dim * I + dim * k + I ] += Dt * invLHS[ dim * j + l ] * LtpAlpha[ dim * l + k ];
                         }
                     }
                 }
@@ -1018,23 +1473,54 @@ namespace tardigradeConstitutiveTools{
                 for ( unsigned int I = 0; I < dim; I++ ){
                     for ( unsigned int K = 0; K < dim; K++ ){
                         for ( unsigned int _L = 0; _L < dim; _L++ ){
-                            dFdL[ dim * j + I ][ dim * K + _L ]  += Dt * ( 1 - alpha ) * invLHS[ dim * _L + I ] * deformationGradient[ dim * j + K ];
-                            dFdLp[ dim * j + I ][ dim * K + _L ] += Dt * alpha * invLHS[ dim * _L + I ] * previousDeformationGradient[ dim * j + K ];
-                            for ( unsigned int A = 0; A < dim; A++ ){
-                                ddFdFp[ dim * j + I ][ dim * K + _L ] += Dt * eye[ dim * j + K ] * LtpAlpha[ dim * _L + A ] * invLHS[ dim * A + I ];
-                            }
+                            dFdL[ dim * sot_dim * j + sot_dim * I + dim * K + _L ]  += Dt * ( 1 - alpha ) * invLHS[ dim * _L + I ] * deformationGradient[ dim * j + K ];
+                            dFdLp[ dim * sot_dim * j + sot_dim * I + dim * K + _L ] += Dt * alpha * invLHS[ dim * _L + I ] * previousDeformationGradient[ dim * j + K ];
+                            ddFdFp[ dim * sot_dim * j + sot_dim * I + dim * j + K ] += Dt * LtpAlpha[ dim * K + _L ] * invLHS[ dim * _L + I ];
                         }
                     }
                 }
             }
         }
 
-        dFdFp = ddFdFp + tardigradeVectorTools::eye< floatType >( previousDeformationGradient.size( ) );
+        dFdFp = ddFdFp;
+        for ( unsigned int i = 0; i < sot_dim; i++ ){ dFdFp[ sot_dim * i + i ] += 1; }
 
-        return NULL;
+        return;
     }
 
-    errorOut evolveF( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    void evolveFFlatJ( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+                           floatVector &deformationGradient, floatVector &dFdL, floatVector &dFdFp, floatVector &dFdLp, const floatType alpha, const unsigned int mode ){
+        /*!
+         * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
+         *
+         * mode 1:
+         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left(1 - \alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \alpha \dot{F}_{iI}^{t} \right]\f$
+         * \f$\frac{\partial F_{jI}^{t + 1}}{\partial L_{kl}^{t+1}} = \left[\delta_{kj} - \Delta t \left(1 - \alpha\right) L_{kj}\right]^{-1} \Delta t \left(1 - \alpha\right) F_{lI}^{t + 1}\f$
+         *
+         * mode 2:
+         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \alpha \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( 1- \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
+         * \f$\frac{\partial F_{iJ}^{t + 1}}{\partial L_{KL}} = \Delta t (1 - \alpha) F_{iK}^{t + 1} \left[\delta_{JL} - \right ]\f$
+         *
+         * \param &Dt: The change in time.
+         * \param &previousDeformationGradient: The previous value of the deformation gradient
+         * \param &Lp: The previous velocity gradient.
+         * \param &L: The current velocity gradient.
+         * \param &deformationGradient: The computed current deformation gradient.
+         * \param &dFdL: The derivative of the deformation gradient w.r.t. the velocity gradient
+         * \param &dFdFp: The derivative of the deformation gradient w.r.t. the previous deformation gradient
+         * \param &dFdLp: The derivative of the deformation gradient w.r.t. the previous velocity gradient
+         * \param alpha: The integration parameter ( 0 for implicit, 1 for explicit )
+         * \param mode: The form of the ODE. See above for details.
+         */
+
+        floatVector dF;
+        floatVector ddFdFp;
+
+        return evolveFFlatJ( Dt, previousDeformationGradient, Lp, L, dF, deformationGradient, dFdL, ddFdFp, dFdFp, dFdLp, alpha, mode );
+
+    }
+
+    void evolveF( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                       floatVector &deformationGradient, floatMatrix &dFdL, floatMatrix &dFdFp, floatMatrix &dFdLp, const floatType alpha, const unsigned int mode ){
         /*!
          * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
@@ -1053,8 +1539,8 @@ namespace tardigradeConstitutiveTools{
          * \param &L: The current velocity gradient.
          * \param &deformationGradient: The computed current deformation gradient.
          * \param &dFdL: The derivative of the deformation gradient w.r.t. the velocity gradient
-         * \param &dFdL: The derivative of the deformation gradient w.r.t. the previous deformation gradient
-         * \param &dFdL: The derivative of the deformation gradient w.r.t. the previous velocity gradient
+         * \param &dFdFp: The derivative of the deformation gradient w.r.t. the previous deformation gradient
+         * \param &dFdLp: The derivative of the deformation gradient w.r.t. the previous velocity gradient
          * \param alpha: The integration parameter ( 0 for implicit, 1 for explicit )
          * \param mode: The form of the ODE. See above for details.
          */
@@ -1096,7 +1582,7 @@ namespace tardigradeConstitutiveTools{
         return mac( x );
     }
 
-    errorOut computeUnitNormal(const floatVector &A, floatVector &Anorm){
+    void computeUnitNormal(const floatVector &A, floatVector &Anorm){
         /*!
          * Compute the unit normal of a second order tensor (or strictly speaking
          * any tensor).
@@ -1105,19 +1591,21 @@ namespace tardigradeConstitutiveTools{
          * \param &Anorm: The unit normal in the direction of A
          */
 
+        const unsigned int A_size = A.size( );
+
         floatType norm = sqrt(tardigradeVectorTools::inner(A, A));
 
         if ( tardigradeVectorTools::fuzzyEquals( norm, 0. ) ){
-            Anorm = floatVector( A.size(), 0 );
+            Anorm = floatVector( A_size, 0 );
         }
         else {
             Anorm = A/norm;
         }
 
-        return NULL;
+        return;
     }
 
-    errorOut computeUnitNormal(const floatVector &A, floatVector &Anorm, floatMatrix &dAnormdA){
+    void computeUnitNormal(const floatVector &A, floatVector &Anorm, floatVector &dAnormdA){
         /*!
          * Compute the unit normal of a second order tensor (or strictly speaking any
          * tensor) and the gradient of that unit normal w.r.t. the tensor.
@@ -1127,24 +1615,59 @@ namespace tardigradeConstitutiveTools{
          * \param &dAnormdA: The gradient of the unit normal w.r.t. A
          */
 
+        const unsigned int A_size = A.size( );
+
         floatType norm = sqrt(tardigradeVectorTools::inner(A, A));
 
         if ( tardigradeVectorTools::fuzzyEquals( norm, 0. ) ){
-            Anorm = floatVector( A.size(), 0 );
+            Anorm = floatVector( A_size, 0 );
         }
         else {
             Anorm = A/norm;
         }
 
-        floatMatrix eye = tardigradeVectorTools::eye<floatType>(A.size());
+        dAnormdA = floatVector( A_size * A_size, 0 );
 
-        dAnormdA = (eye - tardigradeVectorTools::dyadic(Anorm, Anorm))/norm;
+        for ( unsigned int i = 0; i < A_size; i++ ){
 
-        return NULL;
+            dAnormdA[ A_size * i + i ] += 1;
+
+            for ( unsigned int j = 0; j < A_size; j++ ){
+
+                dAnormdA[ A_size * i + j ] -= Anorm[ i ] * Anorm[ j ];
+
+            }
+
+        }
+
+        dAnormdA /= norm;
+
+        return;
     }
 
-    errorOut pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
-                                      floatVector &pullBackVelocityGradient){
+    void computeUnitNormal(const floatVector &A, floatVector &Anorm, floatMatrix &dAnormdA){
+        /*!
+         * Compute the unit normal of a second order tensor (or strictly speaking any
+         * tensor) and the gradient of that unit normal w.r.t. the tensor.
+         *
+         * \param &A: The second order tensor
+         * \param &Anorm: The unit normal in the direction of A
+         * \param &dAnormdA: The gradient of the unit normal w.r.t. A
+         */
+
+        const unsigned int A_size = A.size( );
+
+        floatVector _dAnormdA;
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeUnitNormal( A, Anorm, _dAnormdA ) );
+
+        dAnormdA = tardigradeVectorTools::inflate( _dAnormdA, A_size, A_size );
+
+        return;
+    }
+
+    void pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
+                                      floatVector &pulledBackVelocityGradient){
         /*!
          * Pull back the velocity gradient to the configuration indicated by deformationGradient, i.e.
          *
@@ -1157,24 +1680,92 @@ namespace tardigradeConstitutiveTools{
          * \param &velocityGradient: The velocity gradient in the current configuration.
          * \param &deformationGradient: The deformation gradient between the desired configuration
          *     and the current configuration.
-         * \param &pullBackVelocityGradient: The pulled back velocity gradient.
+         * \param &pulledBackVelocityGradient: The pulled back velocity gradient.
          */
 
         //Assume 3D
-        unsigned int dim = 3;
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
         //Invert the deformation gradient
-        floatVector inverseDeformationGradient = tardigradeVectorTools::inverse(deformationGradient, dim, dim);
+        pulledBackVelocityGradient = floatVector( sot_dim, 0 );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F( deformationGradient.data( ), dim, dim );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > L( velocityGradient.data( ), dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > pullBackL( pulledBackVelocityGradient.data( ), dim, dim );
 
-        //Pull back the velocity gradient
-        pullBackVelocityGradient = tardigradeVectorTools::matrixMultiply(inverseDeformationGradient, velocityGradient, dim, dim, dim, dim);
-        pullBackVelocityGradient = tardigradeVectorTools::matrixMultiply(pullBackVelocityGradient, deformationGradient, dim, dim, dim, dim);
+        pullBackL = ( F.inverse( ) * L * F ).eval( );
 
-        return NULL;
+        return;
     }
 
-    errorOut pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
-                                      floatVector &pullBackVelocityGradient, floatMatrix &dPullBackLdL,
+    void pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
+                                      floatVector &pulledBackVelocityGradient, floatVector &dPullBackLdL,
+                                      floatVector &dPullBackLdF){
+        /*!
+         * Pull back the velocity gradient to the configuration indicated by deformationGradient, i.e.
+         *
+         * \f$totalDeformationGradient_{iI} = deformationGradient_{i \bar{I}} remainingDeformationGradient_{\bar{I}I}\f$
+         *
+         * This is done via
+         *
+         * \f$L_{\bar{I} \bar{J}} = deformationGradient_{\bar{I} i}^{-1} velocityGradient_{ij} deformationGradient_{j\bar{J}}\f$
+         *
+         * \param &velocityGradient: The velocity gradient in the current configuration.
+         * \param &deformationGradient: The deformation gradient between the desired configuration
+         *     and the current configuration.
+         * \param &pulledBackVelocityGradient: The pulled back velocity gradient.
+         * \param &dPullBackLdL: The gradient of the pulled back velocity gradient
+         *     w.r.t. the velocity gradient.
+         * \param &dPullBackLdF: The gradient of the pulled back velocity gradient
+         *     w.r.t. the deformation gradient.
+         */
+
+        //Assume 3D
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+
+        pulledBackVelocityGradient = floatVector( sot_dim, 0 );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F( deformationGradient.data( ), dim, dim );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > L( velocityGradient.data( ), dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > pullBackL( pulledBackVelocityGradient.data( ), dim, dim );
+
+        floatVector inverseDeformationGradient = deformationGradient;
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invF_map( inverseDeformationGradient.data( ), dim, dim );
+        invF_map = invF_map.inverse( ).eval( );
+
+        floatVector term2( sot_dim, 0 );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > term2_map( term2.data( ), dim, dim );
+
+        term2_map = ( invF_map * L ).eval( );
+
+        //Pull back the velocity gradient
+        pullBackL = ( term2_map * F ).eval( );
+
+        //Construct the gradients
+        dPullBackLdL = floatVector( sot_dim * sot_dim, 0 );
+        dPullBackLdF = floatVector( sot_dim * sot_dim, 0 );
+
+        for (unsigned int I=0; I<dim; I++){
+            for (unsigned int J=0; J<dim; J++){
+                for (unsigned int k=0; k<dim; k++){
+                    for (unsigned int l=0; l<dim; l++){
+                        dPullBackLdL[sot_dim * dim * I + sot_dim * J + dim * k + l ] = inverseDeformationGradient[dim*I + k] * deformationGradient[dim*l + J];
+                    }
+
+                    dPullBackLdF[sot_dim * dim * I + sot_dim * J + dim * k + J ] += term2[dim*I + k];
+
+                    for ( unsigned int K = 0; K < dim; K++ ){
+                        dPullBackLdF[sot_dim * dim * I + sot_dim * J + dim * k + K ] -= inverseDeformationGradient[dim*I + k] * pulledBackVelocityGradient[dim*K + J];
+                    }
+                }
+            }
+        }
+
+        return;
+    }
+
+    void pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
+                                      floatVector &pulledBackVelocityGradient, floatMatrix &dPullBackLdL,
                                       floatMatrix &dPullBackLdF){
         /*!
          * Pull back the velocity gradient to the configuration indicated by deformationGradient, i.e.
@@ -1188,7 +1779,7 @@ namespace tardigradeConstitutiveTools{
          * \param &velocityGradient: The velocity gradient in the current configuration.
          * \param &deformationGradient: The deformation gradient between the desired configuration
          *     and the current configuration.
-         * \param &pullBackVelocityGradient: The pulled back velocity gradient.
+         * \param &pulledBackVelocityGradient: The pulled back velocity gradient.
          * \param &dPullBackLdL: The gradient of the pulled back velocity gradient
          *     w.r.t. the velocity gradient.
          * \param &dPullBackLdF: The gradient of the pulled back velocity gradient
@@ -1196,43 +1787,21 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3D
-        unsigned int dim = 3;
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        //Invert the deformation gradient
-        floatVector inverseDeformationGradient = tardigradeVectorTools::inverse(deformationGradient, dim, dim);
+        floatVector _dPullBackLdL, _dPullBackLdF;
 
-        //Pull back the velocity gradient
-        pullBackVelocityGradient = tardigradeVectorTools::matrixMultiply(inverseDeformationGradient, velocityGradient, dim, dim, dim, dim);
-        pullBackVelocityGradient = tardigradeVectorTools::matrixMultiply(pullBackVelocityGradient, deformationGradient, dim, dim, dim, dim);
+        TARDIGRADE_ERROR_TOOLS_CATCH( pullBackVelocityGradient( velocityGradient, deformationGradient, pulledBackVelocityGradient, _dPullBackLdL, _dPullBackLdF ) );
 
-        //Construct the gradients
-        dPullBackLdL = floatMatrix(pullBackVelocityGradient.size(), floatVector( velocityGradient.size(), 0));
-        dPullBackLdF = floatMatrix(pullBackVelocityGradient.size(), floatVector( deformationGradient.size(), 0));
+        dPullBackLdL = tardigradeVectorTools::inflate( _dPullBackLdL, sot_dim, sot_dim );
 
-        floatVector term1 = tardigradeVectorTools::matrixMultiply(inverseDeformationGradient, velocityGradient, dim, dim, dim, dim);
-        term1 = tardigradeVectorTools::matrixMultiply(term1, deformationGradient, dim, dim, dim, dim);
+        dPullBackLdF = tardigradeVectorTools::inflate( _dPullBackLdF, sot_dim, sot_dim );
 
-        floatVector term2 = tardigradeVectorTools::matrixMultiply(inverseDeformationGradient, velocityGradient, dim, dim, dim, dim);
-
-        for (unsigned int I=0; I<dim; I++){
-            for (unsigned int J=0; J<dim; J++){
-                for (unsigned int k=0; k<dim; k++){
-                    for (unsigned int l=0; l<dim; l++){
-                        dPullBackLdL[dim*I + J][dim*k + l] = inverseDeformationGradient[dim*I + k] * deformationGradient[dim*l + J];
-                    }
-
-                    for (unsigned int K=0; K<dim; K++){
-                        dPullBackLdF[dim*I + J][dim*k + K] += -inverseDeformationGradient[dim*I + k] * term1[dim*K + J]
-                                                              + term2[dim*I + k] * deltaDirac(J, K);
-                    }
-                }
-            }
-        }
-
-        return NULL;
+        return;
     }
 
-    errorOut quadraticThermalExpansion(const floatType &temperature, const floatType &referenceTemperature,
+    void quadraticThermalExpansion(const floatType &temperature, const floatType &referenceTemperature,
                                        const floatVector &linearParameters, const floatVector &quadraticParameters,
                                        floatVector &thermalExpansion){
         /*!
@@ -1252,17 +1821,15 @@ namespace tardigradeConstitutiveTools{
          * \param &thermalExpansion: The resulting thermal expansion.
          */
 
-        if (linearParameters.size() != quadraticParameters.size()){
-            return new errorNode("quadraticThermalExpansion", "The linear and quadratic parameters must have the same length");
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( linearParameters.size() == quadraticParameters.size(), "The linear and quadratic parameters must have the same length");
 
         thermalExpansion = linearParameters * temperature          + quadraticParameters * temperature * temperature
                          - linearParameters * referenceTemperature - quadraticParameters * referenceTemperature * referenceTemperature;
 
-        return NULL;
+        return;
     }
 
-    errorOut quadraticThermalExpansion(const floatType &temperature, const floatType &referenceTemperature,
+    void quadraticThermalExpansion(const floatType &temperature, const floatType &referenceTemperature,
                                        const floatVector &linearParameters, const floatVector &quadraticParameters,
                                        floatVector &thermalExpansion, floatVector &thermalExpansionJacobian){
         /*!
@@ -1284,21 +1851,15 @@ namespace tardigradeConstitutiveTools{
          *     the temperature.
          */
 
-        errorOut error = quadraticThermalExpansion(temperature, referenceTemperature, linearParameters, quadraticParameters,
-                                                   thermalExpansion);
-
-        if (error){
-            errorOut result = new errorNode("quadraticThermalExpansion (jacobian)", "Error in computation of thermal expansion");
-            result->addNext(error);
-            return result;
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( quadraticThermalExpansion(temperature, referenceTemperature, linearParameters, quadraticParameters,
+                                                                thermalExpansion) )
 
         thermalExpansionJacobian = linearParameters + 2 * quadraticParameters * temperature;
 
-        return NULL;
+        return;
     }
 
-    errorOut pushForwardGreenLagrangeStrain(const floatVector &greenLagrangeStrain, const floatVector &deformationGradient,
+    void pushForwardGreenLagrangeStrain(const floatVector &greenLagrangeStrain, const floatVector &deformationGradient,
                                             floatVector &almansiStrain){
         /*!
          * Push forward the Green-Lagrange strain to the current configuration.
@@ -1314,21 +1875,26 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3D
-        unsigned int dim = 3;
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        //Compute the inverse deformation gradient
-        floatVector inverseDeformationGradient = tardigradeVectorTools::inverse(deformationGradient, dim, dim);
+        floatVector inverseDeformationGradient = deformationGradient;
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invF( inverseDeformationGradient.data( ), dim, dim );
+        invF = invF.inverse( ).eval( );
+
+        almansiStrain = floatVector( sot_dim, 0 );
+
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > E( greenLagrangeStrain.data( ), dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > e( almansiStrain.data( ), dim, dim );
 
         //Map the Green-Lagrange strain to the current configuration
-        almansiStrain = tardigradeVectorTools::matrixMultiply(greenLagrangeStrain, inverseDeformationGradient,
-                                                    dim, dim, dim, dim, 0, 0);
-        almansiStrain = tardigradeVectorTools::matrixMultiply(inverseDeformationGradient, almansiStrain,
-                                                    dim, dim, dim, dim, 1, 0);
-        return NULL;
+        e = ( invF.transpose( ) * E * invF ).eval( );
+
+        return;
     }
 
-    errorOut pushForwardGreenLagrangeStrain(const floatVector &greenLagrangeStrain, const floatVector &deformationGradient,
-                                            floatVector &almansiStrain, floatMatrix &dalmansiStraindE, floatMatrix &dalmansiStraindF){
+    void pushForwardGreenLagrangeStrain(const floatVector &greenLagrangeStrain, const floatVector &deformationGradient,
+                                            floatVector &almansiStrain, floatVector &dAlmansiStraindE, floatVector &dAlmansiStraindF){
         /*!
          * Push forward the Green-Lagrange strain to the current configuration
          * and return the jacobians.
@@ -1345,71 +1911,83 @@ namespace tardigradeConstitutiveTools{
          * \param &greenLagrangeStrain: The Green-Lagrange strain.
          * \param &deformationGradient: The deformation gradient mapping between configurations.
          * \param &almansiStrain: The strain in the current configuration indicated by the deformation gradient.
-         * \param &dalmansiStraindE: Compute the derivative of the almansi strain w.r.t. the Green-Lagrange strain.
-         * \param &dalmansiStraindF: Compute the derivative of the almansi strain w.r.t. the deformation gradient.
+         * \param &dAlmansiStraindE: Compute the derivative of the Almansi strain w.r.t. the Green-Lagrange strain.
+         * \param &dAlmansiStraindF: Compute the derivative of the Almansi strain w.r.t. the deformation gradient.
          */
 
         //Assume 3D
-        unsigned int dim = 3;
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        //Compute the inverse deformation gradient
-        floatVector inverseDeformationGradient = tardigradeVectorTools::inverse(deformationGradient, dim, dim);
+        floatVector inverseDeformationGradient = deformationGradient;
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invF( inverseDeformationGradient.data( ), dim, dim );
+        invF = invF.inverse( ).eval( );
 
-        //Compute the jacobian of the inverse deformation gradient
-        floatMatrix dFinvdF(dim*dim, floatVector(dim*dim, 0));
-        for (unsigned int I=0; I<dim; I++){
-            for (unsigned int l=0; l<dim; l++){
-                for (unsigned int k=0; k<dim; k++){
-                    for (unsigned int K=0; K<dim; K++){
-                        dFinvdF[dim*I + l][dim*k + K] = -inverseDeformationGradient[dim*I + k] *
-                                                         inverseDeformationGradient[dim*K + l];
-                    }
-                }
-            }
-        }
+        almansiStrain = floatVector( sot_dim, 0 );
+
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > E( greenLagrangeStrain.data( ), dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > e( almansiStrain.data( ), dim, dim );
 
         //Map the Green-Lagrange strain to the current configuration
-        almansiStrain = tardigradeVectorTools::matrixMultiply(greenLagrangeStrain, inverseDeformationGradient,
-                                                    dim, dim, dim, dim, 0, 0);
-        almansiStrain = tardigradeVectorTools::matrixMultiply(inverseDeformationGradient, almansiStrain,
-                                                    dim, dim, dim, dim, 1, 0);
+        e = ( invF.transpose( ) * E * invF ).eval( );
 
         //Compute the jacobians
-        dalmansiStraindE = floatMatrix(dim*dim, floatVector(dim*dim, 0));
+        dAlmansiStraindE = floatVector( sot_dim * sot_dim, 0 );
+        dAlmansiStraindF = floatVector( sot_dim * sot_dim, 0 );
         for (unsigned int i=0; i<dim; i++){
             for (unsigned int j=0; j<dim; j++){
                 for (unsigned int K=0; K<dim; K++){
                     for (unsigned int L=0; L<dim; L++){
-                        dalmansiStraindE[dim*i + j][dim*K + L] = inverseDeformationGradient[dim*K + i] *
-                                                                 inverseDeformationGradient[dim*L + j];
+                        dAlmansiStraindE[sot_dim * dim * i + sot_dim * j + dim * K + L ] = inverseDeformationGradient[dim*K + i] *
+                                                                                           inverseDeformationGradient[dim*L + j];
+                        dAlmansiStraindF[sot_dim * dim * i + sot_dim * j + dim * K + L ] = -inverseDeformationGradient[dim*L + i ] * almansiStrain[dim*K+j]
+                                                                                           -inverseDeformationGradient[dim*L + j ] * almansiStrain[dim*i+K];
                     }
                 }
             }
         }
 
-        dalmansiStraindF = floatMatrix(dim*dim, floatVector(dim*dim, 0));
-        floatVector term1 = tardigradeVectorTools::matrixMultiply(greenLagrangeStrain, inverseDeformationGradient,
-                                                        dim, dim, dim, dim, 0, 0);
-        floatVector term2 = tardigradeVectorTools::matrixMultiply(inverseDeformationGradient, greenLagrangeStrain,
-                                                        dim, dim, dim, dim, 1, 0);
-
-        for (unsigned int i=0; i<dim; i++){
-            for (unsigned int j=0; j<dim; j++){
-                for (unsigned int k=0; k<dim; k++){
-                    for (unsigned int K=0; K<dim; K++){
-                        for (unsigned int I=0; I<dim; I++){
-                            dalmansiStraindF[dim*i + j][dim*k + K] += dFinvdF[dim*I + i][dim*k + K] * term1[dim*I + j]
-                                                                    + term2[dim*i + I] * dFinvdF[dim*I + j][dim*k + K];
-                        }
-                    }
-                }
-            }
-        }
-
-        return NULL;
+        return;
     }
 
-    errorOut pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
+    void pushForwardGreenLagrangeStrain(const floatVector &greenLagrangeStrain, const floatVector &deformationGradient,
+                                            floatVector &almansiStrain, floatMatrix &dAlmansiStraindE, floatMatrix &dAlmansiStraindF){
+        /*!
+         * Push forward the Green-Lagrange strain to the current configuration
+         * and return the jacobians.
+         *
+         * \f$e_{ij} = F_{Ii}^{-1} E_{IJ} F_{Jj}^{-1}\f$
+         *
+         * \f$\frac{\partial e_{ij}}{\partial E_{KL}} = F_{Ki}^{-1} F_{Kj}^{-1}\f$
+         *
+         * \f$\frac{\partial e_{ij}}{\partial F_{kK}} = -F_{Ik}^{-1} F_{Ki}^{-1} E_{IJ} F_{J j}^{-1} - F_{Ii}^{-1} E_{IJ} F_{Jk}^{-1} F_{Kj}^{-1}\f$
+         *
+         * where \f$e_{ij}\f$ is the Almansi strain (the strain in the current configuration, \f$F_{iI}^{-1}\f$ is the
+         * inverse of the deformation gradient, and \f$E_{IJ}\f$ is the Green-Lagrange strain.
+         *
+         * \param &greenLagrangeStrain: The Green-Lagrange strain.
+         * \param &deformationGradient: The deformation gradient mapping between configurations.
+         * \param &almansiStrain: The strain in the current configuration indicated by the deformation gradient.
+         * \param &dAlmansiStraindE: Compute the derivative of the Almansi strain w.r.t. the Green-Lagrange strain.
+         * \param &dAlmansiStraindF: Compute the derivative of the Almansi strain w.r.t. the deformation gradient.
+         */
+
+        //Assume 3D
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+
+        floatVector _dAlmansiStraindE, _dAlmansiStraindF;
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( pushForwardGreenLagrangeStrain( greenLagrangeStrain, deformationGradient, almansiStrain, _dAlmansiStraindE, _dAlmansiStraindF ) );
+
+        dAlmansiStraindE = tardigradeVectorTools::inflate( _dAlmansiStraindE, sot_dim, sot_dim );
+        dAlmansiStraindF = tardigradeVectorTools::inflate( _dAlmansiStraindF, sot_dim, sot_dim );
+
+        return;
+
+    } 
+
+    void pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
                                     floatVector &greenLagrangeStrain ){
         /*!
          * Pull back the almansi strain to the configuration indicated by the deformation gradient.
@@ -1421,15 +1999,64 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3d
-        unsigned int dim = 3;
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        greenLagrangeStrain = tardigradeVectorTools::matrixMultiply( deformationGradient, almansiStrain, dim, dim, dim, dim, 1, 0 );
-        greenLagrangeStrain = tardigradeVectorTools::matrixMultiply( greenLagrangeStrain, deformationGradient, dim, dim, dim, dim, 0, 0 );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F( deformationGradient.data( ), dim, dim );
 
-        return NULL;
+        greenLagrangeStrain = floatVector( sot_dim, 0 );
+
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > E( greenLagrangeStrain.data( ), dim, dim );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > e( almansiStrain.data( ), dim, dim );
+
+        E = ( F.transpose( ) * e * F ).eval( );
+
+        return;
     }
 
-    errorOut pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
+    void pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
+                                    floatVector &greenLagrangeStrain, floatVector &dEde, floatVector &dEdF ){
+        /*!
+         * Pull back the almansi strain to the configuration indicated by the deformation gradient.
+         *
+         * Also return the Jacobians.
+         *
+         * \param &almansiStrain: The strain in the deformation gradient's current configuration.
+         * \param &deformationGradient: The deformation gradient between configurations.
+         * \param &greenLagrangeStrain: The Green-Lagrange strain which corresponds to the reference
+         *     configuration of the deformation gradient.
+         * \param &dEde: The derivative of the Green-Lagrange strain w.r.t. the Almansi strain.
+         * \param &dEdF: The derivative of the Green-Lagrange strain w.r.t. the deformation gradient
+         */
+
+        //Assume 3d
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( pullBackAlmansiStrain( almansiStrain, deformationGradient, greenLagrangeStrain ) )
+
+        floatVector eye( dim * dim );
+        tardigradeVectorTools::eye( eye );
+
+        dEde = floatVector( sot_dim * sot_dim, 0 );
+        dEdF = floatVector( sot_dim * sot_dim, 0 );
+
+        for ( unsigned int I = 0; I < dim; I++ ){
+            for ( unsigned int J = 0; J < dim; J++ ){
+                for ( unsigned int K = 0; K < dim; K++ ){
+                    for ( unsigned int L = 0; L < dim; L++ ){
+                        dEde[ sot_dim * dim * I + sot_dim * J + dim * K + L ] = deformationGradient[ dim * K + I ] * deformationGradient[ dim * L + J ];
+                        dEdF[ sot_dim * dim * I + sot_dim * J + dim * K + I ] += almansiStrain[ dim * K + L ] * deformationGradient[ dim * L + J ];
+                        dEdF[ sot_dim * dim * I + sot_dim * J + dim * K + J ] += deformationGradient[ dim * L + I ] * almansiStrain[ dim * L + K ];
+                    }
+                }
+            }
+        }
+
+        return;
+    }
+
+    void pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
                                     floatVector &greenLagrangeStrain, floatMatrix &dEde, floatMatrix &dEdF ){
         /*!
          * Pull back the almansi strain to the configuration indicated by the deformation gradient.
@@ -1445,41 +2072,20 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Assume 3d
-        unsigned int dim = 3;
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        errorOut error = pullBackAlmansiStrain( almansiStrain, deformationGradient, greenLagrangeStrain );
+        floatVector _dEde, _dEdF;
 
-        if ( error ){
-            errorOut result = new errorNode( "pullBackAlmansiStrain (jacobian)",
-                                             "Error in computation of Green-Lagrange strain" );
-            result->addNext( error );
-            return result;
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( pullBackAlmansiStrain( almansiStrain, deformationGradient, greenLagrangeStrain, _dEde, _dEdF ) )
 
-        floatVector eye( dim * dim );
-        tardigradeVectorTools::eye( eye );
+        dEde = tardigradeVectorTools::inflate( _dEde, sot_dim, sot_dim );
+        dEdF = tardigradeVectorTools::inflate( _dEdF, sot_dim, sot_dim );
 
-        dEde = floatMatrix( dim * dim, floatVector( dim * dim, 0 ) );
-        dEdF = floatMatrix( dim * dim, floatVector( dim * dim, 0 ) );
-
-        for ( unsigned int I = 0; I < dim; I++ ){
-            for ( unsigned int J = 0; J < dim; J++ ){
-                for ( unsigned int K = 0; K < dim; K++ ){
-                    for ( unsigned int L = 0; L < dim; L++ ){
-                        dEde[ dim * I + J ][ dim * K + L ] = deformationGradient[ dim * K + I ] * deformationGradient[ dim * L + J ];
-                        for ( unsigned int j = 0; j < dim; j++ ){
-                            dEdF[ dim * I + J ][ dim * K + L ] += eye[ dim * I + L ] * almansiStrain[ dim * K + j ] * deformationGradient[ dim * j + J ]
-                                                                + deformationGradient[ dim * j + I ] * almansiStrain[ dim * j + K ] * eye[ dim * J + L ];
-                        }
-                    }
-                }
-            }
-        }
-
-        return NULL;
+        return;
     }
 
-    errorOut computeSymmetricPart( const floatVector &A, floatVector &symmA, unsigned int &dim ){
+    void computeSymmetricPart( const floatVector &A, floatVector &symmA, unsigned int &dim ){
         /*!
          * Compute the symmetric part of a second order tensor ( \f$A\f$ ) and return it.
          *
@@ -1494,10 +2100,9 @@ namespace tardigradeConstitutiveTools{
         
         //Get the dimension of A
         dim = ( unsigned int )( std::sqrt( ( double )A.size( ) ) + 0.5 );
-    
-        if ( dim * dim != A.size( ) ){
-            return new errorNode( "computeSymmetricPart", "A is not a square matrix" );
-        }
+        const unsigned int sot_dim = dim * dim;
+   
+        TARDIGRADE_ERROR_TOOLS_CHECK( sot_dim == A.size( ), "A is not a square matrix" );
  
         symmA = floatVector( A.size( ), 0 );
 
@@ -1507,10 +2112,10 @@ namespace tardigradeConstitutiveTools{
             }
         }
     
-        return NULL;
+        return;
     }
 
-    errorOut computeSymmetricPart( const floatVector &A, floatVector &symmA ){
+    void computeSymmetricPart( const floatVector &A, floatVector &symmA ){
         /*!
          * Compute the symmetric part of a second order tensor ( \f$A\f$ ) and return it.
          *
@@ -1524,7 +2129,7 @@ namespace tardigradeConstitutiveTools{
         return computeSymmetricPart( A, symmA, dim );
     }
 
-    errorOut computeSymmetricPart( const floatVector &A, floatVector &symmA, floatMatrix &dSymmAdA ){
+    void computeSymmetricPart( const floatVector &A, floatVector &symmA, floatMatrix &dSymmAdA ){
         /*!
          * Compute the symmetric part of a second order tensor ( \f$A\f$ ) and return it.
          *
@@ -1532,7 +2137,38 @@ namespace tardigradeConstitutiveTools{
          *
          * Also computes the jacobian
          * 
-         * \f$\frac{\partial A^{symm}_{ij}}{\partial A_{kl}} = \frac{1}{2}\left( \delta_{ik} \delta_{jl} + \delta_{jk}\delta_{il} \right)
+         * \f$\frac{\partial A^{symm}_{ij}}{\partial A_{kl}} = \frac{1}{2}\left( \delta_{ik} \delta_{jl} + \delta_{jk}\delta_{il} \right) \f$
+         *
+         * \param &A: A constant reference to the second order tensor to process ( \f$A\f$ )
+         * \param &symmA: The symmetric part of A ( \f$A^{symm}\f$ )
+         * \param &dSymmAdA: The Jacobian of the symmetric part of A w.r.t. A ( \f$\frac{\partial A^{symm}}{\partial A}\f$ )
+         */
+     
+        unsigned int dim;
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeSymmetricPart( A, symmA, dim ) );
+        
+        dSymmAdA = floatMatrix( symmA.size( ), floatVector( A.size( ), 0 ) );
+        
+        for ( unsigned int i = 0; i < dim; i++ ){
+            for ( unsigned int j = 0; j < dim; j++ ){
+                dSymmAdA[ dim * i + j ][ dim * i + j ] += 0.5;
+                dSymmAdA[ dim * i + j ][ dim * j + i ] += 0.5;
+            }
+        }
+        
+        return;
+   
+    }
+
+    void computeSymmetricPart( const floatVector &A, floatVector &symmA, floatVector &dSymmAdA ){
+        /*!
+         * Compute the symmetric part of a second order tensor ( \f$A\f$ ) and return it.
+         *
+         * \f$( A )^{symm}_{ij} = \frac{1}{2}\left(A_{ij} + A_{ji}\right)\f$
+         *
+         * Also computes the jacobian
+         * 
+         * \f$\frac{\partial A^{symm}_{ij}}{\partial A_{kl}} = \frac{1}{2}\left( \delta_{ik} \delta_{jl} + \delta_{jk}\delta_{il} \right)\f$
          *
          * \param &A: A constant reference to the second order tensor to process ( \f$A\f$ )
          * \param &symmA: The symmetric part of A ( \f$A^{symm}\f$ )
@@ -1540,34 +2176,23 @@ namespace tardigradeConstitutiveTools{
          */
         
         unsigned int dim;
-        errorOut error = computeSymmetricPart( A, symmA, dim );
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeSymmetricPart( A, symmA, dim ) );
         
-        if ( error ){
-            errorOut result = new errorNode( "computeSymmetricPart (jacobian)",
-                                             "Error in computation of the symmetric part of A" );
-            result->addNext( error );
-            return result;
-        }
+        const unsigned int Asize = A.size( );
         
-        floatVector eye( A.size( ) );
-        tardigradeVectorTools::eye( eye );
-        
-        dSymmAdA = floatMatrix( symmA.size( ), floatVector( A.size( ), 0 ) );
-        
+        dSymmAdA = floatVector( symmA.size( ) * Asize, 0 );
+
         for ( unsigned int i = 0; i < dim; i++ ){
             for ( unsigned int j = 0; j < dim; j++ ){
-                for ( unsigned int k = 0; k < dim; k++ ){
-                    for ( unsigned int l = 0; l < dim; l++ ){
-                        dSymmAdA[ dim * i + j ][ dim * k + l ] = 0.5 * ( eye[ dim * i + k ] * eye[ dim * j + l ] + eye[ dim * j + k ] * eye[ dim * i + l ] );
-                    }
-                }
+                dSymmAdA[ dim * Asize * i + Asize * j + dim * i + j ] += 0.5;
+                dSymmAdA[ dim * Asize * i + Asize * j + dim * j + i ] += 0.5;
             }
         }
         
-        return NULL;
+        return;
     }
 
-    errorOut pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress ){
+    void pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress ){
         /*!
          * Push the Second Piola-Kirchhoff stress forward to the current configuration resulting in the Cauchy stress
          * 
@@ -1578,35 +2203,98 @@ namespace tardigradeConstitutiveTools{
          * \param &cauchyStress: The Cauchy stress \f$ \sigma_{ij} \f$
          */
 
-        unsigned int dim = ( unsigned int )( std::sqrt( ( double )PK2.size( ) ) + 0.5 );
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
         
-        if ( dim * dim != PK2.size( ) ){
+        TARDIGRADE_ERROR_TOOLS_CHECK( sot_dim == PK2.size( ), "The PK2 stress must have a size of " + std::to_string( sot_dim ) + " and has a size of " + std::to_string( PK2.size( ) ) )
 
-            return new errorNode( "The PK2 stress must have a size of " + std::to_string( dim * dim ) + " and has a size of " + std::to_string( PK2.size( ) ) );
+        TARDIGRADE_ERROR_TOOLS_CHECK( PK2.size( ) == F.size( ), "The deformation gradient must have a size of " + std::to_string( PK2.size( ) ) + " and has a size of " + std::to_string( F.size( ) ) );
 
-        }
+        cauchyStress = floatVector( sot_dim, 0 );
 
-        if ( PK2.size( ) != F.size( ) ){
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > PK2_map( PK2.data( ), dim, dim );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F_map( F.data( ), dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > cauchyStress_map( cauchyStress.data( ), dim, dim );
 
-            return new errorNode( "The deformation gradient must have a size of " + std::to_string( PK2.size( ) ) + " and has a size of " + std::to_string( F.size( ) ) );
+        floatType J = F_map.determinant( );
 
-        }
+        cauchyStress_map = ( F_map * PK2_map * F_map.transpose( ) / J ).eval( );
 
-        cauchyStress = floatVector( dim * dim, 0 );
-
-        floatType J = tardigradeVectorTools::determinant( F, dim, dim );
-
-        cauchyStress = tardigradeVectorTools::matrixMultiply( F, PK2, dim, dim, dim, dim );
-
-        cauchyStress = tardigradeVectorTools::matrixMultiply( cauchyStress, F, dim, dim, dim, dim, false, true );
-
-        cauchyStress /= J;
-
-        return NULL;
+        return;
 
     }
 
-    errorOut pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress,
+    void pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress,
+                                   floatVector &dCauchyStressdPK2, floatVector &dCauchyStressdF ){
+        /*!
+         * Push the Second Piola-Kirchhoff stress forward to the current configuration resulting in the Cauchy stress
+         * 
+         * \f$ \sigma_{ij} = \frac{1}{J} F_{iI} S_{IJ} F_{jJ} \f$
+         * 
+         * \param &PK2: The Second Piola-Kirchhoff stress \f$ S_{IJ} \f$
+         * \param &F: The deformation gradient \f$ F_{iI} \f$
+         * \param &cauchyStress: The Cauchy stress \f$ \sigma_{ij} \f$
+         * \param &dCauchyStressdPK2: The gradient of the Cauchy stress w.r.t. the PK2 stress
+         * \param &dCauchyStressdF: The gradient of the Cauchy stress w.r.t. the deformation gradient
+         */
+
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+        constexpr unsigned int fot_dim = sot_dim * sot_dim;
+        
+        TARDIGRADE_ERROR_TOOLS_CHECK( dim * dim == PK2.size( ), "The PK2 stress must have a size of " + std::to_string( sot_dim ) + " and has a size of " + std::to_string( PK2.size( ) ) );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( PK2.size( ) == F.size( ), "The deformation gradient must have a size of " + std::to_string( PK2.size( ) ) + " and has a size of " + std::to_string( F.size( ) ) );
+
+        cauchyStress = floatVector( sot_dim, 0 );
+        floatVector dJdF( sot_dim, 0 );
+
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > PK2_map( PK2.data( ), dim, dim );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F_map( F.data( ), dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > cauchyStress_map( cauchyStress.data( ), dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > dJdF_map( dJdF.data( ), dim, dim );
+
+        floatType J = F_map.determinant( );
+
+        cauchyStress_map = ( F_map * PK2_map * F_map.transpose( ) / J ).eval( );
+
+        dJdF_map = ( J * F_map.inverse( ).transpose( ) ).eval( );
+
+        dCauchyStressdF = floatVector( fot_dim, 0 );
+
+        dCauchyStressdPK2 = floatVector( fot_dim, 0 );
+
+        floatVector eye( dim * dim, 0 );
+        tardigradeVectorTools::eye( eye );
+
+        for ( unsigned int i = 0; i < dim; i++ ){
+
+            for ( unsigned int j = 0; j < dim; j++ ){
+
+                for ( unsigned int A = 0; A < dim; A++ ){
+
+                    for ( unsigned int B = 0; B < dim; B++ ){
+
+                        dCauchyStressdPK2[ dim * sot_dim * i + sot_dim * j + dim * A + B ] += F[ dim * i + A ] * F[ dim * j + B ] / J;
+                        dCauchyStressdF[ dim * sot_dim * i + sot_dim * j + dim * A + B ] -= cauchyStress[ dim * i + j ] * dJdF[ dim * A + B ] / J;
+
+                        dCauchyStressdF[ dim * sot_dim * i + sot_dim * j + dim * i + A ] += PK2[ dim * A + B ] * F[ dim * j + B ] / J;
+
+                        dCauchyStressdF[ dim * sot_dim * i + sot_dim * j + dim * j + A ] += F[ dim * i + B ] * PK2[ dim * B + A ] / J;
+
+                    }
+
+                }
+
+            }
+
+        } 
+
+        return;
+
+    }
+
+    void pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress,
                                    floatMatrix &dCauchyStressdPK2, floatMatrix &dCauchyStressdF ){
         /*!
          * Push the Second Piola-Kirchhoff stress forward to the current configuration resulting in the Cauchy stress
@@ -1620,69 +2308,19 @@ namespace tardigradeConstitutiveTools{
          * \param &dCauchyStressdF: The gradient of the Cauchy stress w.r.t. the deformation gradient
          */
 
-        unsigned int dim = ( unsigned int )( std::sqrt( ( double )PK2.size( ) ) + 0.5 );
-        
-        if ( dim * dim != PK2.size( ) ){
+        floatVector _dCauchyStressdPK2, _dCauchyStressdF;
 
-            return new errorNode( "The PK2 stress must have a size of " + std::to_string( dim * dim ) + " and has a size of " + std::to_string( PK2.size( ) ) );
+        TARDIGRADE_ERROR_TOOLS_CATCH( pushForwardPK2Stress( PK2, F, cauchyStress, _dCauchyStressdPK2, _dCauchyStressdF ) )
 
-        }
+        dCauchyStressdPK2 = tardigradeVectorTools::inflate( _dCauchyStressdPK2, cauchyStress.size( ), PK2.size( ) );
 
-        if ( PK2.size( ) != F.size( ) ){
+        dCauchyStressdF   = tardigradeVectorTools::inflate( _dCauchyStressdF,   cauchyStress.size( ), F.size( ) );
 
-            return new errorNode( "The deformation gradient must have a size of " + std::to_string( PK2.size( ) ) + " and has a size of " + std::to_string( F.size( ) ) );
-
-        }
-
-        cauchyStress = floatVector( dim * dim, 0 );
-
-        floatType J = tardigradeVectorTools::determinant( F, dim, dim );
-
-        floatVector dJdF = tardigradeVectorTools::computeDDetADA( F, dim, dim );
-
-        cauchyStress = tardigradeVectorTools::matrixMultiply( F, PK2, dim, dim, dim, dim );
-
-        cauchyStress = tardigradeVectorTools::matrixMultiply( cauchyStress, F, dim, dim, dim, dim, false, true );
-
-        dCauchyStressdF = tardigradeVectorTools::dyadic( -cauchyStress / ( J * J ), dJdF );
-
-        cauchyStress /= J;
-
-        dCauchyStressdPK2 = floatMatrix( dim * dim, floatVector( dim * dim, 0 ) );
-
-        floatVector eye( dim * dim, 0 );
-        tardigradeVectorTools::eye( eye );
-
-        for ( unsigned int i = 0; i < dim; i++ ){
-
-            for ( unsigned int j = 0; j < dim; j++ ){
-
-                for ( unsigned int A = 0; A < dim; A++ ){
-
-                    for ( unsigned int B = 0; B < dim; B++ ){
-
-                        dCauchyStressdPK2[ dim * i + j ][ dim * A + B ] += F[ dim * i + A ] * F[ dim * j + B ] / J;
-
-                        for ( unsigned int I = 0; I < dim; I++ ){
-
-                            dCauchyStressdF[ dim * i + j ][ dim * A + B ] += eye[ dim * i + A ] * PK2[ dim * B + I ] * F[ dim * j + I ] / J
-                                                                           + F[ dim * i + I ] * PK2[ dim * I + B ] * eye[ dim * j + A ] / J;
-
-                        }
-
-                    }
-
-                }
-
-            }
-
-        } 
-
-        return NULL;
+        return;
 
     }
 
-    errorOut pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2 ){
+    void pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2 ){
         /*!
          * Pull back the Cauchy stress to an earlier configuration resulting in the second Piola-Kirchhoff stress
          * 
@@ -1697,40 +2335,103 @@ namespace tardigradeConstitutiveTools{
          * \param &PK2: The resulting second Piola-Kirchhoff stress
          */
 
-        unsigned int dim = ( unsigned int )( std::sqrt( ( double )cauchyStress.size( ) ) + 0.5 );
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        if ( cauchyStress.size( ) != dim * dim ){
+        TARDIGRADE_ERROR_TOOLS_CHECK( cauchyStress.size( ) == sot_dim, "The Cauchy stress size is not consistent with the computed dimension\n    cauchyStress.size( ): " + std::to_string( cauchyStress.size( ) ) + "\n    dim * dim           : " + std::to_string( dim * dim ) + "\n" );
 
-            std::string message = "The Cauchy stress size is not consistent with the computed dimension\n";
-            message            += "    cauchyStress.size( ): " + std::to_string( cauchyStress.size( ) ) + "\n";
-            message            += "    dim * dim           : " + std::to_string( dim * dim ) + "\n";
+        TARDIGRADE_ERROR_TOOLS_CHECK( cauchyStress.size( ) == F.size( ), "The Cauchy stress and the deformation gradient have inconsistent sizes\n    cauchyStress.size( ): " + std::to_string( cauchyStress.size( ) ) + "\n    F.size( )           : " + std::to_string( F.size( ) ) + "\n" );
 
-            return new errorNode( __func__, message );
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > cauchyStress_map( cauchyStress.data( ), dim, dim );
 
-        }
+        floatVector Finv = F;
 
-        if ( cauchyStress.size( ) != F.size( ) ){
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > Finv_map( Finv.data( ), dim, dim );
+        Finv_map = Finv_map.inverse( ).eval( );
 
-            std::string message = "The Cauchy stress and the deformation gradient have inconsistent sizes\n";
-            message            += "    cauchyStress.size( ): " + std::to_string( cauchyStress.size( ) ) + "\n";
-            message            += "    F.size( )           : " + std::to_string( F.size( ) ) + "\n";
+        floatType J = 1 / Finv_map.determinant( );
 
-            return new errorNode( __func__, message );
+        PK2 = floatVector( sot_dim, 0 );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > PK2_map( PK2.data( ), dim, dim );
 
-        }
+        PK2_map = ( J * Finv_map * cauchyStress_map * Finv_map.transpose( ) ).eval( );
 
-        floatType J = tardigradeVectorTools::determinant( F, dim, dim );
-
-        floatVector Finv = tardigradeVectorTools::inverse( F, dim, dim );
-
-        PK2 = J * tardigradeVectorTools::matrixMultiply( tardigradeVectorTools::matrixMultiply( Finv, cauchyStress, dim, dim, dim, dim, false, false ),
-                                                         Finv, dim, dim, dim, dim, false, true );
-
-        return NULL;
+        return;
 
     }
     
-    errorOut pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2, 
+    void pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2, 
+                                   floatVector &dPK2dCauchyStress, floatVector &dPK2dF ){
+        /*!
+         * Pull back the Cauchy stress to an earlier configuration resulting in the second Piola-Kirchhoff stress
+         * 
+         * \f$ S_{IJ} = J F^{-1}_{Ii} \sigma_{ij} F^{-1}_{Jj} \f$
+         * 
+         * where \f$S_{IJ}\f$ are the components of the second Piola-Kirchhoff stress tensor, \f$J \f$ is the
+         * determinant of the deformation gradient \f$\bf{F}\f$ which has components \f$F_{iI}\f$, and
+         * \f$ \sigma_{ij} \f$ are the components of the Cauchy stress.
+         *
+         * \param &cauchyStress: The cauchy stress tensor in row-major form (all nine components)
+         * \param &F: The deformation gradient
+         * \param &PK2: The resulting second Piola-Kirchhoff stress
+         * \param &dPK2dCauchyStress: The directional derivative of the second Piola-Kirchhoff stress tensor w.r.t.
+         *     the Cauchy stress
+         * \param &dPK2dF: The directional derivative of the second Piola-Kirchhoff stress tensor w.r.t. the
+         *     deformation gradient
+         */
+
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+        constexpr unsigned int fot_dim = sot_dim * sot_dim;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( cauchyStress.size( ) == sot_dim, "The Cauchy stress size is not consistent with the computed dimension\n    cauchyStress.size( ): " + std::to_string( cauchyStress.size( ) ) + "\n    dim * dim           : " + std::to_string( dim * dim ) + "\n" );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( cauchyStress.size( ) == F.size( ), "The Cauchy stress and the deformation gradient have inconsistent sizes\n    cauchyStress.size( ): " + std::to_string( cauchyStress.size( ) ) + "\n    F.size( )           : " + std::to_string( F.size( ) ) + "\n" );
+
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > cauchyStress_map( cauchyStress.data( ), dim, dim );
+
+        floatVector Finv = F;
+
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > Finv_map( Finv.data( ), dim, dim );
+        Finv_map = Finv_map.inverse( ).eval( );
+
+        floatType J = 1 / Finv_map.determinant( );
+
+        PK2 = floatVector( sot_dim, 0 );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > PK2_map( PK2.data( ), dim, dim );
+
+        PK2_map = ( J * Finv_map * cauchyStress_map * Finv_map.transpose( ) ).eval( );
+
+        dPK2dCauchyStress = floatVector( fot_dim, 0 );
+        dPK2dF            = floatVector( fot_dim, 0 );
+
+        for ( unsigned int A = 0; A < dim; A++ ){
+
+            for ( unsigned int B = 0; B < dim; B++ ){
+
+                for ( unsigned int k = 0; k < dim; k++ ){
+
+                    for ( unsigned int l = 0; l < dim; l++ ){
+
+                        dPK2dCauchyStress[ dim * dim * dim * A + dim * dim * B + dim * k + l ] = J * Finv[ dim * A + k ] * Finv[ dim * B + l ];
+
+                        dPK2dF[ dim * dim * dim * A + dim * dim * B + dim * k + l ] = Finv[ dim * l + k ] * PK2[ dim * A + B ]
+                                                                                    - Finv[ dim * A + k ] * PK2[ dim * l + B ]
+                                                                                    - Finv[ dim * B + k ] * PK2[ dim * A + l ];
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        return;
+
+    }
+
+    void pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2, 
                                    floatMatrix &dPK2dCauchyStress, floatMatrix &dPK2dF ){
         /*!
          * Pull back the Cauchy stress to an earlier configuration resulting in the second Piola-Kirchhoff stress
@@ -1750,51 +2451,105 @@ namespace tardigradeConstitutiveTools{
          *     deformation gradient
          */
 
-        unsigned int dim = ( unsigned int )( std::sqrt( ( double )cauchyStress.size( ) ) + 0.5 );
 
-        if ( cauchyStress.size( ) != dim * dim ){
+        floatVector _dPK2dCauchyStress, _dPK2dF;
 
-            std::string message = "The Cauchy stress size is not consistent with the computed dimension\n";
-            message            += "    cauchyStress.size( ): " + std::to_string( cauchyStress.size( ) ) + "\n";
-            message            += "    dim * dim           : " + std::to_string( dim * dim ) + "\n";
+        TARDIGRADE_ERROR_TOOLS_CATCH( pullBackCauchyStress( cauchyStress, F, PK2, _dPK2dCauchyStress, _dPK2dF ) )
 
-            return new errorNode( __func__, message );
+        dPK2dCauchyStress = tardigradeVectorTools::inflate( _dPK2dCauchyStress, PK2.size( ), cauchyStress.size( ) );
 
-        }
+        dPK2dF = tardigradeVectorTools::inflate( _dPK2dF, PK2.size( ), F.size( ) );
 
-        if ( cauchyStress.size( ) != F.size( ) ){
+        return;
 
-            std::string message = "The Cauchy stress and the deformation gradient have inconsistent sizes\n";
-            message            += "    cauchyStress.size( ): " + std::to_string( cauchyStress.size( ) ) + "\n";
-            message            += "    F.size( )           : " + std::to_string( F.size( ) ) + "\n";
+    }
 
-            return new errorNode( __func__, message );
+    void evolveFExponentialMap( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+                                floatVector &deformationGradient, const floatType alpha ){
+        /*!
+         * Evolve the deformation gradient using the exponential map. Assumes the evolution equation is of the form
+         * 
+         * \f$ \dot{F}_{iI} = \ell_{ij} F_{jI} \f$
+         * 
+         * \param &Dt: The change in time
+         * \param &previousDeformationGradient: The previous value of the deformation gradient
+         * \param &Lp: The previous value of the velocity gradient
+         * \param &L: The current value of the velocity gradient
+         * \param &deformationGradient: The computed value of the deformation gradient
+         * \param &alpha: The integration parameter (0 is explicit and 1 is implicit)
+         */
 
-        }
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        floatType J = tardigradeVectorTools::determinant( F, dim, dim );
+        floatVector DtLalpha = Dt * ( ( 1 - alpha ) * Lp + alpha * L );
 
-        floatVector Finv = tardigradeVectorTools::inverse( F, dim, dim );
+        floatVector expDtLalpha;
 
-        PK2 = J * tardigradeVectorTools::matrixMultiply( tardigradeVectorTools::matrixMultiply( Finv, cauchyStress, dim, dim, dim, dim, false, false ),
-                                                         Finv, dim, dim, dim, dim, false, true );
+        TARDIGRADE_ERROR_TOOLS_CATCH( tardigradeVectorTools::computeMatrixExponentialScalingAndSquaring( DtLalpha, dim, expDtLalpha ) )
 
-        dPK2dCauchyStress = floatMatrix( dim * dim, floatVector( dim * dim, 0 ) );
-        dPK2dF            = floatMatrix( dim * dim, floatVector( dim * dim, 0 ) );
+        deformationGradient = floatVector( sot_dim, 0 );
 
-        for ( unsigned int A = 0; A < dim; A++ ){
+        for ( unsigned int i = 0; i < dim; i++ ){
 
-            for ( unsigned int B = 0; B < dim; B++ ){
+            for ( unsigned int j = 0; j < dim; j++ ){
 
                 for ( unsigned int k = 0; k < dim; k++ ){
 
-                    for ( unsigned int l = 0; l < dim; l++ ){
+                    deformationGradient[ dim * i + k ] += expDtLalpha[ dim * i + j ] * previousDeformationGradient[ dim * j + k ];
 
-                        dPK2dCauchyStress[ dim * A + B ][ dim * k + l ] = J * Finv[ dim * A + k ] * Finv[ dim * B + l ];
+                }
 
-                        dPK2dF[ dim * A + B ][ dim * k + l ] = Finv[ dim * l + k ] * PK2[ dim * A + B ]
-                                                             - Finv[ dim * A + k ] * PK2[ dim * l + B ]
-                                                             - Finv[ dim * B + k ] * PK2[ dim * A + l ];
+            }
+
+        }
+
+    }
+
+    void evolveFExponentialMap( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+                                floatVector &deformationGradient, floatVector &dFdL, const floatType alpha ){
+        /*!
+         * Evolve the deformation gradient using the exponential map. Assumes the evolution equation is of the form
+         * 
+         * \f$ \dot{F}_{iI} = \ell_{ij} F_{jI} \f$
+         * 
+         * \param &Dt: The change in time
+         * \param &previousDeformationGradient: The previous value of the deformation gradient
+         * \param &Lp: The previous value of the velocity gradient
+         * \param &L: The current value of the velocity gradient
+         * \param &deformationGradient: The computed value of the deformation gradient
+         * \param &dFdL: The derivative of the deformation gradient w.r.t. the velocity gradient
+         * \param &alpha: The integration parameter (0 is explicit and 1 is implicit)
+         */
+
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+
+        floatVector DtLalpha = Dt * ( ( 1 - alpha ) * Lp + alpha * L );
+
+        floatVector expDtLalpha;
+
+        floatVector dExpDtLalphadL;
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( tardigradeVectorTools::computeMatrixExponentialScalingAndSquaring( DtLalpha, dim, expDtLalpha, dExpDtLalphadL ) )
+
+        dExpDtLalphadL *= Dt * alpha;
+
+        deformationGradient = floatVector( sot_dim, 0 );
+
+        dFdL = floatVector( sot_dim * sot_dim, 0 );
+
+        for ( unsigned int i = 0; i < dim; i++ ){
+
+            for ( unsigned int j = 0; j < dim; j++ ){
+
+                for ( unsigned int k = 0; k < dim; k++ ){
+
+                    deformationGradient[ dim * i + k ] += expDtLalpha[ dim * i + j ] * previousDeformationGradient[ dim * j + k ];
+
+                    for ( unsigned int ab = 0; ab < sot_dim; ab++ ){
+
+                        dFdL[ dim * sot_dim * i + sot_dim * k + ab ] += dExpDtLalphadL[ dim * sot_dim * i + sot_dim * j + ab ] * previousDeformationGradient[ dim * j + k ];
 
                     }
 
@@ -1804,7 +2559,347 @@ namespace tardigradeConstitutiveTools{
 
         }
 
-        return NULL;
+    }
+
+    void evolveFExponentialMap( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+                                floatVector &deformationGradient, floatVector &dFdL, floatVector &dFdFp, floatVector &dFdLp, const floatType alpha ){
+        /*!
+         * Evolve the deformation gradient using the exponential map. Assumes the evolution equation is of the form
+         * 
+         * \f$ \dot{F}_{iI} = \ell_{ij} F_{jI} \f$
+         * 
+         * \param &Dt: The change in time
+         * \param &previousDeformationGradient: The previous value of the deformation gradient
+         * \param &Lp: The previous value of the velocity gradient
+         * \param &L: The current value of the velocity gradient
+         * \param &deformationGradient: The computed value of the deformation gradient
+         * \param &dFdL: The derivative of the deformation gradient w.r.t. the velocity gradient
+         * \param &dFdFp: The derivative of the deformation gradient w.r.t. the previous deformation gradient
+         * \param &dFdLp: The derivative of the deformation gradient w.r.t. the previous velocity gradient
+         * \param &alpha: The integration parameter (0 is explicit and 1 is implicit)
+         */
+
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+
+        floatVector DtLalpha = Dt * ( ( 1 - alpha ) * Lp + alpha * L );
+
+        floatVector expDtLalpha;
+
+        floatVector dExpDtLalphadL;
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( tardigradeVectorTools::computeMatrixExponentialScalingAndSquaring( DtLalpha, dim, expDtLalpha, dExpDtLalphadL ) )
+
+        floatVector dExpDtLalphadLp = dExpDtLalphadL * Dt * ( 1 - alpha );
+
+        dExpDtLalphadL *= Dt * alpha;
+
+        deformationGradient = floatVector( sot_dim, 0 );
+
+        dFdFp = floatVector( sot_dim * sot_dim, 0 );
+
+        dFdL = floatVector( sot_dim * sot_dim, 0 );
+
+        dFdLp = floatVector( sot_dim * sot_dim, 0 );
+
+        for ( unsigned int i = 0; i < dim; i++ ){
+
+            for ( unsigned int j = 0; j < dim; j++ ){
+
+                for ( unsigned int k = 0; k < dim; k++ ){
+
+                    deformationGradient[ dim * i + k ] += expDtLalpha[ dim * i + j ] * previousDeformationGradient[ dim * j + k ];
+
+                    dFdFp[ dim * sot_dim * i + sot_dim * j + dim * k + j ] += expDtLalpha[ dim * i + k ];
+
+                    for ( unsigned int ab = 0; ab < sot_dim; ab++ ){
+
+                        dFdL[ dim * sot_dim * i + sot_dim * k + ab ] += dExpDtLalphadL[ dim * sot_dim * i + sot_dim * j + ab ] * previousDeformationGradient[ dim * j + k ];
+                        dFdLp[ dim * sot_dim * i + sot_dim * k + ab ] += dExpDtLalphadLp[ dim * sot_dim * i + sot_dim * j + ab ] * previousDeformationGradient[ dim * j + k ];
+
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    void computeDCurrentNormalVectorDF( const floatVector &normalVector, const floatVector &F, floatVector &dNormalVectordF ){
+        /*!
+         * Compute the derivative of the normal vector in the current configuration w.r.t. the deformation gradient
+         * 
+         * \param &normalVector: The unit normal vector in the current configuration
+         * \param &F: The deformation gradient
+         * \param &dNormalVectordF: The derivative of the normal vector w.r.t. the deformation gradient
+         */
+
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+        constexpr unsigned int tot_dim = dim * dim * dim;
+
+        dNormalVectordF = floatVector( tot_dim, 0 );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( F.size( ) == sot_dim, "The deformation gradient must be a second order tensor of size " + std::to_string( sot_dim ) + " and it has " + std::to_string( F.size( ) ) + " elements" );
+
+        floatVector invF( sot_dim, 0 );
+
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F_map( F.data( ), dim, dim );
+
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invF_map( invF.data( ), dim, dim );
+
+        invF_map = F_map.inverse( );
+
+        floatVector invF_n( dim, 0 );
+
+        for ( unsigned int B = 0; B < dim; B++ ){
+
+            for ( unsigned int j = 0; j < dim; j++ ){
+
+                invF_n[ B ] += invF[ dim * B + j ] * normalVector[ j ];
+
+            }
+
+        }
+
+        for ( unsigned int i = 0; i < dim; i++ ){
+
+            for ( unsigned int b = 0; b < dim; b++ ){
+
+                for ( unsigned int B = 0; B < dim; B++ ){
+
+                    dNormalVectordF[ dim * dim * i + dim * b + B ] += normalVector[ i ] * normalVector[ b ] * invF_n[ B ]
+                                                                    - normalVector[ b ] * invF[ dim * B + i ];
+
+                }
+
+            }
+
+        }
+
+    }
+
+    void computeDCurrentAreaWeightedNormalVectorDF( const floatVector &normalVector, const floatVector &F, floatVector &dAreaWeightedNormalVectordF ){
+        /*!
+         * Compute the derivative of the area weighted normal vector w.r.t. the deformation gradient i.e.
+         * 
+         * \f$ \frac{\partial}{\partial F_{bB}} \left( n_i da \right) \f$
+         * 
+         * Note that if the user passes in the unit normal vector, then the result will be more convenient for the construction of
+         * the jacobian of a surface integral in the current configuration.
+         * 
+         * \param &normalVector: The normal vector (a unit vector is likely what is desired)
+         * \param &F: The deformation gradient
+         * \param &dAreaWeightedNormalVectordF: The derivative of the area weighted normal vector w.r.t. the deformation gradient
+         */
+
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+        constexpr unsigned int tot_dim = dim * dim * dim;
+
+        dAreaWeightedNormalVectordF = floatVector( tot_dim, 0 );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( F.size( ) == sot_dim, "The deformation gradient must be a second order tensor of size " + std::to_string( sot_dim ) + " and it has " + std::to_string( F.size( ) ) + " elements" );
+
+        floatVector invF( sot_dim, 0 );
+
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F_map( F.data( ), dim, dim );
+
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invF_map( invF.data( ), dim, dim );
+
+        invF_map = F_map.inverse( );
+
+        for ( unsigned int i = 0; i < dim; i++ ){
+
+            for ( unsigned int b = 0; b < dim; b++ ){
+
+                for ( unsigned int B = 0; B < dim; B++ ){
+
+                    dAreaWeightedNormalVectordF[ dim * dim * i + dim * b + B ] += normalVector[ i ] * invF[ dim * B + b ]
+                                                                                - normalVector[ b ] * invF[ dim * B + i ];
+
+                }
+
+            }
+
+        }
+
+    }
+
+    void computeDCurrentAreaDF( const floatVector &normalVector, const floatVector &F, floatVector &dCurrentAreadF ){
+        /*!
+         * Compute the derivative of the current area w.r.t. the deformation gradient
+         * 
+         * \param &normalVector: The current unit normal vector
+         * \param &F: The deformation gradient
+         * \param &dCurrentAreadF: The derivative of the current surface area w.r.t. F
+         */
+
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+
+        dCurrentAreadF = floatVector( sot_dim, 0 );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( F.size( ) == sot_dim, "The deformation gradient must be a second order tensor of size " + std::to_string( sot_dim ) + " and it has " + std::to_string( F.size( ) ) + " elements" );
+
+        floatVector invF( sot_dim, 0 );
+
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F_map( F.data( ), dim, dim );
+
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invF_map( invF.data( ), dim, dim );
+
+        invF_map = F_map.inverse( );
+
+        floatVector invF_n( dim, 0 );
+
+        for ( unsigned int B = 0; B < dim; B++ ){
+
+            for ( unsigned int i = 0; i < dim; i++ ){
+
+                invF_n[ B ] += invF[ dim * B + i ] * normalVector[ i ];
+
+            }
+
+        }
+
+        for ( unsigned int B = 0; B < dim; B++ ){
+
+            for ( unsigned int b = 0; b < dim; b++ ){
+
+                dCurrentAreadF[ dim * b + B ] += invF[ dim * B + b ] - normalVector[ b ] * invF_n[ B ];
+
+            }
+
+        }
+
+    }
+
+    void computeDCurrentNormalVectorDGradU( const floatVector &normalVector, const floatVector &gradU, floatVector &dNormalVectordGradU, const bool isCurrent ){
+        /*!
+         * Compute the derivative of the normal vector in the current configuration w.r.t. the displacement gradient
+         * 
+         * \param &normalVector: The unit normal vector in the current configuration
+         * \param &gradU: The displacement gradient
+         * \param &dNormalVectordGradU: The derivative of the normal vector w.r.t. the displacement gradient
+         * \param &isCurrent: Whether the displacement gradient is with respect to the reference or current configuration
+         */
+
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+        constexpr unsigned int tot_dim = dim * dim * dim;
+
+        floatVector F;
+
+        floatVector dFdGradU;
+
+        computeDeformationGradient( gradU, F, dFdGradU, isCurrent );
+
+        floatVector dNormalVectordF;
+
+        computeDCurrentNormalVectorDF( normalVector, F, dNormalVectordF );
+
+        dNormalVectordGradU = floatVector( tot_dim, 0 );
+
+        for ( unsigned int i = 0; i < dim; i++ ){
+
+            for ( unsigned int j = 0; j < sot_dim; j++ ){
+
+                for ( unsigned int k = 0; k < sot_dim; k++ ){
+
+                    dNormalVectordGradU[ sot_dim * i + k ] += dNormalVectordF[ sot_dim * i + j ] * dFdGradU[ sot_dim * j + k ];
+
+                }
+
+            }
+
+        }
+
+    }
+
+    void computeDCurrentAreaWeightedNormalVectorDGradU( const floatVector &normalVector, const floatVector &gradU, floatVector &dAreaWeightedNormalVectordGradU, const bool isCurrent ){
+        /*!
+         * Compute the derivative of the area weighted normal vector w.r.t. the displacement gradient
+         * 
+         * \f$ \frac{\partial}{\partial u_{i,j}} \left( n_i da \right) \f$
+         * 
+         * Note that if the user passes in the unit normal vector, then the result will be more convenient for the construction of
+         * the jacobian of a surface integral in the current configuration.
+         * 
+         * \param &normalVector: The normal vector (a unit vector is likely what is desired)
+         * \param &gradU: The displacement gradient
+         * \param &dAreaWeightedNormalVectordGradU: The derivative of the area weighted normal vector w.r.t. the displacement gradient
+         * \param &isCurrent: Whether the displacement gradient is with respect to the reference or current configuration
+         */
+
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+        constexpr unsigned int tot_dim = dim * dim * dim;
+
+        floatVector F;
+
+        floatVector dFdGradU;
+
+        computeDeformationGradient( gradU, F, dFdGradU, isCurrent );
+
+        floatVector dAreaWeightedNormalVectordF;
+
+        computeDCurrentAreaWeightedNormalVectorDF( normalVector, F, dAreaWeightedNormalVectordF );
+
+        dAreaWeightedNormalVectordGradU = floatVector( tot_dim, 0 );
+
+        for ( unsigned int i = 0; i < dim; i++ ){
+
+            for ( unsigned int j = 0; j < sot_dim; j++ ){
+
+                for ( unsigned int k = 0; k < sot_dim; k++ ){
+
+                    dAreaWeightedNormalVectordGradU[ sot_dim * i + k ] += dAreaWeightedNormalVectordF[ sot_dim * i + j ] * dFdGradU[ sot_dim * j + k ];
+
+                }
+
+            }
+
+        }
+
+    }
+
+    void computeDCurrentAreaDGradU( const floatVector &normalVector, const floatVector &gradU, floatVector &dCurrentAreadGradU, const bool isCurrent ){
+        /*!
+         * Compute the derivative of the current area w.r.t. the displacement gradient
+         * 
+         * \param &normalVector: The current unit normal vector
+         * \param &gradU: The displacement gradient
+         * \param &dCurrentAreadGradU: The derivative of the current surface area w.r.t. the displacement gradient
+         * \param &isCurrent: Whether the displacement gradient is with respect to the reference or current configuration
+         */
+
+        constexpr unsigned int dim = 3;
+        constexpr unsigned int sot_dim = dim * dim;
+
+        floatVector F;
+
+        floatVector dFdGradU;
+
+        computeDeformationGradient( gradU, F, dFdGradU, isCurrent );
+
+        floatVector dCurrentAreadF;
+
+        computeDCurrentAreaDF( normalVector, F, dCurrentAreadF );
+
+        dCurrentAreadGradU = floatVector( sot_dim, 0 );
+
+        for ( unsigned int i = 0; i < sot_dim; i++ ){
+
+            for ( unsigned int j = 0; j < sot_dim; j++ ){
+
+                dCurrentAreadGradU[ j ] += dCurrentAreadF[ i ] * dFdGradU[ sot_dim * i + j ];
+
+            }
+
+        }
 
     }
 
