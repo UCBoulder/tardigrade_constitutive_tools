@@ -55,15 +55,11 @@ namespace tardigradeConstitutiveTools{
          */
 
         //Check the size of A
-        if (A.size() != Q.size()){
-            return new errorNode("rotateMatrix", "A and Q must have the same number of values");
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( A.size( ) == Q.size( ), "A and Q must have the same number of values" );
 
         //Set the dimension to be the square-root of the size of A
         const unsigned int dim = std::sqrt(A.size());
-        if (A.size() % dim != 0){
-            return new errorNode("rotateMatrix", "A must be square");
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( A.size() % dim ) == 0, "A must be square");
 
         //Resize rotated A
         rotatedA.resize(A.size());
@@ -320,9 +316,7 @@ namespace tardigradeConstitutiveTools{
          * The Green-Lagrange strain is organized as E11, E12, E13, E21, E22, E23, E31, E32, E33
          */
 
-        if ( deformationGradient.size( ) != 9 ){
-            return new errorNode( "computeGreenLagrangeStrain", "The deformation gradient must be 3D." );
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( deformationGradient.size( ) == 9, "The deformation gradient must be 3D." );
 
         constexpr unsigned int dim=3;
         E.resize( dim * dim );
@@ -355,13 +349,7 @@ namespace tardigradeConstitutiveTools{
 
         floatVector _dEdF;
 
-        errorOut error = computeGreenLagrangeStrain( deformationGradient, E, _dEdF );
-
-        if ( error ){
-            errorOut result = new errorNode( "computeGreenLagrangeStrain (jacobian)", "Error in computation of Green-Lagrange strain" );
-            result->addNext( error );
-            return result;
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeGreenLagrangeStrain( deformationGradient, E, _dEdF ) );
 
         dEdF = tardigradeVectorTools::inflate( _dEdF, deformationGradient.size( ), deformationGradient.size( ) );
 
@@ -383,21 +371,9 @@ namespace tardigradeConstitutiveTools{
          * The Green-Lagrange strain is organized as E11, E12, E13, E21, E22, E23, E31, E32, E33
          */
         
-        errorOut error = computeGreenLagrangeStrain( deformationGradient, E );
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeGreenLagrangeStrain( deformationGradient, E ) );
 
-        if ( error ){
-            errorOut result = new errorNode( "computeGreenLagrangeStrain (jacobian)", "Error in computation of Green-Lagrange strain" );
-            result->addNext( error );
-            return result;
-        }
-
-        error = computeDGreenLagrangeStrainDF( deformationGradient, dEdF );
-
-        if ( error ){
-            errorOut result = new errorNode( "computeGreenLagrangeStrain (jacobian)", "Error in computation of Green-Lagrange strain jacobian" );
-            result->addNext( error );
-            return result;
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeDGreenLagrangeStrainDF( deformationGradient, dEdF ) );
 
         return NULL;
     }
@@ -418,17 +394,7 @@ namespace tardigradeConstitutiveTools{
 
         floatVector _dEdF;
 
-        errorOut error = computeDGreenLagrangeStrainDF( deformationGradient, _dEdF );
-
-        if ( error ){
-
-            errorOut result = new errorNode( "computeDGreenLagrangeStrainDF", "Error in computation of the derivative of the Green-Lagrange strain w.r.t. F" );
-
-            result->addNext( error );
-
-            return result;
-
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeDGreenLagrangeStrainDF( deformationGradient, _dEdF ) );
 
         dEdF = tardigradeVectorTools::inflate( _dEdF, deformationGradient.size( ), deformationGradient.size( ) );
 
@@ -450,9 +416,7 @@ namespace tardigradeConstitutiveTools{
          * The deformation gradient is organized as  F11, F12, F13, F21, F22, F23, F31, F32, F33
          */
 
-        if ( deformationGradient.size( ) != 9 ){
-            return new errorNode( "decomposeGreenLagrangeStrain", "the Green-Lagrange strain must be 3D" );
-        }
+        TARDIGRADE_ERROR_TOOLS_CHECK( deformationGradient.size( ) == 9, "the Green-Lagrange strain must be 3D" );
 
         dEdF = floatVector( 81, 0 );
         for ( unsigned int I = 0; I < 3; I++ ){
@@ -864,7 +828,7 @@ namespace tardigradeConstitutiveTools{
          * \param &Ap: The previous value of the vector
          * \param &DApDt: The previous time rate of change of the vector.
          * \param &DADt: The current time rate of change of the vector.
-         * \param &A: The change in value of the vector.
+         * \param &dA: The change in value of the vector.
          * \param &A: The current value of the vector.
          * \param &DADADt: The gradient of A w.r.t. the current rate of change.
          * \param &alpha: The integration parameter.
@@ -901,7 +865,7 @@ namespace tardigradeConstitutiveTools{
          * \param &Ap: The previous value of the vector
          * \param &DApDt: The previous time rate of change of the vector.
          * \param &DADt: The current time rate of change of the vector.
-         * \param &A: The change in value of the vector.
+         * \param &dA: The change in value of the vector.
          * \param &A: The current value of the vector.
          * \param &DADADt: The gradient of A w.r.t. the current rate of change.
          * \param &alpha: The integration parameter.
@@ -934,7 +898,7 @@ namespace tardigradeConstitutiveTools{
          * \param &Ap: The previous value of the vector
          * \param &DApDt: The previous time rate of change of the vector.
          * \param &DADt: The current time rate of change of the vector.
-         * \param &A: The change in value of the vector.
+         * \param &dA: The change in value of the vector.
          * \param &A: The current value of the vector.
          * \param &DADADt: The gradient of A w.r.t. the current rate of change.
          * \param &DADADtp: The gradient of A w.r.t. the previous rate of change.
@@ -975,7 +939,7 @@ namespace tardigradeConstitutiveTools{
          * \param &Ap: The previous value of the vector
          * \param &DApDt: The previous time rate of change of the vector.
          * \param &DADt: The current time rate of change of the vector.
-         * \param &A: The change in value of the vector.
+         * \param &dA: The change in value of the vector.
          * \param &A: The current value of the vector.
          * \param &DADADt: The gradient of A w.r.t. the current rate of change.
          * \param &DADADtp: The gradient of A w.r.t. the previous rate of change.
@@ -1261,19 +1225,11 @@ namespace tardigradeConstitutiveTools{
 
         floatVector _dFdL;
 
-        errorOut error = evolveFFlatJ( Dt, previousDeformationGradient, Lp, L, dF, deformationGradient, _dFdL, alpha, mode );
-
-        if ( error ){
-
-            errorOut result = new errorNode( __func__, "Error when computing the evolved deformation gradient" );
-            result->addNext( error );
-            return result;
-
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( evolveFFlatJ( Dt, previousDeformationGradient, Lp, L, dF, deformationGradient, _dFdL, alpha, mode ) );
 
         dFdL = tardigradeVectorTools::inflate( _dFdL, sot_dim, sot_dim );
 
-        return error;
+        return NULL;
 
     }
 
@@ -1436,23 +1392,15 @@ namespace tardigradeConstitutiveTools{
         floatVector _dFdFp;
         floatVector _dFdLp;
 
-        errorOut error = evolveFFlatJ( Dt, previousDeformationGradient, Lp, L,
-                                       dF, deformationGradient, _dFdL, _ddFdFp, _dFdFp, _dFdLp, alpha, mode );
-
-        if ( error ){
-
-            errorOut result = new errorNode( __func__, "Error when computing the evolved deformation gradient" );
-            result->addNext( error );
-            return result;
-
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( evolveFFlatJ( Dt, previousDeformationGradient, Lp, L,
+                                                    dF, deformationGradient, _dFdL, _ddFdFp, _dFdFp, _dFdLp, alpha, mode ) );
 
         dFdL   = tardigradeVectorTools::inflate( _dFdL,   sot_dim, sot_dim );
         ddFdFp = tardigradeVectorTools::inflate( _ddFdFp, sot_dim, sot_dim );
         dFdFp  = tardigradeVectorTools::inflate( _dFdFp,  sot_dim, sot_dim );
         dFdLp  = tardigradeVectorTools::inflate( _dFdLp,  sot_dim, sot_dim );
 
-        return error;
+        return NULL;
 
     }
     errorOut evolveFFlatJ( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
@@ -1486,15 +1434,7 @@ namespace tardigradeConstitutiveTools{
         constexpr unsigned int dim = 3;
         const unsigned int sot_dim = dim * dim;
 
-        errorOut error = evolveF( Dt, previousDeformationGradient, Lp, L, dF, deformationGradient, alpha, mode);
-
-        if ( error ){
-
-            errorOut result = new errorNode( __func__, "Error when computing the evolved deformation gradient" );
-            result->addNext( error );
-            return result;
-
-        }
+        TARDIGRADE_ERROR_TOOLS_CATCH( evolveF( Dt, previousDeformationGradient, Lp, L, dF, deformationGradient, alpha, mode) );
 
         //Compute L^{t + \alpha}
         floatVector LtpAlpha = alpha * Lp + ( 1 - alpha ) * L;
@@ -1567,8 +1507,8 @@ namespace tardigradeConstitutiveTools{
          * \param &L: The current velocity gradient.
          * \param &deformationGradient: The computed current deformation gradient.
          * \param &dFdL: The derivative of the deformation gradient w.r.t. the velocity gradient
-         * \param &dFdL: The derivative of the deformation gradient w.r.t. the previous deformation gradient
-         * \param &dFdL: The derivative of the deformation gradient w.r.t. the previous velocity gradient
+         * \param &dFdFp: The derivative of the deformation gradient w.r.t. the previous deformation gradient
+         * \param &dFdLp: The derivative of the deformation gradient w.r.t. the previous velocity gradient
          * \param alpha: The integration parameter ( 0 for implicit, 1 for explicit )
          * \param mode: The form of the ODE. See above for details.
          */
@@ -1599,8 +1539,8 @@ namespace tardigradeConstitutiveTools{
          * \param &L: The current velocity gradient.
          * \param &deformationGradient: The computed current deformation gradient.
          * \param &dFdL: The derivative of the deformation gradient w.r.t. the velocity gradient
-         * \param &dFdL: The derivative of the deformation gradient w.r.t. the previous deformation gradient
-         * \param &dFdL: The derivative of the deformation gradient w.r.t. the previous velocity gradient
+         * \param &dFdFp: The derivative of the deformation gradient w.r.t. the previous deformation gradient
+         * \param &dFdLp: The derivative of the deformation gradient w.r.t. the previous velocity gradient
          * \param alpha: The integration parameter ( 0 for implicit, 1 for explicit )
          * \param mode: The form of the ODE. See above for details.
          */
@@ -2197,7 +2137,7 @@ namespace tardigradeConstitutiveTools{
          *
          * Also computes the jacobian
          * 
-         * \f$\frac{\partial A^{symm}_{ij}}{\partial A_{kl}} = \frac{1}{2}\left( \delta_{ik} \delta_{jl} + \delta_{jk}\delta_{il} \right)
+         * \f$\frac{\partial A^{symm}_{ij}}{\partial A_{kl}} = \frac{1}{2}\left( \delta_{ik} \delta_{jl} + \delta_{jk}\delta_{il} \right) \f$
          *
          * \param &A: A constant reference to the second order tensor to process ( \f$A\f$ )
          * \param &symmA: The symmetric part of A ( \f$A^{symm}\f$ )
@@ -2228,7 +2168,7 @@ namespace tardigradeConstitutiveTools{
          *
          * Also computes the jacobian
          * 
-         * \f$\frac{\partial A^{symm}_{ij}}{\partial A_{kl}} = \frac{1}{2}\left( \delta_{ik} \delta_{jl} + \delta_{jk}\delta_{il} \right)
+         * \f$\frac{\partial A^{symm}_{ij}}{\partial A_{kl}} = \frac{1}{2}\left( \delta_{ik} \delta_{jl} + \delta_{jk}\delta_{il} \right)\f$
          *
          * \param &A: A constant reference to the second order tensor to process ( \f$A\f$ )
          * \param &symmA: The symmetric part of A ( \f$A^{symm}\f$ )
@@ -2634,6 +2574,8 @@ namespace tardigradeConstitutiveTools{
          * \param &L: The current value of the velocity gradient
          * \param &deformationGradient: The computed value of the deformation gradient
          * \param &dFdL: The derivative of the deformation gradient w.r.t. the velocity gradient
+         * \param &dFdFp: The derivative of the deformation gradient w.r.t. the previous deformation gradient
+         * \param &dFdLp: The derivative of the deformation gradient w.r.t. the previous velocity gradient
          * \param &alpha: The integration parameter (0 is explicit and 1 is implicit)
          */
 
@@ -2841,7 +2783,7 @@ namespace tardigradeConstitutiveTools{
          * 
          * \param &normalVector: The unit normal vector in the current configuration
          * \param &gradU: The displacement gradient
-         * \param &dNormalVectordF: The derivative of the normal vector w.r.t. the displacement gradient
+         * \param &dNormalVectordGradU: The derivative of the normal vector w.r.t. the displacement gradient
          * \param &isCurrent: Whether the displacement gradient is with respect to the reference or current configuration
          */
 
