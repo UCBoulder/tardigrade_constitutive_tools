@@ -38,6 +38,16 @@ namespace tardigradeConstitutiveTools{
 
     floatType deltaDirac(const unsigned int i, const unsigned int j);
 
+    template<int dim, class v_in, class v_out>
+    void rotateMatrix( const v_in &A_begin, const v_in &A_end, const v_in &Q_begin, const v_in &Q_end,
+                       v_out temp_begin, v_out temp_end,
+                       v_out rotatedA_begin, v_out rotatedA_end );
+
+    template<class v_in, class v_out>
+    void rotateMatrix( const v_in &A_begin, const v_in &A_end, const v_in &Q_begin, const v_in &Q_end,
+                       const unsigned int dim,
+                       v_out rotatedA_begin, v_out rotatedA_end );
+
     void rotateMatrix(const floatVector &A, const floatVector &Q, floatVector &rotatedA);
 
     void computeDeformationGradient( const floatVector &displacementGradient, floatVector &F, const bool isCurrent );
@@ -237,5 +247,9 @@ namespace tardigradeConstitutiveTools{
     void computeDCurrentAreaDGradU( const floatVector &normalVector, const floatVector &gradU, floatVector &dCurrentAreadGradU, const bool isCurrent = true );
 
 }
+
+#ifdef TARDIGRADE_HEADER_ONLY
+    #include "tardigrade_constitutive_tools.cpp"
+#endif
 
 #endif

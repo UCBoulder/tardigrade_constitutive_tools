@@ -41,6 +41,116 @@ namespace tardigradeConstitutiveTools{
         return 0;
     }
 
+    template<int dim, class v_in, class v_out>
+    void rotateMatrix( const v_in &A_begin, const v_in &A_end, const v_in &Q_begin, const v_in &Q_end,
+                       v_out temp_begin,     v_out temp_end,
+                       v_out rotatedA_begin, v_out rotatedA_end ){
+        /*!
+         * Rotate a matrix \f$A\f$ using the orthogonal matrix \f$Q\f$ with the form
+         * 
+         * \f$A'_{ij} = Q_{Ii} A_{IJ} Q_{Jj}\f$
+         *
+         * TODO: Generalize to non square matrices
+         *
+         * \param &A_begin: The starting iterator of the matrix to be rotated ( \f$A\f$ )
+         * \param &A_end: The stopping iterator of the matrix to be rotated ( \f$A\f$ )
+         * \param &Q_begin: The starting iterator of the rotation matrix ( \f$Q\f$Q )
+         * \param &Q_end: The stopping iterator of the rotation matrix ( \f$Q\f$Q )
+         * \param &temp_begin: The starting iterator of the temporary unknown vector
+         * \param &temp_end: The stopping iterator of the temporary unknown vector
+         * \param &rotatedA_begin: The starting iterator of the rotated matrix ( \f$A'\f$ )
+         * \param &rotatedA_end: The stopping iterator of the rotated matrix ( \f$A'\f$ )
+         */
+
+        std::fill( temp_begin,     temp_end,     0 );
+        std::fill( rotatedA_begin, rotatedA_end, 0 );
+
+        for ( unsigned int i = 0; i < dim; ++i ){
+
+            for ( unsigned int k = 0; k < dim; ++k ){
+
+                for ( unsigned int j = 0; j < dim; ++j ){
+
+                    *( temp_begin + dim * i + j ) += ( *( A_begin + dim * i + k ) ) * ( *( Q_begin + dim * k + j ) );
+
+                }
+
+            }
+
+        }
+
+        for ( unsigned int k = 0; k < dim; ++k ){
+
+            for ( unsigned int i = 0; i < dim; ++i ){
+
+                for ( unsigned int j = 0; j < dim; ++j ){
+
+                    *( rotatedA_begin + dim * i + j ) += ( *( Q_begin + dim * k + i ) ) * ( *( temp_begin + dim * k + j ) );
+
+                }
+
+            }
+
+        }
+
+    }
+
+    template<class v_in, class v_out>
+    void rotateMatrix( const v_in &A_begin, const v_in &A_end, const v_in &Q_begin, const v_in &Q_end,
+                       const unsigned int dim,
+                       v_out temp_begin,     v_out temp_end,
+                       v_out rotatedA_begin, v_out rotatedA_end ){
+        /*!
+         * Rotate a matrix \f$A\f$ using the orthogonal matrix \f$Q\f$ with the form
+         * 
+         * \f$A'_{ij} = Q_{Ii} A_{IJ} Q_{Jj}\f$
+         *
+         * TODO: Generalize to non square matrices
+         *
+         * \param &A_begin: The starting iterator of the matrix to be rotated ( \f$A\f$ )
+         * \param &A_end: The stopping iterator of the matrix to be rotated ( \f$A\f$ )
+         * \param &Q_begin: The starting iterator of the rotation matrix ( \f$Q\f$Q )
+         * \param &Q_end: The stopping iterator of the rotation matrix ( \f$Q\f$Q )
+         * \param &dim: The dimension of the problem
+         * \param &temp_begin: The starting iterator of the temporary unknown vector
+         * \param &temp_end: The stopping iterator of the temporary unknown vector
+         * \param &rotatedA_begin: The starting iterator of the rotated matrix ( \f$A'\f$ )
+         * \param &rotatedA_end: The stopping iterator of the rotated matrix ( \f$A'\f$ )
+         */
+
+        std::fill( temp_begin,     temp_end,     0 );
+        std::fill( rotatedA_begin, rotatedA_end, 0 );
+
+        for ( unsigned int i = 0; i < dim; ++i ){
+
+            for ( unsigned int k = 0; k < dim; ++k ){
+
+                for ( unsigned int j = 0; j < dim; ++j ){
+
+                    *( temp_begin + dim * i + j ) += ( *( A_begin + dim * i + k ) ) * ( *( Q_begin + dim * k + j ) );
+
+                }
+
+            }
+
+        }
+
+        for ( unsigned int k = 0; k < dim; ++k ){
+
+            for ( unsigned int i = 0; i < dim; ++i ){
+
+                for ( unsigned int j = 0; j < dim; ++j ){
+
+                    *( rotatedA_begin + dim * i + j ) += ( *( Q_begin + dim * k + i ) ) * ( *( temp_begin + dim * k + j ) );
+
+                }
+
+            }
+
+        }
+
+    }
+
     void rotateMatrix(const floatVector &A, const floatVector &Q, floatVector &rotatedA){
         /*!
          * Rotate a matrix \f$A\f$ using the orthogonal matrix \f$Q\f$ with the form
@@ -61,18 +171,11 @@ namespace tardigradeConstitutiveTools{
         const unsigned int dim = std::sqrt(A.size());
         TARDIGRADE_ERROR_TOOLS_CHECK( ( A.size() % dim ) == 0, "A must be square");
 
-        //Resize rotated A
-        rotatedA.resize(A.size());
+        floatVector temp( dim * dim );
+        rotatedA = floatVector( dim * dim );
 
-        for (unsigned int i=0; i<dim; i++){
-            for (unsigned int j=0; j<dim; j++){
-                for (unsigned int I=0; I<dim; I++){
-                    for (unsigned int J=0; J<dim; J++){
-                        rotatedA[i*dim + j] += Q[I*dim + i] * A[I*dim + J] * Q[J*dim + j];
-                    }
-                }
-            }
-        }
+        rotateMatrix( std::cbegin( A ), std::cend( A ), std::cbegin( Q ), std::cend( Q ), dim,
+                      std::begin( temp ), std::end( temp ), std::begin( rotatedA ), std::end( rotatedA ) );
 
         return;
     }
