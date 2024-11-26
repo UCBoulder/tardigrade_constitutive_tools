@@ -46,6 +46,7 @@ namespace tardigradeConstitutiveTools{
     template<class v_in, class v_out>
     void rotateMatrix( const v_in &A_begin, const v_in &A_end, const v_in &Q_begin, const v_in &Q_end,
                        const unsigned int dim,
+                       v_out temp_Begin,     v_out temp_end,
                        v_out rotatedA_begin, v_out rotatedA_end );
 
     void rotateMatrix(const floatVector &A, const floatVector &Q, floatVector &rotatedA);

@@ -92,6 +92,8 @@ BOOST_AUTO_TEST_CASE( testRotateMatrix, * boost::unit_test::tolerance( DEFAULT_T
 
     BOOST_TEST( A == App, CHECK_PER_ELEMENT );
 
+#ifdef TARDIGRADE_HEADER_ONLY
+
     std::fill( std::begin( rotatedA ), std::end( rotatedA ), 0 );
 
     floatVector temp( 9, 0 );
@@ -100,6 +102,8 @@ BOOST_AUTO_TEST_CASE( testRotateMatrix, * boost::unit_test::tolerance( DEFAULT_T
                                                   std::begin( temp ), std::end( temp ), std::begin( rotatedA ), std::end( rotatedA ) );
 
     BOOST_TEST( A == App, CHECK_PER_ELEMENT );
+
+#endif
 
 }
 
