@@ -632,8 +632,45 @@ namespace tardigradeConstitutiveTools{
 
     }
 
-    void computeGreenLagrangeStrain( const floatVector &deformationGradient,
-                                         floatVector &E ){
+    template<int dim, class v_in, class v_out>
+    void computeGreenLagrangeStrain( const v_in &deformationGradient_begin, const v_in &deformationGradient_end,
+                                     v_out E_begin, v_out E_end ){
+        /*!
+         * Compute the Green-Lagrange strain ( \f$E\f$ ) from the deformation gradient ( \f$F\f$ ). The operation is:
+         *
+         * \f$E = 0.5 (F_{iI} F_{iJ} - \delta_{IJ})\f$
+         *
+         * Where \f$F\f$ is the deformation gradient and \f$\delta\f$ is the kronecker delta.
+         *
+         * \param &deformationGradient_begin: The starting iterator of the reference to the deformation gradient ( \f$F\f$ ).
+         * \param &deformationGradient_end: The starting iterator of the reference to the deformation gradient ( \f$F\f$ ).
+         * \param &E_begin: The starting iterator of the resulting Green-Lagrange strain ( \f$E\f$ ).
+         * \param &E_end: The stopping iterator of the resulting Green-Lagrange strain ( \f$E\f$ ).
+         *
+         * The deformation gradient is organized as  F11, F12, F13, F21, F22, F23, F31, F32, F33
+         *
+         * The Green-Lagrange strain is organized as E11, E12, E13, E21, E22, E23, E31, E32, E33
+         */
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( size_type )( deformationGradient_end - deformationGradient_begin ) == ( dim * dim ), "The deformation gradient must be 3D." );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( size_type )( E_end - E_begin ) == ( dim * dim ), "The strain tensor must be 3D." );
+
+        std::fill( E_begin, E_end, 0 );
+
+        for ( unsigned int I = 0; I < dim; ++I ){
+            *( E_begin + dim * I + I ) -= 1;
+            for ( unsigned int J = 0; J < dim; ++J ){
+                for ( unsigned int i = 0; i < dim; ++i ){
+                    *( E_begin + dim * I + J ) += ( *( deformationGradient_begin + dim * i + I ) ) * ( *( deformationGradient_begin + dim * i + J ) );
+                }
+                *( E_begin + dim * I + J ) *= 0.5;
+            }
+        }
+        return;
+    }
+
+    void computeGreenLagrangeStrain( const floatVector &deformationGradient, floatVector &E ){
         /*!
          * Compute the Green-Lagrange strain ( \f$E\f$ ) from the deformation gradient ( \f$F\f$ ). The operation is:
          *
@@ -649,21 +686,45 @@ namespace tardigradeConstitutiveTools{
          * The Green-Lagrange strain is organized as E11, E12, E13, E21, E22, E23, E31, E32, E33
          */
 
-        TARDIGRADE_ERROR_TOOLS_CHECK( deformationGradient.size( ) == 9, "The deformation gradient must be 3D." );
+        constexpr unsigned int dim = 3;
 
-        constexpr unsigned int dim=3;
-        E.resize( dim * dim );
+        E = floatVector( deformationGradient.size( ) );
 
-        for ( unsigned int I = 0; I < dim; ++I ){
-            E[ dim * I + I ] -= 1;
-            for ( unsigned int J = 0; J < dim; ++J ){
-                for ( unsigned int i = 0; i < dim; ++i ){
-                    E[ dim * I + J ] += deformationGradient[ dim * i + I ] * deformationGradient[ dim * i + J ];
-                }
-                E[ dim * I + J ] *= 0.5;
-            }
-        }
+        computeGreenLagrangeStrain<dim>( std::cbegin( deformationGradient ), std::cend( deformationGradient ), std::begin( E ), std::end( E ) );
+
         return;
+
+    }
+
+    template<int dim, class v_in, class v_out, class M_out>
+    void computeGreenLagrangeStrain( const v_in &deformationGradient_begin, const v_in &deformationGradient_end,
+                                     v_out E_begin, v_out E_end,
+                                     M_out dEdF_begin, M_out dEdF_end ){
+        /*!
+         * Compute the Green-Lagrange strain ( \f$E\f$ ) from the deformation gradient ( \f$F\f$ ). The operation is:
+         *
+         * \f$E = 0.5 (F_{iI} F_{iJ} - \delta_{IJ})\f$
+         *
+         * Where \f$F\f$ is the deformation gradient and \f$\delta\f$ is the kronecker delta.
+         *
+         * \param &deformationGradient_begin: The starting iterator of the reference to the deformation gradient ( \f$F\f$ ).
+         * \param &deformationGradient_end: The starting iterator of the reference to the deformation gradient ( \f$F\f$ ).
+         * \param &E_begin: The starting iterator of the resulting Green-Lagrange strain ( \f$E\f$ ).
+         * \param &E_end: The stopping iterator of the resulting Green-Lagrange strain ( \f$E\f$ ).
+         * \param &dEdF_begin: The starting iterator of the resulting Green-Lagrange strain ( \f$E\f$ ) Jacobian w.r.t. F
+         * \param &dEdF_end: The stopping iterator of the resulting Green-Lagrange strain ( \f$E\f$ ) Jacobian w.r.t. F
+         *
+         * The deformation gradient is organized as  F11, F12, F13, F21, F22, F23, F31, F32, F33
+         *
+         * The Green-Lagrange strain is organized as E11, E12, E13, E21, E22, E23, E31, E32, E33
+         */
+
+        computeGreenLagrangeStrain<dim>( deformationGradient_begin, deformationGradient_end, E_begin, E_end );
+
+        computeDGreenLagrangeStrainDF<dim>( deformationGradient_begin, deformationGradient_end, dEdF_begin, dEdF_end );
+
+        return;
+
     }
 
     void computeGreenLagrangeStrain( const floatVector &deformationGradient, floatVector &E, floatMatrix &dEdF){
@@ -680,9 +741,12 @@ namespace tardigradeConstitutiveTools{
          * The Green-Lagrange strain is organized as E11, E12, E13, E21, E22, E23, E31, E32, E33
          */
 
-        floatVector _dEdF;
+        constexpr unsigned int dim = 3;
 
-        TARDIGRADE_ERROR_TOOLS_CATCH( computeGreenLagrangeStrain( deformationGradient, E, _dEdF ) );
+        E = floatVector( deformationGradient.size( ) );
+        floatVector _dEdF( deformationGradient.size( ) * deformationGradient.size( ) );
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeGreenLagrangeStrain<dim>( std::cbegin( deformationGradient ), std::cend( deformationGradient ), std::begin( E ), std::end( E ), std::begin( _dEdF ), std::end( _dEdF ) ) );
 
         dEdF = tardigradeVectorTools::inflate( _dEdF, deformationGradient.size( ), deformationGradient.size( ) );
 
@@ -703,12 +767,43 @@ namespace tardigradeConstitutiveTools{
          *
          * The Green-Lagrange strain is organized as E11, E12, E13, E21, E22, E23, E31, E32, E33
          */
-        
+
         TARDIGRADE_ERROR_TOOLS_CATCH( computeGreenLagrangeStrain( deformationGradient, E ) );
 
         TARDIGRADE_ERROR_TOOLS_CATCH( computeDGreenLagrangeStrainDF( deformationGradient, dEdF ) );
 
         return;
+    }
+
+    template<int dim, class v_in, class M_out>
+    void computeDGreenLagrangeStrainDF( const v_in &deformationGradient_begin, const v_in &deformationGradient_end,
+                                        M_out dEdF_begin, M_out dEdF_end ){
+        /*!
+         * Compute the derivative of the Green-Lagrange strain ( \f$E\f$ )w.r.t. the deformation gradient ( \f$F\f$ ).
+         *
+         * \f$\frac{\partial E_{IJ}}{\partial F_{kK}} = 0.5 ( \delta_{IK} F_{kJ} + F_{kI} \delta_{JK})\f$
+         *
+         * Where \f$F\f$ is the deformation gradient and \f$\delta\f$ is the kronecker delta.
+         *
+         * \param &deformationGradient_begin: The starting iterator to a reference to the deformation gradient ( \f$F\f$ ).
+         * \param &deformationGradient_end: The starting iterator to a reference to the deformation gradient ( \f$F\f$ ).
+         * \param &dEdF_begin: The starting iterator to a resulting gradient ( \f$\frac{\partial E}{\partial F}\f$ ).
+         * \param &dEdF_end: The starting iterator to a resulting gradient ( \f$\frac{\partial E}{\partial F}\f$ ).
+         *
+         * The deformation gradient is organized as  F11, F12, F13, F21, F22, F23, F31, F32, F33
+         */
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( size_type )( deformationGradient_end - deformationGradient_begin ) == ( dim * dim ), "the Green-Lagrange strain must be 3D" );
+
+        std::fill( dEdF_begin, dEdF_end, 0 );
+        for ( unsigned int I = 0; I < 3; ++I ){
+            for ( unsigned int J = 0; J < 3; ++J ){
+                for ( unsigned int k = 0; k < 3; ++k ){
+                    *( dEdF_begin + dim * dim * dim * I + dim * dim * J + dim * k + I ) += 0.5 * ( *( deformationGradient_begin + dim * k + J ) );
+                    *( dEdF_begin + dim * dim * dim * I + dim * dim * J + dim * k + J ) += 0.5 * ( *( deformationGradient_begin + dim * k + I ) );
+                }
+            }
+        }
     }
 
     void computeDGreenLagrangeStrainDF(const floatVector &deformationGradient, floatMatrix &dEdF){
@@ -749,17 +844,12 @@ namespace tardigradeConstitutiveTools{
          * The deformation gradient is organized as  F11, F12, F13, F21, F22, F23, F31, F32, F33
          */
 
-        TARDIGRADE_ERROR_TOOLS_CHECK( deformationGradient.size( ) == 9, "the Green-Lagrange strain must be 3D" );
+        constexpr unsigned int dim = 3;
 
-        dEdF = floatVector( 81, 0 );
-        for ( unsigned int I = 0; I < 3; ++I ){
-            for ( unsigned int J = 0; J < 3; ++J ){
-                for ( unsigned int k = 0; k < 3; ++k ){
-                    dEdF[ 3 * 9 * I + 9 * J + 3 * k + I ] += 0.5 * deformationGradient[ 3 * k + J ];
-                    dEdF[ 3 * 9 * I + 9 * J + 3 * k + J ] += 0.5 * deformationGradient[ 3 * k + I ];
-                }
-            }
-        }
+        dEdF = floatVector( dim * dim * dim * dim, 0 );
+
+        computeDGreenLagrangeStrainDF<dim>( std::cbegin( deformationGradient ), std::cend( deformationGradient ),
+                                            std::begin( dEdF ), std::end( dEdF ) );
 
         return;
     }

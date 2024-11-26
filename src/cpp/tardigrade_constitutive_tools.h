@@ -88,6 +88,15 @@ namespace tardigradeConstitutiveTools{
 
     void computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C, floatMatrix &dCdF );
 
+    template<int dim, class v_in, class v_out>
+    void computeGreenLagrangeStrain( const v_in &deformationGradient_begin, const v_in &deformationGradient_end,
+                                     v_out E_begin, v_out E_end );
+
+    template<int dim, class v_in, class v_out, class M_out>
+    void computeGreenLagrangeStrain( const v_in &deformationGradient_begin, const v_in &deformationGradient_end,
+                                     v_out E_begin, v_out E_end,
+                                     M_out dEdF_begin, M_out dEdF_end );
+
     void computeGreenLagrangeStrain(const floatVector &deformationGradient, floatVector &E);
 
     void computeGreenLagrangeStrain(const floatVector &deformationGradient, floatVector &E, floatVector &dEdF);
@@ -95,6 +104,10 @@ namespace tardigradeConstitutiveTools{
     void computeGreenLagrangeStrain(const floatVector &deformationGradient, floatVector &E, floatMatrix &dEdF);
 
     void computeDGreenLagrangeStrainDF(const floatVector &deformationGradient, floatVector &dEdF);
+
+    template<int dim, class v_in, class M_out>
+    void computeDGreenLagrangeStrainDF( const v_in &deformationGradient_begin, const v_in &deformationGradient_end,
+                                        M_out dEdF_begin, M_out dEdF_end );
 
     void computeDGreenLagrangeStrainDF(const floatVector &deformationGradient, floatMatrix &dEdF);
 
