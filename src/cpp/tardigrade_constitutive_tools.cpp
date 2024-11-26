@@ -212,7 +212,7 @@ namespace tardigradeConstitutiveTools{
 
             std::transform( F_begin, F_end, F_begin, std::negate< floatType >( ) );
 
-            for ( unsigned int i = 0; i < dim; i++ ){ *( F_begin + dim * i + i ) += 1; }
+            for ( unsigned int i = 0; i < dim; ++i ){ *( F_begin + dim * i + i ) += 1; }
 
             Eigen::Map< Eigen::Matrix< floatType, dim, dim > > map( &( *F_begin ), dim, dim );
             map = map.inverse( ).eval( );
@@ -220,7 +220,7 @@ namespace tardigradeConstitutiveTools{
         }
         else{
 
-            for ( unsigned int i = 0; i < dim; i++ ){ *( F_begin + dim * i + i ) += 1; }
+            for ( unsigned int i = 0; i < dim; ++i ){ *( F_begin + dim * i + i ) += 1; }
 
         }
 
@@ -261,7 +261,7 @@ namespace tardigradeConstitutiveTools{
 
             std::transform( F_begin, F_end, F_begin, std::negate< floatType >( ) );
 
-            for ( unsigned int i = 0; i < dim; i++ ){ *( F_begin + dim * i + i ) += 1; }
+            for ( unsigned int i = 0; i < dim; ++i ){ *( F_begin + dim * i + i ) += 1; }
 
             Eigen::Map< Eigen::Matrix< floatType, -1, -1 > > map( &( *F_begin ), dim, dim );
             map = map.inverse( ).eval( );
@@ -269,7 +269,7 @@ namespace tardigradeConstitutiveTools{
         }
         else{
 
-            for ( unsigned int i = 0; i < dim; i++ ){ *( F_begin + dim * i + i ) += 1; }
+            for ( unsigned int i = 0; i < dim; ++i ){ *( F_begin + dim * i + i ) += 1; }
 
         }
 
@@ -345,7 +345,7 @@ namespace tardigradeConstitutiveTools{
 
             std::transform( F_begin, F_end, F_begin, std::negate< floatType >( ) );
 
-            for ( unsigned int i = 0; i < dim; i++ ){ *( F_begin + dim * i + i ) += 1; }
+            for ( unsigned int i = 0; i < dim; ++i ){ *( F_begin + dim * i + i ) += 1; }
 
             Eigen::Map< Eigen::Matrix< floatType, dim, dim > > map( &( *F_begin ), dim, dim );
 
@@ -358,7 +358,7 @@ namespace tardigradeConstitutiveTools{
         }
         else{
 
-            for ( unsigned int i = 0; i < dim; i++ ){ *( F_begin + dim * i + i ) += 1; }
+            for ( unsigned int i = 0; i < dim; ++i ){ *( F_begin + dim * i + i ) += 1; }
 
             for ( unsigned int i = 0; i < dim * dim; ++i ){ *( dFdGradU_begin + dim * dim * i + i ) += 1; }
 
@@ -411,7 +411,7 @@ namespace tardigradeConstitutiveTools{
 
             std::transform( F_begin, F_end, F_begin, std::negate< floatType >( ) );
 
-            for ( unsigned int i = 0; i < dim; i++ ){ *( F_begin + dim * i + i ) += 1; }
+            for ( unsigned int i = 0; i < dim; ++i ){ *( F_begin + dim * i + i ) += 1; }
 
             Eigen::Map< Eigen::Matrix< floatType, -1, -1 > > map( &( *F_begin ), dim, dim );
 
@@ -424,7 +424,7 @@ namespace tardigradeConstitutiveTools{
         }
         else{
 
-            for ( unsigned int i = 0; i < dim; i++ ){ *( F_begin + dim * i + i ) += 1; }
+            for ( unsigned int i = 0; i < dim; ++i ){ *( F_begin + dim * i + i ) += 1; }
 
             for ( unsigned int i = 0; i < dim * dim; ++i ){ *( dFdGradU_begin + dim * dim * i + i ) += 1; }
 
@@ -546,9 +546,9 @@ namespace tardigradeConstitutiveTools{
         
         dCdF = floatVector( sot_dim * sot_dim, 0 );
         
-        for ( unsigned int I = 0; I < dim; I++ ){
-            for ( unsigned int J = 0; J < dim; J++ ){
-                for ( unsigned int k = 0; k < dim; k++ ){
+        for ( unsigned int I = 0; I < dim; ++I ){
+            for ( unsigned int J = 0; J < dim; ++J ){
+                for ( unsigned int k = 0; k < dim; ++k ){
                     dCdF[ dim * sot_dim * I + sot_dim * J + dim * k + I ] += deformationGradient[ dim * k + J ];
                     dCdF[ dim * sot_dim * I + sot_dim * J + dim * k + J ] += deformationGradient[ dim * k + I ];
                 }
@@ -581,10 +581,10 @@ namespace tardigradeConstitutiveTools{
         constexpr unsigned int dim=3;
         E.resize( dim * dim );
 
-        for ( unsigned int I = 0; I < dim; I++ ){
+        for ( unsigned int I = 0; I < dim; ++I ){
             E[ dim * I + I ] -= 1;
-            for ( unsigned int J = 0; J < dim; J++ ){
-                for ( unsigned int i = 0; i < dim; i++ ){
+            for ( unsigned int J = 0; J < dim; ++J ){
+                for ( unsigned int i = 0; i < dim; ++i ){
                     E[ dim * I + J ] += deformationGradient[ dim * i + I ] * deformationGradient[ dim * i + J ];
                 }
                 E[ dim * I + J ] *= 0.5;
@@ -679,9 +679,9 @@ namespace tardigradeConstitutiveTools{
         TARDIGRADE_ERROR_TOOLS_CHECK( deformationGradient.size( ) == 9, "the Green-Lagrange strain must be 3D" );
 
         dEdF = floatVector( 81, 0 );
-        for ( unsigned int I = 0; I < 3; I++ ){
-            for ( unsigned int J = 0; J < 3; J++ ){
-                for ( unsigned int k = 0; k < 3; k++ ){
+        for ( unsigned int I = 0; I < 3; ++I ){
+            for ( unsigned int J = 0; J < 3; ++J ){
+                for ( unsigned int k = 0; k < 3; ++k ){
                     dEdF[ 3 * 9 * I + 9 * J + 3 * k + I ] += 0.5 * deformationGradient[ 3 * k + J ];
                     dEdF[ 3 * 9 * I + 9 * J + 3 * k + J ] += 0.5 * deformationGradient[ 3 * k + I ];
                 }
@@ -712,7 +712,7 @@ namespace tardigradeConstitutiveTools{
 
         //Construct the identity tensor
         floatVector F_squared = 2 * E;
-        for ( unsigned int i = 0; i < dim; i++ ){ F_squared[ dim * i + i ] += 1; }
+        for ( unsigned int i = 0; i < dim; ++i ){ F_squared[ dim * i + i ] += 1; }
 
         Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F_squared_map( F_squared.data( ), dim, dim );
 
@@ -723,7 +723,7 @@ namespace tardigradeConstitutiveTools{
         J = sqrt(Jsq);
         Ebar = E/(pow(J, 2./3));
        
-        for ( unsigned int i = 0; i < dim; i++ ){ Ebar[ dim * i + i ] += 0.5*(1/pow(J, 2./3) - 1); }
+        for ( unsigned int i = 0; i < dim; ++i ){ Ebar[ dim * i + i ] += 0.5*(1/pow(J, 2./3) - 1); }
 
         return;
     }
@@ -754,7 +754,7 @@ namespace tardigradeConstitutiveTools{
 
         //Compute the derivative of the jacobian of deformation w.r.t. the Green-Lagrange strain
         dJdE = 2 * E;
-        for ( unsigned int i = 0; i < 3; i++ ){ dJdE[ dim * i + i ] += 1; };
+        for ( unsigned int i = 0; i < 3; ++i ){ dJdE[ dim * i + i ] += 1; };
 
         Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > dJdE_map( dJdE.data( ), dim, dim );
 
@@ -762,7 +762,7 @@ namespace tardigradeConstitutiveTools{
 
         //Compute the derivative of the isochoric part of the Green-Lagrange strain w.r.t. the Green-Lagrange strain
         floatVector eye( sot_dim );
-        for ( unsigned int i = 0; i < dim; i++ ){ eye[ dim * i + i ] = 1.; };
+        for ( unsigned int i = 0; i < dim; ++i ){ eye[ dim * i + i ] = 1.; };
         floatMatrix EYE = tardigradeVectorTools::eye<floatType>(9);
 
         floatType invJ23 = 1./pow(J, 2./3);
@@ -770,19 +770,19 @@ namespace tardigradeConstitutiveTools{
 
         dEbardE = floatVector( sot_dim * sot_dim, 0 );
 
-        for ( unsigned int i = 0; i < sot_dim; i++ ){
+        for ( unsigned int i = 0; i < sot_dim; ++i ){
             dEbardE[ sot_dim * i + i ] += invJ23;
         }
 
-        for ( unsigned int i = 0; i < dim; i++ ){
+        for ( unsigned int i = 0; i < dim; ++i ){
 
-            for ( unsigned int j = 0; j < dim; j++ ){
+            for ( unsigned int j = 0; j < dim; ++j ){
 
-                for ( unsigned int k = 0; k < dim; k++ ){
+                for ( unsigned int k = 0; k < dim; ++k ){
 
                     dEbardE[ sot_dim * dim * i + sot_dim * i + dim * j + k ] -= (1./3) * invJ53 * dJdE[ dim * j + k ];
 
-                    for ( unsigned int l = 0; l < dim; l++ ){
+                    for ( unsigned int l = 0; l < dim; ++l ){
 
                         dEbardE[ sot_dim * dim * i + sot_dim * j + dim * k + l ] -= (2./3) * invJ53 * E[ dim * i + j ] * dJdE[ dim * k + l ];
 
@@ -856,9 +856,9 @@ namespace tardigradeConstitutiveTools{
         floatVector temp_sot( sot_dim, 0 );
         cauchyStress = floatVector( sot_dim, 0);
 
-        for (unsigned int i=0; i<dim; i++){
-            for (unsigned int I=0; I<dim; I++){
-                for (unsigned int j=0; j<dim; j++){
+        for (unsigned int i=0; i<dim; ++i){
+            for (unsigned int I=0; I<dim; ++I){
+                for (unsigned int j=0; j<dim; ++j){
                     temp_sot[ dim * i + j ] += deformationGradient[ 3 * i + I ] * PK2Stress[ 3 * I + j ];
                 }
             }
@@ -866,9 +866,9 @@ namespace tardigradeConstitutiveTools{
 
         temp_sot /= detF;
 
-        for ( unsigned int i = 0; i < dim; i++ ){
-            for ( unsigned int j = 0; j < dim; j++ ){
-                for ( unsigned int I = 0; I < dim; I++ ){
+        for ( unsigned int i = 0; i < dim; ++i ){
+            for ( unsigned int j = 0; j < dim; ++j ){
+                for ( unsigned int I = 0; I < dim; ++I ){
                         cauchyStress[ dim * i + j ] += temp_sot[ dim * i + I ]*deformationGradient[ 3 * j + I ];
                 }
             }
@@ -944,9 +944,9 @@ namespace tardigradeConstitutiveTools{
 
         DFDt = floatVector(velocityGradient.size(), 0);
 
-        for (unsigned int i=0; i<dim; i++){
-            for (unsigned int I=0; I<dim; I++){
-                for (unsigned int j=0; j<dim; j++){
+        for (unsigned int i=0; i<dim; ++i){
+            for (unsigned int I=0; I<dim; ++I){
+                for (unsigned int j=0; j<dim; ++j){
                     DFDt[dim*i + I] += velocityGradient[dim*i + j] * deformationGradient[dim*j + I];
                 }
             }
@@ -987,9 +987,9 @@ namespace tardigradeConstitutiveTools{
         dDFDtdL = floatVector( sot_dim * sot_dim, 0 );
         dDFDtdF = floatVector( sot_dim * sot_dim, 0 );;
 
-        for (unsigned int i=0; i<dim; i++){
-            for (unsigned int I=0; I<dim; I++){
-                for (unsigned int k=0; k<dim; k++){
+        for (unsigned int i=0; i<dim; ++i){
+            for (unsigned int I=0; I<dim; ++I){
+                for (unsigned int k=0; k<dim; ++k){
                     dDFDtdL[ sot_dim * dim * i + sot_dim * I + dim * i + k] = deformationGradient[ dim * k + I ];
                     dDFDtdF[ sot_dim * dim * i + sot_dim * I + dim * k + I] = velocityGradient[ dim * i + k ];
                 }
@@ -1061,7 +1061,7 @@ namespace tardigradeConstitutiveTools{
 
         unsigned int i = 0;
 
-        for ( auto ai = alpha.begin( ); ai != alpha.end( ); ai++, i++ ){
+        for ( auto ai = alpha.begin( ); ai != alpha.end( ); ++ai, ++i ){
 
             TARDIGRADE_ERROR_TOOLS_CHECK( ( ( *ai ) >= 0) && ( ( *ai ) <= 1 ), "Alpha must be between 0 and 1" );
 
@@ -1102,7 +1102,7 @@ namespace tardigradeConstitutiveTools{
 
         unsigned int i = 0;
 
-        for ( auto ai = alpha.begin( ); ai != alpha.end( ); ai++, i++ ){
+        for ( auto ai = alpha.begin( ); ai != alpha.end( ); ++ai, ++i ){
 
             DADADt[ A_size * i + i ] = Dt * ( 1 - *ai );
 
@@ -1173,7 +1173,7 @@ namespace tardigradeConstitutiveTools{
 
         unsigned int i = 0;
 
-        for ( auto ai = alpha.begin( ); ai != alpha.end( ); ai++, i++ ){
+        for ( auto ai = alpha.begin( ); ai != alpha.end( ); ++ai, ++i ){
 
             DADADtp[ A_size * i + i ] = Dt * ( *ai );
 
@@ -1401,7 +1401,7 @@ namespace tardigradeConstitutiveTools{
         tardigradeVectorTools::eye( eye );
 
         floatVector invLHS = -Dt * ( 1 - alpha ) * L;
-        for ( unsigned int i = 0; i < dim; i++ ){ invLHS[ dim * i + i ] += 1; }
+        for ( unsigned int i = 0; i < dim; ++i ){ invLHS[ dim * i + i ] += 1; }
 
         dF = floatVector( sot_dim, 0 );
 
@@ -1525,7 +1525,7 @@ namespace tardigradeConstitutiveTools{
 
         //Compute the left hand side
         floatVector invLHS = -Dt * ( 1 - alpha ) * L;
-        for ( unsigned int i = 0; i < dim; i++ ){ invLHS[ dim * i + i ] += 1; }
+        for ( unsigned int i = 0; i < dim; ++i ){ invLHS[ dim * i + i ] += 1; }
 
         Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invLHS_map( invLHS.data( ), dim, dim );
 
@@ -1534,10 +1534,10 @@ namespace tardigradeConstitutiveTools{
         //Compute the jacobian
         dFdL = floatVector( sot_dim * sot_dim, 0 );
         if ( mode == 1 ){
-            for ( unsigned int j = 0; j < dim; j++ ){
-                for ( unsigned int I = 0; I < dim; I++ ){
-                    for ( unsigned int k = 0; k < dim; k++ ){
-                        for ( unsigned int l = 0; l < dim; l++ ){
+            for ( unsigned int j = 0; j < dim; ++j ){
+                for ( unsigned int I = 0; I < dim; ++I ){
+                    for ( unsigned int k = 0; k < dim; ++k ){
+                        for ( unsigned int l = 0; l < dim; ++l ){
                             dFdL[ dim * sot_dim * j + sot_dim * I + dim * k + l ] += Dt * ( 1 - alpha ) * invLHS[ dim * j + k ] * deformationGradient[ dim * l + I ];
                         }
                     }
@@ -1545,10 +1545,10 @@ namespace tardigradeConstitutiveTools{
             }
         }
         if ( mode == 2 ){
-            for ( unsigned int j = 0; j < dim; j++ ){
-                for ( unsigned int I = 0; I < dim; I++ ){
-                    for ( unsigned int K = 0; K < dim; K++ ){
-                        for ( unsigned int _L = 0; _L < dim; _L++ ){
+            for ( unsigned int j = 0; j < dim; ++j ){
+                for ( unsigned int I = 0; I < dim; ++I ){
+                    for ( unsigned int K = 0; K < dim; ++K ){
+                        for ( unsigned int _L = 0; _L < dim; ++_L ){
                             dFdL[ dim * sot_dim * j + sot_dim * I + dim * K + _L ] += Dt * ( 1 - alpha ) * invLHS[ dim * _L + I ] * deformationGradient[ dim * j + K ];
                         }
                     }
@@ -1705,7 +1705,7 @@ namespace tardigradeConstitutiveTools{
         tardigradeVectorTools::eye( eye );
 
         floatVector invLHS = -Dt * ( 1 - alpha ) * L;
-        for ( unsigned int i = 0; i < dim; i++ ){ invLHS[ dim * i + i ] += 1; }
+        for ( unsigned int i = 0; i < dim; ++i ){ invLHS[ dim * i + i ] += 1; }
 
         Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invLHS_map( invLHS.data( ), dim, dim );
 
@@ -1716,10 +1716,10 @@ namespace tardigradeConstitutiveTools{
         ddFdFp = floatVector( sot_dim * sot_dim, 0 );
         dFdLp  = floatVector( sot_dim * sot_dim, 0 );
         if ( mode == 1 ){
-            for ( unsigned int j = 0; j < dim; j++ ){
-                for ( unsigned int I = 0; I < dim; I++ ){
-                    for ( unsigned int k = 0; k < dim; k++ ){
-                        for ( unsigned int l = 0; l < dim; l++ ){
+            for ( unsigned int j = 0; j < dim; ++j ){
+                for ( unsigned int I = 0; I < dim; ++I ){
+                    for ( unsigned int k = 0; k < dim; ++k ){
+                        for ( unsigned int l = 0; l < dim; ++l ){
                             dFdL[ dim * sot_dim * j + sot_dim * I + dim * k + l ]  += Dt * ( 1 - alpha ) * invLHS[ dim * j + k ] * deformationGradient[ dim * l + I ];
                             dFdLp[ dim * sot_dim * j + sot_dim * I + dim * k + l ] += invLHS[ dim * j + k ] * Dt * alpha * previousDeformationGradient[ dim * l + I ];
                             ddFdFp[ dim * sot_dim * j + sot_dim * I + dim * k + I ] += Dt * invLHS[ dim * j + l ] * LtpAlpha[ dim * l + k ];
@@ -1729,10 +1729,10 @@ namespace tardigradeConstitutiveTools{
             }
         }
         if ( mode == 2 ){
-            for ( unsigned int j = 0; j < dim; j++ ){
-                for ( unsigned int I = 0; I < dim; I++ ){
-                    for ( unsigned int K = 0; K < dim; K++ ){
-                        for ( unsigned int _L = 0; _L < dim; _L++ ){
+            for ( unsigned int j = 0; j < dim; ++j ){
+                for ( unsigned int I = 0; I < dim; ++I ){
+                    for ( unsigned int K = 0; K < dim; ++K ){
+                        for ( unsigned int _L = 0; _L < dim; ++_L ){
                             dFdL[ dim * sot_dim * j + sot_dim * I + dim * K + _L ]  += Dt * ( 1 - alpha ) * invLHS[ dim * _L + I ] * deformationGradient[ dim * j + K ];
                             dFdLp[ dim * sot_dim * j + sot_dim * I + dim * K + _L ] += Dt * alpha * invLHS[ dim * _L + I ] * previousDeformationGradient[ dim * j + K ];
                             ddFdFp[ dim * sot_dim * j + sot_dim * I + dim * j + K ] += Dt * LtpAlpha[ dim * K + _L ] * invLHS[ dim * _L + I ];
@@ -1743,7 +1743,7 @@ namespace tardigradeConstitutiveTools{
         }
 
         dFdFp = ddFdFp;
-        for ( unsigned int i = 0; i < sot_dim; i++ ){ dFdFp[ sot_dim * i + i ] += 1; }
+        for ( unsigned int i = 0; i < sot_dim; ++i ){ dFdFp[ sot_dim * i + i ] += 1; }
 
         return;
     }
@@ -1888,11 +1888,11 @@ namespace tardigradeConstitutiveTools{
 
         dAnormdA = floatVector( A_size * A_size, 0 );
 
-        for ( unsigned int i = 0; i < A_size; i++ ){
+        for ( unsigned int i = 0; i < A_size; ++i ){
 
             dAnormdA[ A_size * i + i ] += 1;
 
-            for ( unsigned int j = 0; j < A_size; j++ ){
+            for ( unsigned int j = 0; j < A_size; ++j ){
 
                 dAnormdA[ A_size * i + j ] -= Anorm[ i ] * Anorm[ j ];
 
@@ -2005,16 +2005,16 @@ namespace tardigradeConstitutiveTools{
         dPullBackLdL = floatVector( sot_dim * sot_dim, 0 );
         dPullBackLdF = floatVector( sot_dim * sot_dim, 0 );
 
-        for (unsigned int I=0; I<dim; I++){
-            for (unsigned int J=0; J<dim; J++){
-                for (unsigned int k=0; k<dim; k++){
-                    for (unsigned int l=0; l<dim; l++){
+        for (unsigned int I=0; I<dim; ++I){
+            for (unsigned int J=0; J<dim; ++J){
+                for (unsigned int k=0; k<dim; ++k){
+                    for (unsigned int l=0; l<dim; ++l){
                         dPullBackLdL[sot_dim * dim * I + sot_dim * J + dim * k + l ] = inverseDeformationGradient[dim*I + k] * deformationGradient[dim*l + J];
                     }
 
                     dPullBackLdF[sot_dim * dim * I + sot_dim * J + dim * k + J ] += term2[dim*I + k];
 
-                    for ( unsigned int K = 0; K < dim; K++ ){
+                    for ( unsigned int K = 0; K < dim; ++K ){
                         dPullBackLdF[sot_dim * dim * I + sot_dim * J + dim * k + K ] -= inverseDeformationGradient[dim*I + k] * pulledBackVelocityGradient[dim*K + J];
                     }
                 }
@@ -2194,10 +2194,10 @@ namespace tardigradeConstitutiveTools{
         //Compute the jacobians
         dAlmansiStraindE = floatVector( sot_dim * sot_dim, 0 );
         dAlmansiStraindF = floatVector( sot_dim * sot_dim, 0 );
-        for (unsigned int i=0; i<dim; i++){
-            for (unsigned int j=0; j<dim; j++){
-                for (unsigned int K=0; K<dim; K++){
-                    for (unsigned int L=0; L<dim; L++){
+        for (unsigned int i=0; i<dim; ++i){
+            for (unsigned int j=0; j<dim; ++j){
+                for (unsigned int K=0; K<dim; ++K){
+                    for (unsigned int L=0; L<dim; ++L){
                         dAlmansiStraindE[sot_dim * dim * i + sot_dim * j + dim * K + L ] = inverseDeformationGradient[dim*K + i] *
                                                                                            inverseDeformationGradient[dim*L + j];
                         dAlmansiStraindF[sot_dim * dim * i + sot_dim * j + dim * K + L ] = -inverseDeformationGradient[dim*L + i ] * almansiStrain[dim*K+j]
@@ -2301,10 +2301,10 @@ namespace tardigradeConstitutiveTools{
         dEde = floatVector( sot_dim * sot_dim, 0 );
         dEdF = floatVector( sot_dim * sot_dim, 0 );
 
-        for ( unsigned int I = 0; I < dim; I++ ){
-            for ( unsigned int J = 0; J < dim; J++ ){
-                for ( unsigned int K = 0; K < dim; K++ ){
-                    for ( unsigned int L = 0; L < dim; L++ ){
+        for ( unsigned int I = 0; I < dim; ++I ){
+            for ( unsigned int J = 0; J < dim; ++J ){
+                for ( unsigned int K = 0; K < dim; ++K ){
+                    for ( unsigned int L = 0; L < dim; ++L ){
                         dEde[ sot_dim * dim * I + sot_dim * J + dim * K + L ] = deformationGradient[ dim * K + I ] * deformationGradient[ dim * L + J ];
                         dEdF[ sot_dim * dim * I + sot_dim * J + dim * K + I ] += almansiStrain[ dim * K + L ] * deformationGradient[ dim * L + J ];
                         dEdF[ sot_dim * dim * I + sot_dim * J + dim * K + J ] += deformationGradient[ dim * L + I ] * almansiStrain[ dim * L + K ];
@@ -2366,8 +2366,8 @@ namespace tardigradeConstitutiveTools{
  
         symmA = floatVector( A.size( ), 0 );
 
-        for ( unsigned int i = 0; i < dim; i++ ){
-            for ( unsigned int j = 0; j < dim; j++ ){
+        for ( unsigned int i = 0; i < dim; ++i ){
+            for ( unsigned int j = 0; j < dim; ++j ){
                 symmA[ dim * i + j ] = 0.5 * ( A[ dim * i + j ] + A[ dim * j + i ] );
             }
         }
@@ -2409,8 +2409,8 @@ namespace tardigradeConstitutiveTools{
         
         dSymmAdA = floatMatrix( symmA.size( ), floatVector( A.size( ), 0 ) );
         
-        for ( unsigned int i = 0; i < dim; i++ ){
-            for ( unsigned int j = 0; j < dim; j++ ){
+        for ( unsigned int i = 0; i < dim; ++i ){
+            for ( unsigned int j = 0; j < dim; ++j ){
                 dSymmAdA[ dim * i + j ][ dim * i + j ] += 0.5;
                 dSymmAdA[ dim * i + j ][ dim * j + i ] += 0.5;
             }
@@ -2442,8 +2442,8 @@ namespace tardigradeConstitutiveTools{
         
         dSymmAdA = floatVector( symmA.size( ) * Asize, 0 );
 
-        for ( unsigned int i = 0; i < dim; i++ ){
-            for ( unsigned int j = 0; j < dim; j++ ){
+        for ( unsigned int i = 0; i < dim; ++i ){
+            for ( unsigned int j = 0; j < dim; ++j ){
                 dSymmAdA[ dim * Asize * i + Asize * j + dim * i + j ] += 0.5;
                 dSymmAdA[ dim * Asize * i + Asize * j + dim * j + i ] += 0.5;
             }
@@ -2527,13 +2527,13 @@ namespace tardigradeConstitutiveTools{
         floatVector eye( dim * dim, 0 );
         tardigradeVectorTools::eye( eye );
 
-        for ( unsigned int i = 0; i < dim; i++ ){
+        for ( unsigned int i = 0; i < dim; ++i ){
 
-            for ( unsigned int j = 0; j < dim; j++ ){
+            for ( unsigned int j = 0; j < dim; ++j ){
 
-                for ( unsigned int A = 0; A < dim; A++ ){
+                for ( unsigned int A = 0; A < dim; ++A ){
 
-                    for ( unsigned int B = 0; B < dim; B++ ){
+                    for ( unsigned int B = 0; B < dim; ++B ){
 
                         dCauchyStressdPK2[ dim * sot_dim * i + sot_dim * j + dim * A + B ] += F[ dim * i + A ] * F[ dim * j + B ] / J;
                         dCauchyStressdF[ dim * sot_dim * i + sot_dim * j + dim * A + B ] -= cauchyStress[ dim * i + j ] * dJdF[ dim * A + B ] / J;
@@ -2665,13 +2665,13 @@ namespace tardigradeConstitutiveTools{
         dPK2dCauchyStress = floatVector( fot_dim, 0 );
         dPK2dF            = floatVector( fot_dim, 0 );
 
-        for ( unsigned int A = 0; A < dim; A++ ){
+        for ( unsigned int A = 0; A < dim; ++A ){
 
-            for ( unsigned int B = 0; B < dim; B++ ){
+            for ( unsigned int B = 0; B < dim; ++B ){
 
-                for ( unsigned int k = 0; k < dim; k++ ){
+                for ( unsigned int k = 0; k < dim; ++k ){
 
-                    for ( unsigned int l = 0; l < dim; l++ ){
+                    for ( unsigned int l = 0; l < dim; ++l ){
 
                         dPK2dCauchyStress[ dim * dim * dim * A + dim * dim * B + dim * k + l ] = J * Finv[ dim * A + k ] * Finv[ dim * B + l ];
 
@@ -2750,11 +2750,11 @@ namespace tardigradeConstitutiveTools{
 
         deformationGradient = floatVector( sot_dim, 0 );
 
-        for ( unsigned int i = 0; i < dim; i++ ){
+        for ( unsigned int i = 0; i < dim; ++i ){
 
-            for ( unsigned int j = 0; j < dim; j++ ){
+            for ( unsigned int j = 0; j < dim; ++j ){
 
-                for ( unsigned int k = 0; k < dim; k++ ){
+                for ( unsigned int k = 0; k < dim; ++k ){
 
                     deformationGradient[ dim * i + k ] += expDtLalpha[ dim * i + j ] * previousDeformationGradient[ dim * j + k ];
 
@@ -2799,15 +2799,15 @@ namespace tardigradeConstitutiveTools{
 
         dFdL = floatVector( sot_dim * sot_dim, 0 );
 
-        for ( unsigned int i = 0; i < dim; i++ ){
+        for ( unsigned int i = 0; i < dim; ++i ){
 
-            for ( unsigned int j = 0; j < dim; j++ ){
+            for ( unsigned int j = 0; j < dim; ++j ){
 
-                for ( unsigned int k = 0; k < dim; k++ ){
+                for ( unsigned int k = 0; k < dim; ++k ){
 
                     deformationGradient[ dim * i + k ] += expDtLalpha[ dim * i + j ] * previousDeformationGradient[ dim * j + k ];
 
-                    for ( unsigned int ab = 0; ab < sot_dim; ab++ ){
+                    for ( unsigned int ab = 0; ab < sot_dim; ++ab ){
 
                         dFdL[ dim * sot_dim * i + sot_dim * k + ab ] += dExpDtLalphadL[ dim * sot_dim * i + sot_dim * j + ab ] * previousDeformationGradient[ dim * j + k ];
 
@@ -2862,17 +2862,17 @@ namespace tardigradeConstitutiveTools{
 
         dFdLp = floatVector( sot_dim * sot_dim, 0 );
 
-        for ( unsigned int i = 0; i < dim; i++ ){
+        for ( unsigned int i = 0; i < dim; ++i ){
 
-            for ( unsigned int j = 0; j < dim; j++ ){
+            for ( unsigned int j = 0; j < dim; ++j ){
 
-                for ( unsigned int k = 0; k < dim; k++ ){
+                for ( unsigned int k = 0; k < dim; ++k ){
 
                     deformationGradient[ dim * i + k ] += expDtLalpha[ dim * i + j ] * previousDeformationGradient[ dim * j + k ];
 
                     dFdFp[ dim * sot_dim * i + sot_dim * j + dim * k + j ] += expDtLalpha[ dim * i + k ];
 
-                    for ( unsigned int ab = 0; ab < sot_dim; ab++ ){
+                    for ( unsigned int ab = 0; ab < sot_dim; ++ab ){
 
                         dFdL[ dim * sot_dim * i + sot_dim * k + ab ] += dExpDtLalphadL[ dim * sot_dim * i + sot_dim * j + ab ] * previousDeformationGradient[ dim * j + k ];
                         dFdLp[ dim * sot_dim * i + sot_dim * k + ab ] += dExpDtLalphadLp[ dim * sot_dim * i + sot_dim * j + ab ] * previousDeformationGradient[ dim * j + k ];
@@ -2915,9 +2915,9 @@ namespace tardigradeConstitutiveTools{
 
         floatVector invF_n( dim, 0 );
 
-        for ( unsigned int B = 0; B < dim; B++ ){
+        for ( unsigned int B = 0; B < dim; ++B ){
 
-            for ( unsigned int j = 0; j < dim; j++ ){
+            for ( unsigned int j = 0; j < dim; ++j ){
 
                 invF_n[ B ] += invF[ dim * B + j ] * normalVector[ j ];
 
@@ -2925,11 +2925,11 @@ namespace tardigradeConstitutiveTools{
 
         }
 
-        for ( unsigned int i = 0; i < dim; i++ ){
+        for ( unsigned int i = 0; i < dim; ++i ){
 
-            for ( unsigned int b = 0; b < dim; b++ ){
+            for ( unsigned int b = 0; b < dim; ++b ){
 
-                for ( unsigned int B = 0; B < dim; B++ ){
+                for ( unsigned int B = 0; B < dim; ++B ){
 
                     dNormalVectordF[ dim * dim * i + dim * b + B ] += normalVector[ i ] * normalVector[ b ] * invF_n[ B ]
                                                                     - normalVector[ b ] * invF[ dim * B + i ];
@@ -2972,11 +2972,11 @@ namespace tardigradeConstitutiveTools{
 
         invF_map = F_map.inverse( );
 
-        for ( unsigned int i = 0; i < dim; i++ ){
+        for ( unsigned int i = 0; i < dim; ++i ){
 
-            for ( unsigned int b = 0; b < dim; b++ ){
+            for ( unsigned int b = 0; b < dim; ++b ){
 
-                for ( unsigned int B = 0; B < dim; B++ ){
+                for ( unsigned int B = 0; B < dim; ++B ){
 
                     dAreaWeightedNormalVectordF[ dim * dim * i + dim * b + B ] += normalVector[ i ] * invF[ dim * B + b ]
                                                                                 - normalVector[ b ] * invF[ dim * B + i ];
@@ -3015,9 +3015,9 @@ namespace tardigradeConstitutiveTools{
 
         floatVector invF_n( dim, 0 );
 
-        for ( unsigned int B = 0; B < dim; B++ ){
+        for ( unsigned int B = 0; B < dim; ++B ){
 
-            for ( unsigned int i = 0; i < dim; i++ ){
+            for ( unsigned int i = 0; i < dim; ++i ){
 
                 invF_n[ B ] += invF[ dim * B + i ] * normalVector[ i ];
 
@@ -3025,9 +3025,9 @@ namespace tardigradeConstitutiveTools{
 
         }
 
-        for ( unsigned int B = 0; B < dim; B++ ){
+        for ( unsigned int B = 0; B < dim; ++B ){
 
-            for ( unsigned int b = 0; b < dim; b++ ){
+            for ( unsigned int b = 0; b < dim; ++b ){
 
                 dCurrentAreadF[ dim * b + B ] += invF[ dim * B + b ] - normalVector[ b ] * invF_n[ B ];
 
@@ -3063,11 +3063,11 @@ namespace tardigradeConstitutiveTools{
 
         dNormalVectordGradU = floatVector( tot_dim, 0 );
 
-        for ( unsigned int i = 0; i < dim; i++ ){
+        for ( unsigned int i = 0; i < dim; ++i ){
 
-            for ( unsigned int j = 0; j < sot_dim; j++ ){
+            for ( unsigned int j = 0; j < sot_dim; ++j ){
 
-                for ( unsigned int k = 0; k < sot_dim; k++ ){
+                for ( unsigned int k = 0; k < sot_dim; ++k ){
 
                     dNormalVectordGradU[ sot_dim * i + k ] += dNormalVectordF[ sot_dim * i + j ] * dFdGradU[ sot_dim * j + k ];
 
@@ -3110,11 +3110,11 @@ namespace tardigradeConstitutiveTools{
 
         dAreaWeightedNormalVectordGradU = floatVector( tot_dim, 0 );
 
-        for ( unsigned int i = 0; i < dim; i++ ){
+        for ( unsigned int i = 0; i < dim; ++i ){
 
-            for ( unsigned int j = 0; j < sot_dim; j++ ){
+            for ( unsigned int j = 0; j < sot_dim; ++j ){
 
-                for ( unsigned int k = 0; k < sot_dim; k++ ){
+                for ( unsigned int k = 0; k < sot_dim; ++k ){
 
                     dAreaWeightedNormalVectordGradU[ sot_dim * i + k ] += dAreaWeightedNormalVectordF[ sot_dim * i + j ] * dFdGradU[ sot_dim * j + k ];
 
@@ -3151,9 +3151,9 @@ namespace tardigradeConstitutiveTools{
 
         dCurrentAreadGradU = floatVector( sot_dim, 0 );
 
-        for ( unsigned int i = 0; i < sot_dim; i++ ){
+        for ( unsigned int i = 0; i < sot_dim; ++i ){
 
-            for ( unsigned int j = 0; j < sot_dim; j++ ){
+            for ( unsigned int j = 0; j < sot_dim; ++j ){
 
                 dCurrentAreadGradU[ j ] += dCurrentAreadF[ i ] * dFdGradU[ sot_dim * i + j ];
 
