@@ -461,6 +461,84 @@ namespace tardigradeConstitutiveTools{
 
     }
 
+    template<int dim, class v_in, class v_out>
+    void computeRightCauchyGreen( const v_in &deformationGradient_begin, const v_in &deformationGradient_end,
+                                  v_out C_begin, v_out C_end ){
+        /*!
+         * Compute the Right Cauchy-Green deformation tensor ( \f$C\f$ )
+         *
+         * \f$C_{IJ} = F_{iI} F_{iJ}\f$
+         *
+         * \param &deformationGradient_begin: The starting iterator of the deformation gradient ( \f$F\f$ )
+         * \param &deformationGradient_end: The stopping iterator of the deformation gradient ( \f$F\f$ )
+         * \param &C_begin: A starting iterator to the resulting Right Cauchy-Green deformation tensor ( \f$C\f$ )
+         * \param &C_end: A stopping iterator to the resulting Right Cauchy-Green deformation tensor ( \f$C\f$ )
+         *
+         * The deformation gradient is organized as F11, F12, F13, F21, F22, F23, F31, F32, F33
+         *
+         * The Right Cauchy-Green deformation tensor is organized as C11, C12, C13, C21, C22, C23, C31, C32, C33
+         */
+
+        //Assume 3D
+        constexpr unsigned int sot_dim = dim * dim;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( size_type )( deformationGradient_end - deformationGradient_begin ) == sot_dim, "The deformation gradient must be 3D" );
+
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F( &( *deformationGradient_begin ), dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > C_map( &( *C_begin ), dim, dim );
+
+        C_map = ( F.transpose( ) * F ).eval( );
+
+        return;
+
+    }
+
+    template<int dim, class v_in, class v_out, class M_out>
+    void computeRightCauchyGreen( const v_in &deformationGradient_begin, const v_in &deformationGradient_end,
+                                  v_out C_begin, v_out C_end,
+                                  M_out dCdF_begin, M_out dCdF_end ){
+        /*!
+         * Compute the Right Cauchy-Green deformation tensor ( \f$C\f$ )
+         *
+         * \f$C_{IJ} = F_{iI} F_{iJ}\f$
+         *
+         * \param &deformationGradient_begin: The starting iterator of the deformation gradient ( \f$F\f$ )
+         * \param &deformationGradient_end: The stopping iterator of the deformation gradient ( \f$F\f$ )
+         * \param &C_begin: A starting iterator to the resulting Right Cauchy-Green deformation tensor ( \f$C\f$ )
+         * \param &C_end: A stopping iterator to the resulting Right Cauchy-Green deformation tensor ( \f$C\f$ )
+         * \param &dCdF_begin: A starting iterator to the resulting Right Cauchy-Green deformation tensor ( \f$C\f$ ) Jacobian w.r.t. F
+         * \param &dCdF_end: A stopping iterator to the resulting Right Cauchy-Green deformation tensor ( \f$C\f$ ) Jacobian w.r.t. F
+         *
+         * The deformation gradient is organized as F11, F12, F13, F21, F22, F23, F31, F32, F33
+         *
+         * The Right Cauchy-Green deformation tensor is organized as C11, C12, C13, C21, C22, C23, C31, C32, C33
+         */
+
+        //Assume 3D
+        constexpr unsigned int sot_dim = dim * dim;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( size_type )( deformationGradient_end - deformationGradient_begin ) == sot_dim, "The deformation gradient must be 3D" );
+
+        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F( &( *deformationGradient_begin ), dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > C_map( &( *C_begin ), dim, dim );
+
+        C_map = ( F.transpose( ) * F ).eval( );
+
+        std::fill( dCdF_begin, dCdF_end, 0 );
+
+        for ( unsigned int I = 0; I < dim; ++I ){
+            for ( unsigned int J = 0; J < dim; ++J ){
+                for ( unsigned int k = 0; k < dim; ++k ){
+                    *( dCdF_begin + dim * sot_dim * I + sot_dim * J + dim * k + I ) += *( deformationGradient_begin + dim * k + J );
+                    *( dCdF_begin + dim * sot_dim * I + sot_dim * J + dim * k + J ) += *( deformationGradient_begin + dim * k + I );
+                }
+            }
+        }
+
+        return;
+
+    }
+
     void computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C ){
         /*!
          * Compute the Right Cauchy-Green deformation tensor ( \f$C\f$ )
@@ -479,9 +557,10 @@ namespace tardigradeConstitutiveTools{
         constexpr unsigned int dim = 3;
         constexpr unsigned int sot_dim = dim * dim;
 
-        TARDIGRADE_ERROR_TOOLS_CHECK( deformationGradient.size( ) == sot_dim, "The deformation gradient must be 3D" );
-
         C = floatVector( sot_dim, 0 );
+
+        computeRightCauchyGreen<dim>( std::cbegin( deformationGradient ), std::cend( deformationGradient ), std::begin( C ), std::end( C ) );
+
 
         Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F( deformationGradient.data( ), dim, dim );
         Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > C_map( C.data( ), dim, dim );
@@ -489,6 +568,7 @@ namespace tardigradeConstitutiveTools{
         C_map = ( F.transpose( ) * F ).eval( );
 
         return;
+
     }
 
     void computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C, floatMatrix &dCdF ){
@@ -510,9 +590,11 @@ namespace tardigradeConstitutiveTools{
         constexpr unsigned int dim = 3;
         constexpr unsigned int sot_dim = dim * dim;
 
-        floatVector _dCdF;
+        C = floatVector( sot_dim );
+        floatVector _dCdF( sot_dim * sot_dim );
 
-        TARDIGRADE_ERROR_TOOLS_CATCH( computeRightCauchyGreen( deformationGradient, C, _dCdF ) );
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeRightCauchyGreen<dim>( std::cbegin( deformationGradient ), std::cend( deformationGradient ),
+                                                                    std::begin( C ), std::end( C ), std::begin( _dCdF ), std::end( _dCdF ) ) );
 
         dCdF = tardigradeVectorTools::inflate( _dCdF, sot_dim, sot_dim );
 
@@ -540,20 +622,11 @@ namespace tardigradeConstitutiveTools{
         constexpr unsigned int dim = 3;
         constexpr unsigned int sot_dim = dim * dim;
 
-        TARDIGRADE_ERROR_TOOLS_CATCH( computeRightCauchyGreen( deformationGradient, C ) );
-        
-        //Assemble the Jacobian
-        
-        dCdF = floatVector( sot_dim * sot_dim, 0 );
-        
-        for ( unsigned int I = 0; I < dim; ++I ){
-            for ( unsigned int J = 0; J < dim; ++J ){
-                for ( unsigned int k = 0; k < dim; ++k ){
-                    dCdF[ dim * sot_dim * I + sot_dim * J + dim * k + I ] += deformationGradient[ dim * k + J ];
-                    dCdF[ dim * sot_dim * I + sot_dim * J + dim * k + J ] += deformationGradient[ dim * k + I ];
-                }
-            }
-        }
+        C = floatVector( sot_dim );
+        dCdF = floatVector( sot_dim * sot_dim );
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeRightCauchyGreen<dim>( std::cbegin( deformationGradient ), std::cend( deformationGradient ),
+                                                                    std::begin( C ), std::end( C ), std::begin( dCdF ), std::end( dCdF ) ) );
 
         return;
 

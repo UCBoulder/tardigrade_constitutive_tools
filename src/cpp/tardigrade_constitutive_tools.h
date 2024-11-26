@@ -73,6 +73,15 @@ namespace tardigradeConstitutiveTools{
 
     void computeDeformationGradient( const floatVector &displacementGradient, floatVector &F, floatVector &dFdGradU, const bool isCurrent );
 
+    template<int dim, class v_in, class v_out>
+    void computeRightCauchyGreen( const v_in &deformationGradient_begin, const v_in &deformationGradient_end,
+                                  v_out C_begin, v_out C_end );
+
+    template<int dim, class v_in, class v_out, class M_out>
+    void computeRightCauchyGreen( const v_in &deformationGradient_begin, const v_in &deformationGradient_end,
+                                  v_out C_begin, v_out C_end,
+                                  M_out dCdF_begin, M_out dCdF_end );
+
     void computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C );
 
     void computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C, floatVector &dCdF );
