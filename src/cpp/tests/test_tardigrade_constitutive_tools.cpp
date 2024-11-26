@@ -137,6 +137,24 @@ BOOST_AUTO_TEST_CASE( testComputeDeformationGradient, * boost::unit_test::tolera
 
     floatVector dFdGradU_true, dFdGradU_false;
 
+#ifdef TARDIGRADE_HEADER_ONLY
+
+    std::fill( std::begin( F ), std::end( F ), 0 );
+    tardigradeConstitutiveTools::computeDeformationGradient<3>( std::begin( gradU ), std::end( gradU ),
+                                                                std::begin( F ),     std::end( F ),
+                                                                true );
+
+    BOOST_TEST( F == answer1, CHECK_PER_ELEMENT );
+
+    std::fill( std::begin( F ), std::end( F ), 0 );
+    tardigradeConstitutiveTools::computeDeformationGradient<3>( std::begin( gradU ), std::end( gradU ),
+                                                                std::begin( F ),     std::end( F ),
+                                                                false );
+
+    BOOST_TEST( F == answer2, CHECK_PER_ELEMENT );
+
+#endif
+
     F.clear( );
     tardigradeConstitutiveTools::computeDeformationGradient( gradU, F, dFdGradU_true, true );
 
@@ -146,6 +164,33 @@ BOOST_AUTO_TEST_CASE( testComputeDeformationGradient, * boost::unit_test::tolera
     tardigradeConstitutiveTools::computeDeformationGradient( gradU, F, dFdGradU_false, false );
 
     BOOST_TEST( F == answer2, CHECK_PER_ELEMENT );
+
+#ifdef TARDIGRADE_HEADER_ONLY
+
+    floatVector dFdGradU_iterator( 81 );
+
+    std::fill( std::begin( F ), std::end( F ), 0 );
+    tardigradeConstitutiveTools::computeDeformationGradient<3>( std::begin( gradU ),             std::end( gradU ),
+                                                                std::begin( F ),                 std::end( F ),
+                                                                std::begin( dFdGradU_iterator ), std::end( dFdGradU_iterator ),
+                                                                true );
+
+    BOOST_TEST( F == answer1, CHECK_PER_ELEMENT );
+
+    BOOST_TEST( dFdGradU_iterator == dFdGradU_true, CHECK_PER_ELEMENT );
+
+    std::fill( std::begin( F ),                 std::end( F ), 0 );
+    std::fill( std::begin( dFdGradU_iterator ), std::end( dFdGradU_iterator ), 0 );
+    tardigradeConstitutiveTools::computeDeformationGradient<3>( std::begin( gradU ),             std::end( gradU ),
+                                                                std::begin( F ),                 std::end( F ),
+                                                                std::begin( dFdGradU_iterator ), std::end( dFdGradU_iterator ),
+                                                                false );
+
+    BOOST_TEST( F == answer2, CHECK_PER_ELEMENT );
+
+    BOOST_TEST( dFdGradU_iterator == dFdGradU_false, CHECK_PER_ELEMENT );
+
+#endif
 
     const float eps = 1e-6;
 

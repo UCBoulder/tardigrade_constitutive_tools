@@ -36,6 +36,8 @@ namespace tardigradeConstitutiveTools{
     typedef std::vector< floatType > floatVector; //!< Define a vector of floats
     typedef std::vector< std::vector< floatType > > floatMatrix; //!< Define a matrix of floats
 
+    typedef tardigradeVectorTools::size_type size_type; //!< Define the type of the size variable
+
     floatType deltaDirac(const unsigned int i, const unsigned int j);
 
     template<int dim, class v_in, class v_out>
@@ -51,7 +53,23 @@ namespace tardigradeConstitutiveTools{
 
     void rotateMatrix(const floatVector &A, const floatVector &Q, floatVector &rotatedA);
 
+    template<int dim, class v_in, class v_out>
+    void computeDeformationGradient( const v_in &displacementGradient_begin, const v_in &displacementGradient_end,
+                                     v_out F_begin, v_out F_end, const bool isCurrent );
+
+    template<class v_in, class v_out>
+    void computeDeformationGradient( const v_in &displacementGradient_begin, const v_in &displacementGradient_end,
+                                     v_out F_begin, v_out F_end, const bool isCurrent );
+
     void computeDeformationGradient( const floatVector &displacementGradient, floatVector &F, const bool isCurrent );
+
+    template<int dim, class v_in, class v_out, class M_out>
+    void computeDeformationGradient( const v_in &displacementGradient_Begin, const v_in &displacementGradient_end,
+                                     v_out F_begin, v_out F_end, M_out dFdGradU_begin, M_out dFdGradU_end, const bool isCurrent );
+
+    template<class v_in, class v_out, class M_out>
+    void computeDeformationGradient( const v_in &displacementGradient_Begin, const v_in &displacementGradient_end,
+                                     v_out F_begin, v_out F_end, M_out dFdGradU_begin, M_out dFdGradU_end, const bool isCurrent );
 
     void computeDeformationGradient( const floatVector &displacementGradient, floatVector &F, floatVector &dFdGradU, const bool isCurrent );
 
