@@ -1144,6 +1144,60 @@ namespace tardigradeConstitutiveTools{
 
     }
 
+    template<typename T, class v_in>
+    void WLF( const T &temperature, const v_in &parameters_begin, const v_in &parameters_end, T &factor ){
+        /*!
+         * An implementation of the Williams-Landel-Ferry equation.
+         *
+         * \f$factor = 10**((-C_1*(T - T_r))/(C_2 + T - T_r))\f$
+         *
+         * where \f$T\f$ is the temperature, \f$T_r\f$ is the reference temperature, and \f$C_1\f$ and \f$C_2\f$ are parameters
+         *
+         * \param &temperature: The temperature \f$T\f$
+         * \param &parameters_begin: The starting iterator of the parameters for the function [\f$T_r\f$, \f$C_1\f$, \f$C_2\f$]
+         * \param &parameters_end: The stopping iterator of the parameters for the function [\f$T_r\f$, \f$C_1\f$, \f$C_2\f$]
+         * \param &factor: The shift factor
+         */
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( size_type )( parameters_end - parameters_begin ) == 3, "The parameters have the wrong number of terms");
+
+        T Tr = *( parameters_begin + 0 );
+        T C1 = *( parameters_begin + 1 );
+        T C2 = *( parameters_begin + 2 );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( !tardigradeVectorTools::fuzzyEquals(C2 + (temperature - Tr), 0.), "Zero in the denominator");
+
+        factor = pow(10., -C1*(temperature - Tr)/(C2 + (temperature - Tr)));
+
+        return;
+    }
+
+    template<typename T, class v_in>
+    void WLF( const T &temperature, const v_in &parameters_begin, const v_in &parameters_end, T &factor, T &dfactordT ){
+        /*!
+         * An implementation of the Williams-Landel-Ferry equation.
+         *
+         * \f$factor = 10**((-C_1*(T - T_r))/(C_2 + T - T_r))\f$
+         *
+         * where \f$T\f$ is the temperature, \f$T_r\f$ is the reference temperature, and \f$C_1\f$ and \f$C_2\f$ are parameters
+         *
+         * \param &temperature: The temperature \f$T\f$
+         * \param &parameters_begin: The starting iterator of the parameters for the function [\f$T_r\f$, \f$C_1\f$, \f$C_2\f$]
+         * \param &parameters_end: The stopping iterator of the parameters for the function [\f$T_r\f$, \f$C_1\f$, \f$C_2\f$]
+         * \param &factor: The shift factor
+         * \param &dfactordT: The derivative of the shift factor w.r.t. the temperature ( \f$\frac{\partial factor}{\partial T}\f$ )
+         */
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( WLF(temperature, parameters_begin, parameters_end, factor) );
+
+        T Tr = *( parameters_begin + 0 );
+        T C1 = *( parameters_begin + 1 );
+        T C2 = *( parameters_begin + 2 );
+
+        dfactordT = std::log(10)*factor*(-C1/(C2 + temperature - Tr) + (C1*(temperature - Tr)/pow(C2 + temperature - Tr, 2)));
+
+    }
+
     void WLF(const floatType &temperature, const floatVector &WLFParameters, floatType &factor){
         /*!
          * An implementation of the Williams-Landel-Ferry equation.
@@ -1157,17 +1211,10 @@ namespace tardigradeConstitutiveTools{
          * \param &factor: The shift factor
          */
 
-        TARDIGRADE_ERROR_TOOLS_CHECK( WLFParameters.size() == 3, "The parameters have the wrong number of terms");
-
-        floatType Tr = WLFParameters[0];
-        floatType C1 = WLFParameters[1];
-        floatType C2 = WLFParameters[2];
-
-        TARDIGRADE_ERROR_TOOLS_CHECK( !tardigradeVectorTools::fuzzyEquals(C2 + (temperature - Tr), 0.), "Zero in the denominator");
-
-        factor = pow(10., -C1*(temperature - Tr)/(C2 + (temperature - Tr)));
+        WLF( temperature, std::cbegin( WLFParameters ), std::cend( WLFParameters ), factor );
 
         return;
+
     }
 
     void WLF(const floatType &temperature, const floatVector &WLFParameters, floatType &factor, floatType &dfactordT){
@@ -1180,15 +1227,10 @@ namespace tardigradeConstitutiveTools{
          * \param &dfactordT: The derivative of the shift factor w.r.t. the temperature ( \f$\frac{\partial factor}{\partial T}\f$ )
          */
 
-        TARDIGRADE_ERROR_TOOLS_CATCH( WLF(temperature, WLFParameters, factor) );
-
-        floatType Tr = WLFParameters[0];
-        floatType C1 = WLFParameters[1];
-        floatType C2 = WLFParameters[2];
-
-        dfactordT = std::log(10)*factor*(-C1/(C2 + temperature - Tr) + (C1*(temperature - Tr)/pow(C2 + temperature - Tr, 2)));
+        WLF( temperature, std::cbegin( WLFParameters ), std::cend( WLFParameters ), factor, dfactordT );
 
         return;
+
     }
 
     void computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt){
