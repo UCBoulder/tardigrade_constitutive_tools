@@ -144,6 +144,17 @@ namespace tardigradeConstitutiveTools{
 
     void WLF(const floatType &temperature, const floatVector &WLFParameters, floatType &factor, floatType &dfactordT);
 
+    template<int dim, class v_in, class v_out>
+    void computeDFDt(const v_in &velocityGradient_begin,    const v_in &velocityGradient_end,
+                     const v_in &deformationGradient_begin, const v_in &deformationGradient_end,
+                     v_out DFDt_begin, v_out DFDt_end );
+
+    template<int dim, class v_in, class v_out, class M_out>
+    void computeDFDt(const v_in &velocityGradient_begin,    const v_in &velocityGradient_end,
+                     const v_in &deformationGradient_begin, const v_in &deformationGradient_end,
+                     v_out DFDt_begin, v_out DFDt_end, M_out dDFDtdL_begin, M_out dDFDtdL_end,
+                     M_out dDFDtdF_begin, M_out dDFDtdF_end );
+
     void computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt);
 
     void computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt,

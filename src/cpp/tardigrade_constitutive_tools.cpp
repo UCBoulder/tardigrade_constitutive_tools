@@ -1233,6 +1233,95 @@ namespace tardigradeConstitutiveTools{
 
     }
 
+    template<int dim, class v_in, class v_out>
+    void computeDFDt(const v_in &velocityGradient_begin,    const v_in &velocityGradient_end,
+                     const v_in &deformationGradient_begin, const v_in &deformationGradient_end,
+                     v_out DFDt_begin, v_out DFDt_end ){
+        /*!
+         * Compute the total time derivative of the deformation gradient.
+         *
+         * \f$\dot{F}_{iI} = L_{ij} F_{jI}\f$
+         *
+         * \param &velocityGradient_begin: The starting iterator of the velocity gradient \f$L_{ij}\f$
+         * \param &velocityGradient_end: The stopping iterator of the velocity gradient \f$L_{ij}\f$
+         * \param &deformationGradient_begin: The starting iterator of the deformation gradient \f$F_{iI}\f$
+         * \param &deformationGradient_end: The stopping iterator of the deformation gradient \f$F_{iI}\f$
+         * \param &DFDt_begin: The starting iterator of the total time derivative of the deformation gradient
+         * \param &DFDt_end: The stopping iterator of the total time derivative of the deformation gradient
+         */
+
+        constexpr unsigned int sot_dim = dim * dim;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( size_type )( deformationGradient_end - deformationGradient_begin ) == sot_dim, "The deformation gradient is of an inconsistent size with the dimension");
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( size_type )( velocityGradient_end - velocityGradient_begin ) == sot_dim, "The velocity gradient is of an inconsistent size with the dimension");
+
+        std::fill( DFDt_begin, DFDt_end, 0 );
+
+        for (unsigned int i=0; i<dim; ++i){
+            for (unsigned int I=0; I<dim; ++I){
+                for (unsigned int j=0; j<dim; ++j){
+                    *( DFDt_begin + dim * i + I ) += ( *( velocityGradient_begin + dim * i + j ) ) * ( *( deformationGradient_begin + dim * j + I ) );
+                }
+            }
+        }
+ 
+       return;
+
+    }
+
+    template<int dim, class v_in, class v_out, class M_out>
+    void computeDFDt(const v_in &velocityGradient_begin,    const v_in &velocityGradient_end,
+                     const v_in &deformationGradient_begin, const v_in &deformationGradient_end,
+                     v_out DFDt_begin, v_out DFDt_end, M_out dDFDtdL_begin, M_out dDFDtdL_end, 
+                     M_out dDFDtdF_begin, M_out dDFDtdF_end ){
+        /*!
+         * Compute the total time derivative of the deformation gradient
+         * and return the partial derivatives w.r.t. L and F.
+         *
+         * \f$\dot{F}_{iI} = L_{ij} F_{jI}\f$
+         * \f$\frac{\partial \dot{F}_{iI}}{\partial L_{kl}} = \delta_{ik} F{lI}\f$
+         * \f$\frac{\partial \dot{F}_{iI}}{\partial F_{kK}} = L_{ik} \delta{IK}\f$
+         *
+         * \param &velocityGradient_begin: The starting iterator of the velocity gradient \f$L_{ij}\f$
+         * \param &velocityGradient_end: The stopping iterator of the velocity gradient \f$L_{ij}\f$
+         * \param &deformationGradient_begin: The starting iterator of the deformation gradient \f$F_{iI}\f$
+         * \param &deformationGradient_end: The stopping iterator of the deformation gradient \f$F_{iI}\f$
+         * \param &DFDt_begin: The starting iterator of the total time derivative of the deformation gradient
+         * \param &DFDt_end: The stopping iterator of the total time derivative of the deformation gradient
+         * \param &dDFDtdL_begin: The starting iterator of the derivative of the total time derivative of the deformation gradient
+         *     with respect to the velocity gradient.
+         * \param &dDFDtdL_end: The stopping iterator of the derivative of the total time derivative of the deformation gradient
+         *     with respect to the velocity gradient.
+         * \param &dDFDtdF_begin: The starting iterator of the derivative of the total time derivative of the deformation gradient
+         *     with respect to the deformation gradient.
+         * \param &dDFDtdF_end: The stopping iterator of the derivative of the total time derivative of the deformation gradient
+         *     with respect to the deformation gradient.
+         */
+
+        constexpr unsigned int sot_dim = dim * dim;
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeDFDt<dim>( velocityGradient_begin,    velocityGradient_end,
+                                                        deformationGradient_begin, deformationGradient_end,
+                                                        DFDt_begin, DFDt_end ) );
+
+        //Form the partial w.r.t. L and F
+        std::fill( dDFDtdL_begin, dDFDtdL_end, 0 );
+        std::fill( dDFDtdF_begin, dDFDtdF_end, 0 );
+
+        for (unsigned int i=0; i<dim; ++i){
+            for (unsigned int I=0; I<dim; ++I){
+                for (unsigned int k=0; k<dim; ++k){
+                    *( dDFDtdL_begin + sot_dim * dim * i + sot_dim * I + dim * i + k ) = *( deformationGradient_begin + dim * k + I );
+                    *( dDFDtdF_begin + sot_dim * dim * i + sot_dim * I + dim * k + I ) = *( velocityGradient_begin + dim * i + k );
+                }
+            }
+        }
+
+        return;
+
+    }
+
     void computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt){
         /*!
          * Compute the total time derivative of the deformation gradient.
@@ -1248,20 +1337,13 @@ namespace tardigradeConstitutiveTools{
         constexpr unsigned int dim = 3;
         constexpr unsigned int sot_dim = dim * dim;
 
-        TARDIGRADE_ERROR_TOOLS_CHECK( velocityGradient.size() == deformationGradient.size(), "The velocity gradient and deformation gradient must have the same size");
+        DFDt = floatVector( sot_dim );
 
-        TARDIGRADE_ERROR_TOOLS_CHECK( velocityGradient.size() == sot_dim, "The velocity gradient doesn't have enough entries");
+        computeDFDt<dim>( std::cbegin( velocityGradient ), std::cend( velocityGradient ), std::cbegin( deformationGradient ), std::cend( deformationGradient ),
+                          std::begin( DFDt ), std::end( DFDt ) );
 
-        DFDt = floatVector(velocityGradient.size(), 0);
-
-        for (unsigned int i=0; i<dim; ++i){
-            for (unsigned int I=0; I<dim; ++I){
-                for (unsigned int j=0; j<dim; ++j){
-                    DFDt[dim*i + I] += velocityGradient[dim*i + j] * deformationGradient[dim*j + I];
-                }
-            }
-        }
         return;
+
     }
 
     void computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt,
@@ -1287,26 +1369,18 @@ namespace tardigradeConstitutiveTools{
         constexpr unsigned int dim = 3;
         constexpr unsigned int sot_dim = dim * dim;
 
-        TARDIGRADE_ERROR_TOOLS_CATCH( computeDFDt(velocityGradient, deformationGradient, DFDt) );
+        DFDt = floatVector( sot_dim );
+        dDFDtdL = floatVector( sot_dim * sot_dim );
+        dDFDtdF = floatVector( sot_dim * sot_dim );
 
-        //Form the identity tensor
-        floatVector eye(dim*dim, 0);
-        tardigradeVectorTools::eye(eye);
-
-        //Form the partial w.r.t. L and F
-        dDFDtdL = floatVector( sot_dim * sot_dim, 0 );
-        dDFDtdF = floatVector( sot_dim * sot_dim, 0 );;
-
-        for (unsigned int i=0; i<dim; ++i){
-            for (unsigned int I=0; I<dim; ++I){
-                for (unsigned int k=0; k<dim; ++k){
-                    dDFDtdL[ sot_dim * dim * i + sot_dim * I + dim * i + k] = deformationGradient[ dim * k + I ];
-                    dDFDtdF[ sot_dim * dim * i + sot_dim * I + dim * k + I] = velocityGradient[ dim * i + k ];
-                }
-            }
-        }
+        computeDFDt<dim>( std::cbegin( velocityGradient ),    std::cend( velocityGradient ),
+                          std::cbegin( deformationGradient ), std::cend( deformationGradient ),
+                          std::begin( DFDt ), std::end( DFDt ),
+                          std::begin( dDFDtdL ), std::end( dDFDtdL ),
+                          std::begin( dDFDtdF ), std::end( dDFDtdF ) );
 
         return;
+
     }
 
     void computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt,
@@ -1332,15 +1406,22 @@ namespace tardigradeConstitutiveTools{
         constexpr unsigned int dim = 3;
         constexpr unsigned int sot_dim = dim * dim;
 
-        floatVector _dDFDtdL, _dDFDtdF;
+        DFDt = floatVector( sot_dim );
+        floatVector _dDFDtdL( sot_dim * sot_dim );
+        floatVector _dDFDtdF( sot_dim * sot_dim );
 
-        TARDIGRADE_ERROR_TOOLS_CATCH( computeDFDt( velocityGradient, deformationGradient, DFDt, _dDFDtdL, _dDFDtdF ) );
+        TARDIGRADE_ERROR_TOOLS_CATCH( computeDFDt<dim>( std::cbegin( velocityGradient ), std::cend( velocityGradient ),
+                                                        std::cbegin( deformationGradient ), std::cend( deformationGradient ),
+                                                        std::begin( DFDt ), std::end( DFDt ),
+                                                        std::begin( _dDFDtdL ), std::end( _dDFDtdL ),
+                                                        std::begin( _dDFDtdF ), std::end( _dDFDtdF ) ) );
 
         dDFDtdL = tardigradeVectorTools::inflate( _dDFDtdL, sot_dim, sot_dim );
 
         dDFDtdF = tardigradeVectorTools::inflate( _dDFDtdF, sot_dim, sot_dim );
 
         return;
+
     }
 
     void midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
