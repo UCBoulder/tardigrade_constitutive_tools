@@ -111,6 +111,13 @@ namespace tardigradeConstitutiveTools{
 
     void computeDGreenLagrangeStrainDF(const floatVector &deformationGradient, floatMatrix &dEdF);
 
+    template<int dim, class v_in, class v_out, typename T>
+    void decomposeGreenLagrangeStrain( const v_in &E_begin, const v_in &E_end, v_out Ebar_begin, v_out Ebar_end, T &J );
+
+    template<int dim, class v_in, class v_out, class M_out, typename T>
+    void decomposeGreenLagrangeStrain( const v_in &E_begin, const v_in &E_end, v_out Ebar_begin, v_out Ebar_end, T &J,
+                                       M_out dEbardE_begin, M_out dEbardE_end, v_out dJdE_begin, v_out dJdE_end );
+
     void decomposeGreenLagrangeStrain(const floatVector &E, floatVector &Ebar, floatType &J);
 
     void decomposeGreenLagrangeStrain(const floatVector &E, floatVector &Ebar, floatType &J,

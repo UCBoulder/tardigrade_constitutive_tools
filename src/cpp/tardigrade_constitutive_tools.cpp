@@ -854,6 +854,124 @@ namespace tardigradeConstitutiveTools{
         return;
     }
 
+    template<int dim, class v_in, class v_out, typename T>
+    void decomposeGreenLagrangeStrain( const v_in &E_begin, const v_in &E_end, v_out Ebar_begin, v_out Ebar_end, T &J ){
+        /*!
+         * Decompose the Green-Lagrange strain tensor ( \f$E\f$ ) into isochoric ( \f$\bar{E}\f$ ) and volumetric ( \f$J\f$ ) parts where
+         *
+         * \f$J = det(F) = sqrt(det(2*E + I))\f$
+         *
+         * \f$\bar{E}_{IJ} = 0.5*((1/(J**(2/3))) F_{iI} F_{iJ} - I_{IJ}) = (1/(J**(2/3)))*E_{IJ} + 0.5(1/(J**(2/3)) - 1)*I_{IJ}\f$
+         *
+         * \param &E_begin: The starting iterator of the Green-Lagrange strain tensor ( \f$E\f$ )
+         * \param &E_end: The stopping iterator of the Green-Lagrange strain tensor ( \f$E\f$ )
+         * \param &Ebar_begin: The starting iterator of the isochoric Green-Lagrange strain tensor ( \f$\bar{E}\f$ ).
+         *     format = E11, E12, E13, E21, E22, E23, E31, E32, E33
+         * \param &Ebar_end: The stopping iterator of the isochoric Green-Lagrange strain tensor ( \f$\bar{E}\f$ ).
+         *     format = E11, E12, E13, E21, E22, E23, E31, E32, E33
+         * \param &J: The Jacobian of deformation ( \f$J\f$ )
+         */
+
+        constexpr unsigned int sot_dim = dim * dim;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( size_type )( E_end - E_begin ) == sot_dim, "the Green-Lagrange strain must be 3D");
+
+        //Construct the identity tensor
+        std::copy( E_begin, E_end, Ebar_begin );
+
+        std::transform( Ebar_begin, Ebar_end, Ebar_begin, std::bind( std::multiplies< T >( ), std::placeholders::_1, 2. ) );
+
+        for ( unsigned int i = 0; i < dim; ++i ){ *( Ebar_begin + dim * i + i ) += 1; }
+
+        Eigen::Map< Eigen::Matrix< T, dim, dim, Eigen::RowMajor > > F_squared_map( &( *Ebar_begin ), dim, dim );
+
+        T Jsq = F_squared_map.determinant( );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( Jsq > 0, "the determinant of the Green-Lagrange strain is negative");
+
+        J = std::sqrt(Jsq);
+
+        T den = 1 / ( 2. * std::pow( J, 2./3 ) );
+
+        std::transform( Ebar_begin, Ebar_end, Ebar_begin, std::bind( std::multiplies< T >( ), std::placeholders::_1, den ) );
+
+        for ( unsigned int i = 0; i < dim; ++i ){ *( Ebar_begin + dim * i + i ) -= 0.5; }
+
+        return;
+    }
+
+    template<int dim, class v_in, class v_out, class M_out, typename T>
+    void decomposeGreenLagrangeStrain( const v_in &E_begin, const v_in &E_end, v_out Ebar_begin, v_out Ebar_end, T &J,
+                                       M_out dEbardE_begin, M_out dEbardE_end, v_out dJdE_begin, v_out dJdE_end ){
+        /*!
+         * Decompose the Green-Lagrange strain tensor ( \f$E\f$ ) into isochoric ( \f$\bar{E}\f$ ) and volumetric ( \f$J\f$ ) parts where
+         *
+         * \f$J = det(F) = sqrt(det(2*E + I))\f$
+         *
+         * \f$\bar{E}_{IJ} = 0.5*((1/(J**(2/3))) F_{iI} F_{iJ} - I_{IJ}) = (1/(J**(2/3)))*E_{IJ} + 0.5(1/(J**(2/3)) - 1)*I_{IJ}\f$
+         *
+         * \param &E_begin: The starting iterator of the Green-Lagrange strain tensor ( \f$E\f$ )
+         * \param &E_end: The stopping iterator of the Green-Lagrange strain tensor ( \f$E\f$ )
+         * \param Ebar_begin: The starting iterator of the isochoric Green-Lagrange strain tensor ( \f$\bar{E}\f$ ).
+         *     format = E11, E12, E13, E21, E22, E23, E31, E32, E33
+         * \param Ebar_end: The stopping iterator of the isochoric Green-Lagrange strain tensor ( \f$\bar{E}\f$ ).
+         *     format = E11, E12, E13, E21, E22, E23, E31, E32, E33
+         * \param &J: The Jacobian of deformation ( \f$J\f$ )
+         * \param dEbardE_begin: The starting iterator of the derivative of the isochoric Green-Lagrange strain w.r.t. the Green-Lagrange strain
+         * \param dEbardE_end: The stoppingarting iterator of the derivative of the isochoric Green-Lagrange strain w.r.t. the Green-Lagrange strain
+         * \param dJdE_begin: The starting iterator of the derivative of the Jacobian w.r.t. the Green-Lagrange strain
+         * \param dJdE_end: The stoppingarting iterator of the derivative of the Jacobian w.r.t. the Green-Lagrange strain
+         */
+
+        constexpr unsigned int sot_dim = dim * dim;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( size_type )( dEbardE_end - dEbardE_begin ) == ( sot_dim * sot_dim ), "the derivative of the Jacobian w.r.t. is not of the correct size");
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( size_type )( dJdE_end - dJdE_begin ) == sot_dim, "the derivative of the Jacobian w.r.t. is not of the correct size");
+
+        decomposeGreenLagrangeStrain<dim>( E_begin, E_end, Ebar_begin, Ebar_end, J );
+
+        floatType invJ23 = 1./pow(J, 2./3);
+        floatType invJ53 = 1./pow(J, 5./3);
+
+        std::transform( E_begin, E_end, dJdE_begin, std::bind( std::multiplies<T>( ), std::placeholders::_1, 2. / J ) );
+
+        for ( unsigned int i = 0; i < 3; ++i ){ *( dJdE_begin + dim * i + i ) += 1. / J; };
+
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > dJdE_map( &( *dJdE_begin ), dim, dim );
+
+        dJdE_map = ( dJdE_map.inverse( ) ).eval( );
+
+        std::fill( dEbardE_begin, dEbardE_end, 0 );
+
+        for ( unsigned int i = 0; i < sot_dim; ++i ){
+            *( dEbardE_begin + sot_dim * i + i ) += invJ23;
+        }
+
+        for ( unsigned int i = 0; i < dim; ++i ){
+
+            for ( unsigned int j = 0; j < dim; ++j ){
+
+                for ( unsigned int k = 0; k < dim; ++k ){
+
+                    *( dEbardE_begin + sot_dim * dim * i + sot_dim * i + dim * j + k ) -= ( 1. / 3 ) * invJ53 * ( *( dJdE_begin + dim * j + k ) );
+
+                    for ( unsigned int l = 0; l < dim; ++l ){
+
+                        *( dEbardE_begin + sot_dim * dim * i + sot_dim * j + dim * k + l ) -= (2./3) * invJ53 * ( *( E_begin + dim * i + j ) ) * ( *( dJdE_begin + dim * k + l ) );
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        return;
+
+    }
+
     void decomposeGreenLagrangeStrain( const floatVector &E, floatVector &Ebar, floatType &J ){
         /*!
          * Decompose the Green-Lagrange strain tensor ( \f$E\f$ ) into isochoric ( \f$\bar{E}\f$ ) and volumetric ( \f$J\f$ ) parts where
@@ -871,22 +989,9 @@ namespace tardigradeConstitutiveTools{
         constexpr unsigned int dim = 3;
         constexpr unsigned int sot_dim = dim * dim;
 
-        TARDIGRADE_ERROR_TOOLS_CHECK( E.size() == sot_dim, "the Green-Lagrange strain must be 3D");
+        Ebar = floatVector( sot_dim );
 
-        //Construct the identity tensor
-        floatVector F_squared = 2 * E;
-        for ( unsigned int i = 0; i < dim; ++i ){ F_squared[ dim * i + i ] += 1; }
-
-        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F_squared_map( F_squared.data( ), dim, dim );
-
-        floatType Jsq = F_squared_map.determinant( );
-
-        TARDIGRADE_ERROR_TOOLS_CHECK( Jsq > 0, "the determinant of the Green-Lagrange strain is negative");
-
-        J = sqrt(Jsq);
-        Ebar = E/(pow(J, 2./3));
-       
-        for ( unsigned int i = 0; i < dim; ++i ){ Ebar[ dim * i + i ] += 0.5*(1/pow(J, 2./3) - 1); }
+        decomposeGreenLagrangeStrain<dim>( std::cbegin( E ), std::cend( E ), std::begin( Ebar ), std::end( Ebar ), J );
 
         return;
     }
@@ -913,49 +1018,14 @@ namespace tardigradeConstitutiveTools{
         constexpr unsigned int dim = 3;
         constexpr unsigned int sot_dim = dim * dim;
 
-        TARDIGRADE_ERROR_TOOLS_CATCH( decomposeGreenLagrangeStrain(E, Ebar, J) );
+        Ebar = floatVector( sot_dim );
 
-        //Compute the derivative of the jacobian of deformation w.r.t. the Green-Lagrange strain
-        dJdE = 2 * E;
-        for ( unsigned int i = 0; i < 3; ++i ){ dJdE[ dim * i + i ] += 1; };
+        dEbardE = floatVector( sot_dim * sot_dim );
 
-        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > dJdE_map( dJdE.data( ), dim, dim );
+        dJdE = floatVector( sot_dim );
 
-        dJdE_map = ( J * dJdE_map.inverse( ) ).eval( );
-
-        //Compute the derivative of the isochoric part of the Green-Lagrange strain w.r.t. the Green-Lagrange strain
-        floatVector eye( sot_dim );
-        for ( unsigned int i = 0; i < dim; ++i ){ eye[ dim * i + i ] = 1.; };
-        floatMatrix EYE = tardigradeVectorTools::eye<floatType>(9);
-
-        floatType invJ23 = 1./pow(J, 2./3);
-        floatType invJ53 = 1./pow(J, 5./3);
-
-        dEbardE = floatVector( sot_dim * sot_dim, 0 );
-
-        for ( unsigned int i = 0; i < sot_dim; ++i ){
-            dEbardE[ sot_dim * i + i ] += invJ23;
-        }
-
-        for ( unsigned int i = 0; i < dim; ++i ){
-
-            for ( unsigned int j = 0; j < dim; ++j ){
-
-                for ( unsigned int k = 0; k < dim; ++k ){
-
-                    dEbardE[ sot_dim * dim * i + sot_dim * i + dim * j + k ] -= (1./3) * invJ53 * dJdE[ dim * j + k ];
-
-                    for ( unsigned int l = 0; l < dim; ++l ){
-
-                        dEbardE[ sot_dim * dim * i + sot_dim * j + dim * k + l ] -= (2./3) * invJ53 * E[ dim * i + j ] * dJdE[ dim * k + l ];
-
-                    }
-
-                }
-
-            }
-
-        }
+        decomposeGreenLagrangeStrain<dim>( std::cbegin( E ), std::cend( E ), std::begin( Ebar ), std::end( Ebar ), J,
+                                           std::begin( dEbardE ), std::end( dEbardE ), std::begin( dJdE ), std::end( dJdE ) );
 
         return;
     }
