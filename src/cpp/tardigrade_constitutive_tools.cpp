@@ -1424,14 +1424,305 @@ namespace tardigradeConstitutiveTools{
 
     }
 
-    void midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
-                                floatVector &dA, floatVector &A, const floatVector &alpha ){
+    template<typename T, class v_in, class v_out>
+    void midpointEvolution( T Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
+                            const v_in &DADt_begin, const v_in &DADt_end, v_out dA_begin, v_out dA_end, v_out A_begin, v_out A_end,
+                            const v_in &alpha_begin, const v_in &alpha_end ){
         /*!
          * Perform midpoint rule based evolution of a vector.
          *
-         * alpha=0 (implicit)
+         * alpha=1 (implicit)
          *
-         * alpha=1 (explicit)
+         * alpha=0 (explicit)
+         *
+         * \param &Dt: The change in time.
+         * \param &Ap_begin: The starting iterator of the previous value of the vector
+         * \param &Ap_end: The stopping iterator of the previous value of the vector
+         * \param &DApDt_begin: The starting iterator of the previous time rate of change of the vector.
+         * \param &DApDt_end: The stopping iterator of the previous time rate of change of the vector.
+         * \param &DADt_begin: The starting iterator of the current time rate of change of the vector.
+         * \param &DADt_end: The stopping iterator of the current time rate of change of the vector.
+         * \param &dA_begin: The starting iterator of the change in the vector
+         * \param &dA_end: The stopping iterator of the change in the vector
+         * \param &A_begin: The starting iterator of the current value of the vector.
+         * \param &A_end: The stopping iterator of the current value of the vector.
+         * \param &alpha_begin: The starting iterator of the integration parameter.
+         * \param &alpha_end: The stopping iterator of the integration parameter.
+         */
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( ( size_type )( Ap_end - Ap_begin ) == ( size_type )( DApDt_end - DApDt_begin ) ) && ( ( size_type )( Ap_end - Ap_begin ) == ( size_type )( DADt_end - DADt_begin) ), "The size of the previous value of the vector and the two rates are not equal" );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( size_type )( Ap_end - Ap_begin ) == ( size_type )( alpha_end - alpha_begin ), "The size of the alpha vector is not the same size as the previous vector value" );
+
+        unsigned int i = 0;
+
+        for ( auto ai = alpha_begin; ai != alpha_end; ++ai, ++i ){
+
+            TARDIGRADE_ERROR_TOOLS_CHECK( ( ( *ai ) >= 0) && ( ( *ai ) <= 1 ), "Alpha must be between 0 and 1" );
+
+            *( dA_begin + i ) = Dt * ( ( 1 - *ai ) * ( *( DApDt_begin + i ) ) + ( *ai ) * ( *( DADt_begin + i ) ) );
+
+            *( A_begin + i )  = ( *( Ap_begin + i ) ) + ( *( dA_begin + i ) );
+
+        }
+
+        return;
+
+    }
+
+    template<typename T, class v_in, class v_out, class M_out>
+    void midpointEvolution( T Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
+                            const v_in &DADt_begin, const v_in &DADt_end, v_out dA_begin, v_out dA_end, v_out A_begin, v_out A_end,
+                            M_out DADADt_begin, M_out DADADt_end,
+                            const v_in &alpha_begin, const v_in &alpha_end ){
+        /*!
+         * Perform midpoint rule based evolution of a vector and return the jacobian.
+         *
+         * alpha=1 (implicit)
+         *
+         * alpha=0 (explicit)
+         *
+         * \param &Ap_begin: The starting iterator of the previous value of the vector
+         * \param &Ap_end: The stopping iterator of the previous value of the vector
+         * \param &DApDt_begin: The starting iterator of the previous time rate of change of the vector.
+         * \param &DApDt_end: The stopping iterator of the previous time rate of change of the vector.
+         * \param &DADt_begin: The starting iterator of the current time rate of change of the vector.
+         * \param &DADt_end: The stopping iterator of the current time rate of change of the vector.
+         * \param &dA_begin: The starting iterator of the change in the vector
+         * \param &dA_end: The stopping iterator of the change in the vector
+         * \param &A_begin: The starting iterator of the current value of the vector.
+         * \param &A_end: The stopping iterator of the current value of the vector.
+         * \param &DADADt_begin: The starting iterator of the gradient of A w.r.t. the current rate of change.
+         * \param &DADADt_end: The stopping iterator of the gradient of A w.r.t. the current rate of change.
+         * \param &alpha_begin: The starting iterator of the integration parameter.
+         * \param &alpha_end: The stopping iterator of the integration parameter.
+         */
+
+        const size_type A_size = ( size_type )( A_end - A_begin );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( size_type )( DADADt_end - DADADt_begin ) == ( A_size * A_size ), "The Jacobian size is not consistent with the incoming matrix" )
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( midpointEvolution( Dt, Ap_begin, Ap_end, DApDt_begin, DApDt_end, DADt_begin, DADt_end, dA_begin, dA_end, A_begin, A_end, alpha_begin, alpha_end ) );
+
+        std::fill( DADADt_begin, DADADt_end, 0 );
+
+        unsigned int i = 0;
+
+        for ( auto ai = alpha_begin; ai != alpha_end; ++ai, ++i ){
+
+            *( DADADt_begin + A_size * i + i ) = Dt * ( *ai );
+
+        }
+
+        return;
+
+    }
+
+    template<typename T, class v_in, class v_out, class M_out>
+    void midpointEvolution( T Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
+                            const v_in &DADt_begin, const v_in &DADt_end, v_out dA_begin, v_out dA_end, v_out A_begin, v_out A_end,
+                            M_out DADADt_begin, M_out DADADt_end, M_out DADADtp_begin, M_out DADADtp_end,
+                            const v_in &alpha_begin, const v_in &alpha_end ){
+        /*!
+         * Perform midpoint rule based evolution of a vector and return the jacobian.
+         *
+         * alpha=1 (implicit)
+         *
+         * alpha=0 (explicit)
+         *
+         * \param &Ap_begin: The starting iterator of the previous value of the vector
+         * \param &Ap_end: The stopping iterator of the previous value of the vector
+         * \param &DApDt_begin: The starting iterator of the previous time rate of change of the vector.
+         * \param &DApDt_end: The stopping iterator of the previous time rate of change of the vector.
+         * \param &DADt_begin: The starting iterator of the current time rate of change of the vector.
+         * \param &DADt_end: The stopping iterator of the current time rate of change of the vector.
+         * \param &dA_begin: The starting iterator of the change in the vector
+         * \param &dA_end: The stopping iterator of the change in the vector
+         * \param &A_begin: The starting iterator of the current value of the vector.
+         * \param &A_end: The stopping iterator of the current value of the vector.
+         * \param &DADADt_begin: The starting iterator of the gradient of A w.r.t. the current rate of change.
+         * \param &DADADt_end: The stopping iterator of the gradient of A w.r.t. the current rate of change.
+         * \param &DADADtp_begin: The starting iterator of the gradient of A w.r.t. the previous rate of change.
+         * \param &DADADtp_end: The stopping iterator of the gradient of A w.r.t. the previous rate of change.
+         * \param &alpha_begin: The starting iterator of the integration parameter.
+         * \param &alpha_end: The stopping iterator of the integration parameter.
+         */
+
+        const size_type A_size = ( size_type )( A_end - A_begin );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( size_type )( DADADt_end - DADADt_begin ) == ( A_size * A_size ), "The Jacobian size is not consistent with the incoming matrix" )
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( midpointEvolution( Dt, Ap_begin, Ap_end, DApDt_begin, DApDt_end, DADt_begin, DADt_end, dA_begin, dA_end, A_begin, A_end, alpha_begin, alpha_end ) );
+
+        std::fill( DADADt_begin, DADADt_end, 0 );
+
+        std::fill( DADADtp_begin, DADADtp_end, 0 );
+
+        unsigned int i = 0;
+
+        for ( auto ai = alpha_begin; ai != alpha_end; ++ai, ++i ){
+
+            *( DADADt_begin + A_size * i + i ) = Dt * ( *ai );
+
+            *( DADADtp_begin + A_size * i + i ) = Dt * ( 1 - *ai );
+
+        }
+
+        return;
+
+    }
+
+    template<typename T, class v_in, class v_out>
+    void midpointEvolution( T Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
+                            const v_in &DADt_begin, const v_in &DADt_end, v_out dA_begin, v_out dA_end, v_out A_begin, v_out A_end,
+                            const floatType alpha ){
+        /*!
+         * Perform midpoint rule based evolution of a vector.
+         *
+         * alpha=1 (implicit)
+         *
+         * alpha=0 (explicit)
+         *
+         * \param &Dt: The change in time.
+         * \param &Ap_begin: The starting iterator of the previous value of the vector
+         * \param &Ap_end: The stopping iterator of the previous value of the vector
+         * \param &DApDt_begin: The starting iterator of the previous time rate of change of the vector.
+         * \param &DApDt_end: The stopping iterator of the previous time rate of change of the vector.
+         * \param &DADt_begin: The starting iterator of the current time rate of change of the vector.
+         * \param &DADt_end: The stopping iterator of the current time rate of change of the vector.
+         * \param &dA_begin: The starting iterator of the change in the vector
+         * \param &dA_end: The stopping iterator of the change in the vector
+         * \param &A_begin: The starting iterator of the current value of the vector.
+         * \param &A_end: The stopping iterator of the current value of the vector.
+         * \param &alpha: The integration parameter.
+         */
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( ( size_type )( Ap_end - Ap_begin ) == ( size_type )( DApDt_end - DApDt_begin ) ) && ( ( size_type )( Ap_end - Ap_begin ) == ( size_type )( DADt_end - DADt_begin) ), "The size of the previous value of the vector and the two rates are not equal" );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( alpha >= 0) && ( alpha <= 1 ), "Alpha must be between 0 and 1" );
+
+        unsigned int i = 0;
+
+        for ( auto dAi = dA_begin; dAi != dA_end; ++dAi, ++i ){
+
+            *dAi = Dt * ( ( 1 - alpha ) * ( *( DApDt_begin + i ) ) + ( alpha ) * ( *( DADt_begin + i ) ) );
+
+            *( A_begin + i )  = ( *( Ap_begin + i ) ) + ( *dAi );
+
+        }
+
+        return;
+
+    }
+
+    template<typename T, class v_in, class v_out, class M_out>
+    void midpointEvolution( T Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
+                            const v_in &DADt_begin, const v_in &DADt_end, v_out dA_begin, v_out dA_end, v_out A_begin, v_out A_end,
+                            M_out DADADt_begin, M_out DADADt_end,
+                            const floatType alpha ){
+        /*!
+         * Perform midpoint rule based evolution of a vector and return the jacobian.
+         *
+         * alpha=1 (implicit)
+         *
+         * alpha=0 (explicit)
+         *
+         * \param &Ap_begin: The starting iterator of the previous value of the vector
+         * \param &Ap_end: The stopping iterator of the previous value of the vector
+         * \param &DApDt_begin: The starting iterator of the previous time rate of change of the vector.
+         * \param &DApDt_end: The stopping iterator of the previous time rate of change of the vector.
+         * \param &DADt_begin: The starting iterator of the current time rate of change of the vector.
+         * \param &DADt_end: The stopping iterator of the current time rate of change of the vector.
+         * \param &dA_begin: The starting iterator of the change in the vector
+         * \param &dA_end: The stopping iterator of the change in the vector
+         * \param &A_begin: The starting iterator of the current value of the vector.
+         * \param &A_end: The stopping iterator of the current value of the vector.
+         * \param &DADADt_begin: The starting iterator of the gradient of A w.r.t. the current rate of change.
+         * \param &DADADt_end: The stopping iterator of the gradient of A w.r.t. the current rate of change.
+         * \param &alpha: The integration parameter.
+         */
+
+        const size_type A_size = ( size_type )( A_end - A_begin );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( size_type )( DADADt_end - DADADt_begin ) == ( A_size * A_size ), "The Jacobian size is not consistent with the incoming matrix" )
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( midpointEvolution( Dt, Ap_begin, Ap_end, DApDt_begin, DApDt_end, DADt_begin, DADt_end, dA_begin, dA_end, A_begin, A_end, alpha ) );
+
+        std::fill( DADADt_begin, DADADt_end, 0 );
+
+        unsigned int i = 0;
+
+        for ( auto dAi = dA_begin; dAi != dA_end; ++dAi, ++i ){
+
+            *( DADADt_begin + A_size * i + i ) = Dt * ( alpha );
+
+        }
+
+        return;
+
+    }
+
+    template<typename T, class v_in, class v_out, class M_out>
+    void midpointEvolution( T Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
+                            const v_in &DADt_begin, const v_in &DADt_end, v_out dA_begin, v_out dA_end, v_out A_begin, v_out A_end,
+                            M_out DADADt_begin, M_out DADADt_end, M_out DADADtp_begin, M_out DADADtp_end,
+                            const floatType alpha ){
+        /*!
+         * Perform midpoint rule based evolution of a vector and return the jacobian.
+         *
+         * alpha=1 (implicit)
+         *
+         * alpha=0 (explicit)
+         *
+         * \param &Ap_begin: The starting iterator of the previous value of the vector
+         * \param &Ap_end: The stopping iterator of the previous value of the vector
+         * \param &DApDt_begin: The starting iterator of the previous time rate of change of the vector.
+         * \param &DApDt_end: The stopping iterator of the previous time rate of change of the vector.
+         * \param &DADt_begin: The starting iterator of the current time rate of change of the vector.
+         * \param &DADt_end: The stopping iterator of the current time rate of change of the vector.
+         * \param &dA_begin: The starting iterator of the change in the vector
+         * \param &dA_end: The stopping iterator of the change in the vector
+         * \param &A_begin: The starting iterator of the current value of the vector.
+         * \param &A_end: The stopping iterator of the current value of the vector.
+         * \param &DADADt_begin: The starting iterator of the gradient of A w.r.t. the current rate of change.
+         * \param &DADADt_end: The stopping iterator of the gradient of A w.r.t. the current rate of change.
+         * \param &DADADtp_begin: The starting iterator of the gradient of A w.r.t. the previous rate of change.
+         * \param &DADADtp_end: The stopping iterator of the gradient of A w.r.t. the previous rate of change.
+         * \param alpha: The integration parameter.
+         */
+
+        const size_type A_size = ( size_type )( A_end - A_begin );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( size_type )( DADADt_end - DADADt_begin ) == ( A_size * A_size ), "The Jacobian size is not consistent with the incoming matrix" )
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( midpointEvolution( Dt, Ap_begin, Ap_end, DApDt_begin, DApDt_end, DADt_begin, DADt_end, dA_begin, dA_end, A_begin, A_end, alpha ) );
+
+        std::fill( DADADt_begin, DADADt_end, 0 );
+
+        std::fill( DADADtp_begin, DADADtp_end, 0 );
+
+        unsigned int i = 0;
+
+        for ( auto dAi = dA_begin; dAi != dA_end; ++dAi, ++i ){
+
+            *( DADADt_begin + A_size * i + i ) = Dt * ( alpha );
+
+            *( DADADtp_begin + A_size * i + i ) = Dt * ( 1 - alpha );
+
+        }
+
+        return;
+
+    }
+
+    void midpointEvolution( const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+                            floatVector &dA, floatVector &A, const floatVector &alpha ){
+        /*!
+         * Perform midpoint rule based evolution of a vector.
+         *
+         * alpha=1 (implicit)
+         *
+         * alpha=0 (explicit)
          *
          * \param &Dt: The change in time.
          * \param &Ap: The previous value of the vector
@@ -1442,25 +1733,12 @@ namespace tardigradeConstitutiveTools{
          * \param &alpha: The integration parameter.
          */
 
-        TARDIGRADE_ERROR_TOOLS_CHECK( ( Ap.size( ) == DApDt.size( ) ) && ( Ap.size( ) == DADt.size( ) ), "The size of the previous value of the vector and the two rates are not equal" );
-
-        TARDIGRADE_ERROR_TOOLS_CHECK( Ap.size( ) == alpha.size( ), "The size of the alpha vector is not the same size as the previous vector value" );
-
         dA = floatVector( Ap.size( ), 0 );
 
         A = floatVector( Ap.size( ), 0 );
 
-        unsigned int i = 0;
-
-        for ( auto ai = alpha.begin( ); ai != alpha.end( ); ++ai, ++i ){
-
-            TARDIGRADE_ERROR_TOOLS_CHECK( ( ( *ai ) >= 0) && ( ( *ai ) <= 1 ), "Alpha must be between 0 and 1" );
-
-            dA[ i ] = Dt * ( *ai * DApDt[ i ] + ( 1 - *ai ) * DADt[ i ] );
-
-            A[ i ]  = Ap[ i ] + dA[ i ];
-
-        }
+        midpointEvolution( Dt, std::cbegin( Ap ), std::cend( Ap ), std::cbegin( DApDt ), std::cend( DApDt ), std::cbegin( DADt ), std::cend( DADt ),
+                           std::begin( dA ), std::end( dA ), std::begin( A ), std::end( A ), std::cbegin( alpha ), std::cend( alpha ) );
 
         return;
 
@@ -1471,9 +1749,9 @@ namespace tardigradeConstitutiveTools{
         /*!
          * Perform midpoint rule based evolution of a vector and return the jacobian.
          *
-         * alpha=0 (implicit)
+         * alpha=1 (implicit)
          *
-         * alpha=1 (explicit)
+         * alpha=0 (explicit)
          *
          * \param &Dt: The change in time.
          * \param &Ap: The previous value of the vector
@@ -1485,19 +1763,15 @@ namespace tardigradeConstitutiveTools{
          * \param &alpha: The integration parameter.
          */
 
-        TARDIGRADE_ERROR_TOOLS_CATCH( midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, alpha ) )
+        dA = floatVector( Ap.size( ), 0 );
 
-        const unsigned int A_size = A.size( );
+        A = floatVector( Ap.size( ), 0 );
 
-        DADADt = floatVector( A_size * A_size, 0 );
+        DADADt = floatVector( Ap.size( ) * Ap.size( ), 0 );
 
-        unsigned int i = 0;
-
-        for ( auto ai = alpha.begin( ); ai != alpha.end( ); ++ai, ++i ){
-
-            DADADt[ A_size * i + i ] = Dt * ( 1 - *ai );
-
-        }
+        midpointEvolution( Dt, std::cbegin( Ap ), std::cend( Ap ), std::cbegin( DApDt ), std::cend( DApDt ), std::cbegin( DADt ), std::cend( DADt ),
+                           std::begin( dA ), std::end( dA ), std::begin( A ), std::end( A ), std::begin( DADADt ), std::end( DADADt ),
+                           std::cbegin( alpha ), std::cend( alpha ) );
 
         return;
 
@@ -1508,9 +1782,9 @@ namespace tardigradeConstitutiveTools{
         /*!
          * Perform midpoint rule based evolution of a vector and return the jacobian.
          *
-         * alpha=0 (implicit)
+         * alpha=1 (implicit)
          *
-         * alpha=1 (explicit)
+         * alpha=0 (explicit)
          *
          * \param &Dt: The change in time.
          * \param &Ap: The previous value of the vector
@@ -1539,9 +1813,9 @@ namespace tardigradeConstitutiveTools{
         /*!
          * Perform midpoint rule based evolution of a vector and return the jacobian.
          *
-         * alpha=0 (implicit)
+         * alpha=1 (implicit)
          *
-         * alpha=1 (explicit)
+         * alpha=0 (explicit)
          *
          * Note that the gradient of A w.r.t. Ap is identity and the gradient of dA w.r.t. Ap is zero
          *
@@ -1556,19 +1830,18 @@ namespace tardigradeConstitutiveTools{
          * \param &alpha: The integration parameter.
          */
 
-        TARDIGRADE_ERROR_TOOLS_CATCH( midpointEvolutionFlatJ( Dt, Ap, DApDt, DADt, dA, A, DADADt, alpha ) );
 
-        const unsigned int A_size = A.size( );
+        dA = floatVector( Ap.size( ), 0 );
 
-        DADADtp = floatVector( A_size * A_size, 0 );
+        A = floatVector( Ap.size( ), 0 );
 
-        unsigned int i = 0;
+        DADADt = floatVector( Ap.size( ) * Ap.size( ), 0 );
 
-        for ( auto ai = alpha.begin( ); ai != alpha.end( ); ++ai, ++i ){
+        DADADtp = floatVector( Ap.size( ) * Ap.size( ), 0 );
 
-            DADADtp[ A_size * i + i ] = Dt * ( *ai );
-
-        }
+        midpointEvolution( Dt, std::cbegin( Ap ), std::cend( Ap ), std::cbegin( DApDt ), std::cend( DApDt ), std::cbegin( DADt ), std::cend( DADt ),
+                           std::begin( dA ), std::end( dA ), std::begin( A ), std::end( A ), std::begin( DADADt ), std::end( DADADt ),
+                           std::begin( DADADtp ), std::end( DADADtp ), std::cbegin( alpha ), std::cend( alpha ) );
 
         return;
 
@@ -1580,9 +1853,9 @@ namespace tardigradeConstitutiveTools{
         /*!
          * Perform midpoint rule based evolution of a vector and return the jacobian.
          *
-         * alpha=0 (implicit)
+         * alpha=1 (implicit)
          *
-         * alpha=1 (explicit)
+         * alpha=0 (explicit)
          *
          * Note that the gradient of A w.r.t. Ap is identity and the gradient of dA w.r.t. Ap is zero
          *
@@ -1614,9 +1887,9 @@ namespace tardigradeConstitutiveTools{
         /*!
          * Perform midpoint rule based evolution of a vector. Defaults to the trapezoidal rule.
          *
-         * alpha=0 (implicit)
+         * alpha=1 (implicit)
          *
-         * alpha=1 (explicit)
+         * alpha=0 (explicit)
          *
          * \param &Dt: The change in time.
          * \param &Ap: The previous value of the vector
@@ -1627,7 +1900,12 @@ namespace tardigradeConstitutiveTools{
          * \param alpha: The integration parameter.
          */
 
-        return midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, alpha * floatVector( Ap.size( ), 1 ) );
+        dA = floatVector( Ap.size( ), 0 );
+
+        A = floatVector( Ap.size( ), 0 );
+
+        return midpointEvolution( Dt, std::cbegin( Ap ), std::cend( Ap ), std::cbegin( DApDt ), std::cend( DApDt ), std::cbegin( DADt ), std::cend( DADt ),
+                                  std::begin( dA ), std::end( dA ), std::begin( A ), std::end( A ), alpha );
 
     }
 
@@ -1636,9 +1914,9 @@ namespace tardigradeConstitutiveTools{
         /*!
          * Perform midpoint rule based evolution of a vector. Defaults to the trapezoidal rule.
          *
-         * alpha=0 (implicit)
+         * alpha=1 (implicit)
          *
-         * alpha=1 (explicit)
+         * alpha=0 (explicit)
          *
          * \param &Dt: The change in time.
          * \param &Ap: The previous value of the vector
@@ -1650,7 +1928,14 @@ namespace tardigradeConstitutiveTools{
          * \param alpha: The integration parameter.
          */
 
-        return midpointEvolutionFlatJ( Dt, Ap, DApDt, DADt, dA, A, DADADt, alpha * floatVector( Ap.size( ), 1 ) );
+        dA = floatVector( Ap.size( ), 0 );
+
+        A = floatVector( Ap.size( ), 0 );
+
+        DADADt = floatVector( Ap.size( ) * Ap.size( ), 0 );
+
+        return midpointEvolution( Dt, std::cbegin( Ap ), std::cend( Ap ), std::cbegin( DApDt ), std::cend( DApDt ), std::cbegin( DADt ), std::cend( DADt ),
+                                  std::begin( dA ), std::end( dA ), std::begin( A ), std::end( A ), std::begin( DADADt ), std::end( DADADt ), alpha );
 
     }
 
@@ -1660,9 +1945,9 @@ namespace tardigradeConstitutiveTools{
         /*!
          * Perform midpoint rule based evolution of a vector. Defaults to the trapezoidal rule.
          *
-         * alpha=0 (implicit)
+         * alpha=1 (implicit)
          *
-         * alpha=1 (explicit)
+         * alpha=0 (explicit)
          * 
          * Note that the gradient of A w.r.t. Ap is identity and the gradient of dA w.r.t. Ap is zero
          *
@@ -1677,7 +1962,19 @@ namespace tardigradeConstitutiveTools{
          * \param alpha: The integration parameter.
          */
 
-        return midpointEvolutionFlatJ( Dt, Ap, DApDt, DADt, dA, A, DADADt, DADADtp, alpha * floatVector( Ap.size( ), 1 ) );
+        dA = floatVector( Ap.size( ), 0 );
+
+        A = floatVector( Ap.size( ), 0 );
+
+        DADADt = floatVector( Ap.size( ) * Ap.size( ), 0 );
+
+        DADADtp = floatVector( Ap.size( ) * Ap.size( ), 0 );
+
+        midpointEvolution( Dt, std::cbegin( Ap ), std::cend( Ap ), std::cbegin( DApDt ), std::cend( DApDt ), std::cbegin( DADt ), std::cend( DADt ),
+                           std::begin( dA ), std::end( dA ), std::begin( A ), std::end( A ), std::begin( DADADt ), std::end( DADADt ),
+                           std::begin( DADADtp ), std::end( DADADtp ), alpha );
+
+        return;
 
     }
 
@@ -1686,9 +1983,9 @@ namespace tardigradeConstitutiveTools{
         /*!
          * Perform midpoint rule based evolution of a vector. Defaults to the trapezoidal rule.
          *
-         * alpha=0 (implicit)
+         * alpha=1 (implicit)
          *
-         * alpha=1 (explicit)
+         * alpha=0 (explicit)
          *
          * \param &Dt: The change in time.
          * \param &Ap: The previous value of the vector
@@ -1700,7 +1997,16 @@ namespace tardigradeConstitutiveTools{
          * \param alpha: The integration parameter.
          */
 
-        return midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, DADADt, alpha * floatVector( Ap.size( ), 1 ) );
+        dA = floatVector( Ap.size( ), 0 );
+
+        A = floatVector( Ap.size( ), 0 );
+
+        floatVector _DADADt( Ap.size( ) * Ap.size( ), 0 );
+
+        midpointEvolution( Dt, std::cbegin( Ap ), std::cend( Ap ), std::cbegin( DApDt ), std::cend( DApDt ), std::cbegin( DADt ), std::cend( DADt ),
+                           std::begin( dA ), std::end( dA ), std::begin( A ), std::end( A ), std::begin( _DADADt ), std::end( _DADADt ), alpha );
+
+        DADADt  = tardigradeVectorTools::inflate( _DADADt,  A.size( ), A.size( ) );
 
     }
 
@@ -1710,9 +2016,9 @@ namespace tardigradeConstitutiveTools{
         /*!
          * Perform midpoint rule based evolution of a vector. Defaults to the trapezoidal rule.
          *
-         * alpha=0 (implicit)
+         * alpha=1 (implicit)
          *
-         * alpha=1 (explicit)
+         * alpha=0 (explicit)
          * 
          * Note that the gradient of A w.r.t. Ap is identity and the gradient of dA w.r.t. Ap is zero
          *
@@ -1727,7 +2033,20 @@ namespace tardigradeConstitutiveTools{
          * \param alpha: The integration parameter.
          */
 
-        return midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, DADADt, DADADtp, alpha * floatVector( Ap.size( ), 1 ) );
+        dA = floatVector( Ap.size( ), 0 );
+
+        A = floatVector( Ap.size( ), 0 );
+
+        floatVector _DADADt( Ap.size( ) * Ap.size( ), 0 );
+
+        floatVector _DADADtp( Ap.size( ) * Ap.size( ), 0 );
+
+        midpointEvolution( Dt, std::cbegin( Ap ), std::cend( Ap ), std::cbegin( DApDt ), std::cend( DApDt ), std::cbegin( DADt ), std::cend( DADt ),
+                           std::begin( dA ), std::end( dA ), std::begin( A ), std::end( A ), std::begin( _DADADt ), std::end( _DADADt ), std::begin( _DADADtp ), std::end( _DADADtp ), alpha );
+
+        DADADt  = tardigradeVectorTools::inflate( _DADADt,  A.size( ), A.size( ) );
+
+        DADADtp = tardigradeVectorTools::inflate( _DADADtp, A.size( ), A.size( ) );
 
     }
 

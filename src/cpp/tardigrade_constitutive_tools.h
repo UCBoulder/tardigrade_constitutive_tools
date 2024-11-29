@@ -163,6 +163,40 @@ namespace tardigradeConstitutiveTools{
     void computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt,
                          floatMatrix &dDFDtdL, floatMatrix &dDFDtdF);
 
+    template<typename T, class v_in, class v_out>
+    void midpointEvolution( T Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
+                            const v_in &DADt_begin, const v_in &DADt_end, v_out dA_begin, v_out dA_end, v_out A_begin, v_out A_end,
+                            const v_in &alpha_begin, const v_in &alpha_end );
+
+    template<typename T, class v_in, class v_out, class M_out>
+    void midpointEvolution( T Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
+                            const v_in &DADt_begin, const v_in &DADt_end, v_out dA_begin, v_out dA_end, v_out A_begin, v_out A_end,
+                            M_out DADADt_begin, M_out DADADt_end,
+                            const v_in &alpha_begin, const v_in &alpha_end );
+
+    template<typename T, class v_in, class v_out, class M_out>
+    void midpointEvolution( T Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
+                            const v_in &DADt_begin, const v_in &DADt_end, v_out dA_begin, v_out dA_end, v_out A_begin, v_out A_end,
+                            M_out DADADt_begin, M_out DADADt_end, M_out DADADtp_begin, M_out DADADtp_end,
+                            const v_in &alpha_begin, const v_in &alpha_end );
+
+    template<typename T, class v_in, class v_out>
+    void midpointEvolution( T Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
+                            const v_in &DADt_begin, const v_in &DADt_end, v_out dA_begin, v_out dA_end, v_out A_begin, v_out A_end,
+                            const floatType alpha=0.5 );
+
+    template<typename T, class v_in, class v_out, class M_out>
+    void midpointEvolution( T Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
+                            const v_in &DADt_begin, const v_in &DADt_end, v_out dA_begin, v_out dA_end, v_out A_begin, v_out A_end,
+                            M_out DADADt_begin, M_out DADADt_end,
+                            const floatType alpha=0.5 );
+
+    template<typename T, class v_in, class v_out, class M_out>
+    void midpointEvolution( T Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
+                            const v_in &DADt_begin, const v_in &DADt_end, v_out dA_begin, v_out dA_end, v_out A_begin, v_out A_end,
+                            M_out DADADt_begin, M_out DADADt_end, M_out DADADtp_begin, M_out DADADtp_end,
+                            const floatType alpha=0.5 );
+
     void midpointEvolution(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                floatVector &dA, floatVector &A, const floatVector &alpha);
 

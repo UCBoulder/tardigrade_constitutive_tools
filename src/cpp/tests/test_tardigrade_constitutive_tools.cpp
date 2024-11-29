@@ -496,36 +496,28 @@ BOOST_AUTO_TEST_CASE( testMidpointEvolution, * boost::unit_test::tolerance( DEFA
 
     floatVector DADt  = { 5, 6, 7, 8 };
 
-    floatVector alphaVec = { 0.1, 0.2, 0.3, 0.4 };
+    floatVector alphaVec = { 0.9, 0.8, 0.7, 0.6 };
 
     floatVector dA, A;
 
     //Test implicit integration
-    tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, 0 );
-
-    
+    tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, 1 );
 
     BOOST_TEST( dA == Dt * DADt, CHECK_PER_ELEMENT );
 
     //Test explicit integration
-    tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, 1 );
-
-    
+    tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, 0 );
 
     BOOST_TEST( dA == Dt*DApDt, CHECK_PER_ELEMENT );
 
     //Test midpoint integration
     tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA, A );
 
-    
-
     BOOST_TEST(  A == Ap + Dt*0.5*( DApDt + DADt ), CHECK_PER_ELEMENT );
 
     BOOST_TEST( dA == Dt*0.5*( DApDt + DADt ), CHECK_PER_ELEMENT );
 
     tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, alphaVec );
-
-    
 
     floatVector A_answer  = { 20.5, 23., 25.5, 28. };
     floatVector dA_answer = { 11.5, 13., 14.5, 16. };
@@ -545,8 +537,6 @@ BOOST_AUTO_TEST_CASE( testMidpointEvolution, * boost::unit_test::tolerance( DEFA
 
     tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA0, A0, DADADt, alphaVec );
 
-    
-
     BOOST_TEST( A0 == A, CHECK_PER_ELEMENT );
 
     BOOST_TEST( dA0 == dA, CHECK_PER_ELEMENT );
@@ -561,11 +551,7 @@ BOOST_AUTO_TEST_CASE( testMidpointEvolution, * boost::unit_test::tolerance( DEFA
 
         tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt + delta, dAip, Aip, alphaVec );
 
-        
-
         tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt - delta, dAim, Aim, alphaVec );
-
-        
 
         floatVector gradCol = ( Aip - Aim )/(2*delta[ i ]);
 
