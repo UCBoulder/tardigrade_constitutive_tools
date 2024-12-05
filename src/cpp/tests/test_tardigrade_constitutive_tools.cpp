@@ -718,7 +718,7 @@ BOOST_AUTO_TEST_CASE( testEvolveF, * boost::unit_test::tolerance( DEFAULT_TEST_T
 
     //Test 1 ( mode 1 fully explicit )
     floatVector dF, F;
-    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, F, 1, 1 );
+    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, F, 0, 1 );
 
     floatVector answer = { 4.39551129, 2.53782698, 1.84614498,
                            4.81201673, 3.75047725, 2.48674399,
@@ -726,14 +726,14 @@ BOOST_AUTO_TEST_CASE( testEvolveF, * boost::unit_test::tolerance( DEFAULT_TEST_T
 
     BOOST_TEST( answer == F, CHECK_PER_ELEMENT );
 
-    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dF, F, 1, 1 );
+    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dF, F, 0, 1 );
 
     BOOST_TEST( answer == F, CHECK_PER_ELEMENT );
 
     BOOST_TEST( ( answer - Fp ) == dF, CHECK_PER_ELEMENT );
 
     //Test 2 ( mode 1 fully implicit )
-    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, F, 0, 1 );
+    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, F, 1, 1 );
 
     answer = {  0.63522182, -0.1712192 , -0.00846781,
                -0.81250979, -0.19375022, -0.20193394,
@@ -741,7 +741,7 @@ BOOST_AUTO_TEST_CASE( testEvolveF, * boost::unit_test::tolerance( DEFAULT_TEST_T
 
     BOOST_TEST( answer == F, CHECK_PER_ELEMENT );
 
-    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dF, F, 0, 1 );
+    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dF, F, 1, 1 );
 
     BOOST_TEST( answer == F, CHECK_PER_ELEMENT );
 
@@ -866,7 +866,7 @@ BOOST_AUTO_TEST_CASE( testEvolveF, * boost::unit_test::tolerance( DEFAULT_TEST_T
     BOOST_TEST( tardigradeVectorTools::appendVectors( dFdLp ) == tardigradeVectorTools::appendVectors( dFdLp_answer ), CHECK_PER_ELEMENT );
 
     //Test 6 ( mode 2 fully explicit )
-    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, F, 1, 2 );
+    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, F, 0, 2 );
 
     answer = { 3.03173544, 1.1881084 , 2.77327313,
                3.92282144, 2.58424672, 3.75584617,
@@ -874,12 +874,12 @@ BOOST_AUTO_TEST_CASE( testEvolveF, * boost::unit_test::tolerance( DEFAULT_TEST_T
 
     BOOST_TEST( answer == F, CHECK_PER_ELEMENT );
 
-    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dF, F, 1, 2 );
+    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dF, F, 0, 2 );
 
     BOOST_TEST( ( answer - Fp ) == dF, CHECK_PER_ELEMENT );
 
     //Test 7 ( mode 2 fully implicit )
-    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, F, 0, 2 );
+    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, F, 1, 2 );
 
     answer = {  0.65045472, -0.42475879, -0.09274688,
                -0.25411831, -0.08867872, -0.16467241,
@@ -887,7 +887,7 @@ BOOST_AUTO_TEST_CASE( testEvolveF, * boost::unit_test::tolerance( DEFAULT_TEST_T
 
     BOOST_TEST( answer == F, CHECK_PER_ELEMENT );
 
-    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dF, F, 0, 2 );
+    tardigradeConstitutiveTools::evolveF( Dt, Fp, Lp, L, dF, F, 1, 2 );
 
     BOOST_TEST( ( answer - Fp ) == dF, CHECK_PER_ELEMENT );
 

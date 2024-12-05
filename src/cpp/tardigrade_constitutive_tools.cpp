@@ -1425,7 +1425,7 @@ namespace tardigradeConstitutiveTools{
     }
 
     template<typename T, class v_in, class v_out>
-    void midpointEvolution( T Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
+    void midpointEvolution( const T &Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
                             const v_in &DADt_begin, const v_in &DADt_end, v_out dA_begin, v_out dA_end, v_out A_begin, v_out A_end,
                             const v_in &alpha_begin, const v_in &alpha_end ){
         /*!
@@ -1471,7 +1471,7 @@ namespace tardigradeConstitutiveTools{
     }
 
     template<typename T, class v_in, class v_out, class M_out>
-    void midpointEvolution( T Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
+    void midpointEvolution( const T &Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
                             const v_in &DADt_begin, const v_in &DADt_end, v_out dA_begin, v_out dA_end, v_out A_begin, v_out A_end,
                             M_out DADADt_begin, M_out DADADt_end,
                             const v_in &alpha_begin, const v_in &alpha_end ){
@@ -1482,6 +1482,7 @@ namespace tardigradeConstitutiveTools{
          *
          * alpha=0 (explicit)
          *
+         * \param &Dt: The change in time.
          * \param &Ap_begin: The starting iterator of the previous value of the vector
          * \param &Ap_end: The stopping iterator of the previous value of the vector
          * \param &DApDt_begin: The starting iterator of the previous time rate of change of the vector.
@@ -1519,7 +1520,7 @@ namespace tardigradeConstitutiveTools{
     }
 
     template<typename T, class v_in, class v_out, class M_out>
-    void midpointEvolution( T Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
+    void midpointEvolution( const T &Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
                             const v_in &DADt_begin, const v_in &DADt_end, v_out dA_begin, v_out dA_end, v_out A_begin, v_out A_end,
                             M_out DADADt_begin, M_out DADADt_end, M_out DADADtp_begin, M_out DADADtp_end,
                             const v_in &alpha_begin, const v_in &alpha_end ){
@@ -1530,6 +1531,7 @@ namespace tardigradeConstitutiveTools{
          *
          * alpha=0 (explicit)
          *
+         * \param &Dt: The change in time.
          * \param &Ap_begin: The starting iterator of the previous value of the vector
          * \param &Ap_end: The stopping iterator of the previous value of the vector
          * \param &DApDt_begin: The starting iterator of the previous time rate of change of the vector.
@@ -1573,7 +1575,7 @@ namespace tardigradeConstitutiveTools{
     }
 
     template<typename T, class v_in, class v_out>
-    void midpointEvolution( T Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
+    void midpointEvolution( const T &Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
                             const v_in &DADt_begin, const v_in &DADt_end, v_out dA_begin, v_out dA_end, v_out A_begin, v_out A_end,
                             const floatType alpha ){
         /*!
@@ -1616,7 +1618,7 @@ namespace tardigradeConstitutiveTools{
     }
 
     template<typename T, class v_in, class v_out, class M_out>
-    void midpointEvolution( T Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
+    void midpointEvolution( const T &Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
                             const v_in &DADt_begin, const v_in &DADt_end, v_out dA_begin, v_out dA_end, v_out A_begin, v_out A_end,
                             M_out DADADt_begin, M_out DADADt_end,
                             const floatType alpha ){
@@ -1627,6 +1629,7 @@ namespace tardigradeConstitutiveTools{
          *
          * alpha=0 (explicit)
          *
+         * \param &Dt: The change in time.
          * \param &Ap_begin: The starting iterator of the previous value of the vector
          * \param &Ap_end: The stopping iterator of the previous value of the vector
          * \param &DApDt_begin: The starting iterator of the previous time rate of change of the vector.
@@ -1663,7 +1666,7 @@ namespace tardigradeConstitutiveTools{
     }
 
     template<typename T, class v_in, class v_out, class M_out>
-    void midpointEvolution( T Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
+    void midpointEvolution( const T &Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
                             const v_in &DADt_begin, const v_in &DADt_end, v_out dA_begin, v_out dA_end, v_out A_begin, v_out A_end,
                             M_out DADADt_begin, M_out DADADt_end, M_out DADADtp_begin, M_out DADADtp_end,
                             const floatType alpha ){
@@ -1674,6 +1677,7 @@ namespace tardigradeConstitutiveTools{
          *
          * alpha=0 (explicit)
          *
+         * \param &Dt: The change in time.
          * \param &Ap_begin: The starting iterator of the previous value of the vector
          * \param &Ap_end: The stopping iterator of the previous value of the vector
          * \param &DApDt_begin: The starting iterator of the previous time rate of change of the vector.
@@ -2050,73 +2054,90 @@ namespace tardigradeConstitutiveTools{
 
     }
 
-    void evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
-                     floatVector &dF, floatVector &deformationGradient, const floatType alpha, const unsigned int mode){
+    template<int dim, typename T, class v_in, class v_out>
+    void evolveF(const T &Dt, const v_in &previousDeformationGradient_begin, const v_in &previousDeformationGradient_end,
+                 const v_in &Lp_begin, const v_in &Lp_end, const v_in &L_begin, const v_in &L_end,
+                 v_out dF_begin, v_out dF_end, v_out deformationGradient_begin, v_out deformationGradient_end,
+                 const floatType alpha, const unsigned int mode ){
         /*!
          * Evolve the deformation gradient ( F ) using the midpoint integration method.
          *
          * mode 1:
-         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left(1 - \alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \alpha \dot{F}_{iI}^{t} \right]\f$
+         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left(\alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \left( 1 - \alpha \right) \dot{F}_{iI}^{t} \right]\f$
          *
          * mode 2:
-         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \alpha \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( 1- \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
+         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \left( 1 - \alpha \right) \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
          *
          * \param &Dt: The change in time.
-         * \param &previousDeformationGradient: The previous value of the deformation gradient
-         * \param &Lp: The previous velocity gradient in the current configuration (mode 1) or
+         * \param &previousDeformationGradient_begin: The starting iterator of the previous value of the deformation gradient
+         * \param &previousDeformationGradient_end: The stopping iterator of the previous value of the deformation gradient
+         * \param &Lp_begin: The starting iterator of the previous velocity gradient in the current configuration (mode 1) or
          *     reference configuration (mode 2).
-         * \param &L: The current velocity gradient in the current configuration (mode 1) or
+         * \param &Lp_end: The stopping iterator of the previous velocity gradient in the current configuration (mode 1) or
          *     reference configuration (mode 2).
-         * \param &dF: The change in the deformation gradient \f$\Delta \bf{F}\f$ such that \f$F_{iI}^{t+1} = F_{iI}^t + \Delta F_{iI}\f$
-         * \param &deformationGradient: The computed current deformation gradient.
-         * \param alpha: The integration parameter.
+         * \param &L_begin: The starting iterator of the current velocity gradient in the current configuration (mode 1) or
+         *     reference configuration (mode 2).
+         * \param &L_end: The stopping iterator of the current velocity gradient in the current configuration (mode 1) or
+         *     reference configuration (mode 2).
+         * \param &dF_begin: The starting iterator of the change in the deformation gradient \f$\Delta \bf{F}\f$ such that \f$F_{iI}^{t+1} = F_{iI}^t + \Delta F_{iI}\f$
+         * \param &dF_end: The stopping iterator of the change in the deformation gradient \f$\Delta \bf{F}\f$ such that \f$F_{iI}^{t+1} = F_{iI}^t + \Delta F_{iI}\f$
+         * \param &deformationGradient_begin: The starting iterator of the computed current deformation gradient.
+         * \param &deformationGradient_end: The stopping iterator of the computed current deformation gradient.
+         * \param alpha: The integration parameter (0 is explicit, 1 is implicit).
          * \param mode: The mode of the ODE. Whether the velocity gradient is known in the
          *     current (mode 1) or reference (mode 2) configuration.
          */
 
         //Assumes 3D
-        constexpr unsigned int dim = 3;
         constexpr unsigned int sot_dim = dim * dim;
 
-        TARDIGRADE_ERROR_TOOLS_CHECK( previousDeformationGradient.size( ) == sot_dim, "The deformation gradient doesn't have enough terms (require 9 for 3D)" );
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( size_type )( previousDeformationGradient_end - previousDeformationGradient_begin ) == sot_dim, "The deformation gradient doesn't have enough terms (require 9 for 3D)" );
 
-        TARDIGRADE_ERROR_TOOLS_CHECK( Lp.size( ) == previousDeformationGradient.size( ), "The previous velocity gradient and deformation gradient aren't the same size" );
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( size_type )( Lp_end - Lp_begin ) == sot_dim, "The previous velocity gradient and deformation gradient aren't the same size" );
 
-        TARDIGRADE_ERROR_TOOLS_CHECK( previousDeformationGradient.size( ) == L.size( ), "The previous deformation gradient and the current velocity gradient aren't the same size" );
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( size_type )( L_end - L_begin ) == sot_dim, "The previous deformation gradient and the current velocity gradient aren't the same size" );
 
         TARDIGRADE_ERROR_TOOLS_CHECK( ( mode == 1 ) || ( mode == 2 ), "The mode of evolution is not recognized" );
 
-        //Compute L^{t + \alpha}
-        floatVector LtpAlpha = alpha * Lp + ( 1 - alpha ) * L;
-
         //Compute the right hand side
 
-        floatVector RHS( sot_dim, 0 );
-        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > Fp( previousDeformationGradient.data( ), dim, dim );
-        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > Lt( LtpAlpha.data( ), dim, dim );
-        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > RHS_map( RHS.data( ), dim, dim );
+        std::array< T, sot_dim > RHS;
+        auto RHS_begin = std::begin( RHS );
+        auto RHS_end   = std::end( RHS );
+
+        std::fill( RHS_begin, RHS_end, 0 );
+
+        Eigen::Map< Eigen::Matrix< T, dim, dim, Eigen::RowMajor > > RHS_map( RHS.data( ), dim, dim );
 
         if ( mode == 1 ){
-            RHS_map = ( Lt * Fp ).eval( );
+            for ( unsigned int i = 0; i < dim; ++i ){
+                for ( unsigned int k = 0; k < dim; ++k ) {
+                    for ( unsigned int j = 0; j < dim; ++j ){
+                        *( RHS_begin + dim * i + j ) += ( ( 1 - alpha ) * ( *( Lp_begin + dim * i + k ) ) + alpha * ( *( L_begin + dim * i + k ) ) ) * ( *( previousDeformationGradient_begin + dim * k + j ) );
+                    }
+                }
+            }
         }
         if ( mode == 2 ){
-            RHS_map = ( Fp * Lt ).eval( );
+            for ( unsigned int i = 0; i < dim; ++i ){
+                for ( unsigned int k = 0; k < dim; ++k ) {
+                    for ( unsigned int j = 0; j < dim; ++j ){
+                        *( RHS_begin + dim * i + j ) += ( ( 1 - alpha ) * ( *( Lp_begin + dim * k + j ) ) + alpha * ( *( L_begin + dim * k + j ) ) ) * ( *( previousDeformationGradient_begin + dim * i + k ) );
+                    }
+                }
+            }
         }
 
-        RHS *= Dt;
+        std::transform( RHS_begin, RHS_end, RHS_begin, std::bind( std::multiplies<T>( ), std::placeholders::_1, Dt ) );
 
         //Compute the left-hand side
-        floatVector eye( dim * dim );
+        std::copy( L_begin, L_end, deformationGradient_begin );
+        std::transform( deformationGradient_begin, deformationGradient_end, deformationGradient_begin, std::bind( std::multiplies<T>( ), std::placeholders::_1, -Dt * alpha ) );
 
-        tardigradeVectorTools::eye( eye );
+        for ( unsigned int i = 0; i < dim; ++i ){ *( deformationGradient_begin + dim * i + i ) += 1; }
 
-        floatVector invLHS = -Dt * ( 1 - alpha ) * L;
-        for ( unsigned int i = 0; i < dim; ++i ){ invLHS[ dim * i + i ] += 1; }
-
-        dF = floatVector( sot_dim, 0 );
-
-        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invLHS_map( invLHS.data( ), dim, dim );
-        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > dF_map( dF.data( ), dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invLHS_map( &( *deformationGradient_begin ), dim, dim );
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > dF_map( &( *dF_begin ), dim, dim );
 
         invLHS_map = invLHS_map.inverse( ).eval( );
 
@@ -2131,7 +2152,190 @@ namespace tardigradeConstitutiveTools{
 
         }
 
-        deformationGradient = previousDeformationGradient + dF;
+        std::transform( previousDeformationGradient_begin, previousDeformationGradient_end, dF_begin, deformationGradient_begin, std::plus<T>( ) );
+
+        return;
+
+    }
+
+    template<int dim, typename T, class v_in, class v_out, class M_out>
+    void evolveF(const T &Dt, const v_in &previousDeformationGradient_begin, const v_in &previousDeformationGradient_end,
+                 const v_in &Lp_begin, const v_in &Lp_end, const v_in &L_begin, const v_in &L_end,
+                 v_out dF_begin, v_out dF_end, v_out deformationGradient_begin, v_out deformationGradient_end,
+                 M_out dFdL_begin, M_out dFdL_end,
+                 const floatType alpha, const unsigned int mode ){
+        /*!
+         * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
+         *
+         * mode 1:
+         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left(\alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \left( 1 - \alpha \right) \dot{F}_{iI}^{t} \right]\f$
+         * \f$\frac{\partial F_{jI}^{t + 1}}{\partial L_{kl}^{t+1}} = \left[\delta_{kj} - \Delta t \left(\alpha\right) L_{kj}\right]^{-1} \Delta t \left(\alpha\right) F_{lI}^{t + 1}\f$
+         *
+         * mode 2:
+         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \left( 1 - \alpha \right) \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
+         * \f$\frac{\partial F_{iJ}^{t + 1}}{\partial L_{KL}} = \Delta t ( \alpha) F_{iK}^{t + 1} \left[\delta_{JL} - \right ]\f$
+         *
+         * \param &Dt: The change in time.
+         * \param &previousDeformationGradient_begin: The starting iterator of the previous value of the deformation gradient
+         * \param &previousDeformationGradient_end: The stopping iterator of the previous value of the deformation gradient
+         * \param &Lp_begin: The starting iterator of the previous velocity gradient in the current configuration (mode 1) or
+         *     reference configuration (mode 2).
+         * \param &Lp_end: The stopping iterator of the previous velocity gradient in the current configuration (mode 1) or
+         *     reference configuration (mode 2).
+         * \param &L_begin: The starting iterator of the current velocity gradient in the current configuration (mode 1) or
+         *     reference configuration (mode 2).
+         * \param &L_end: The stopping iterator of the current velocity gradient in the current configuration (mode 1) or
+         *     reference configuration (mode 2).
+         * \param &dF_begin: The starting iterator of the change in the deformation gradient \f$\Delta \bf{F}\f$ such that \f$F_{iI}^{t+1} = F_{iI}^t + \Delta F_{iI}\f$
+         * \param &dF_end: The stopping iterator of the change in the deformation gradient \f$\Delta \bf{F}\f$ such that \f$F_{iI}^{t+1} = F_{iI}^t + \Delta F_{iI}\f$
+         * \param &deformationGradient_begin: The starting iterator of the computed current deformation gradient.
+         * \param &deformationGradient_end: The stopping iterator of the computed current deformation gradient.
+         * \param &dFdL_begin: The starting iterator of the derivative of the deformation gradient w.r.t. the velocity gradient
+         * \param &dFdL_end: The stopping iterator of the derivative of the deformation gradient w.r.t. the velocity gradient
+         * \param alpha: The integration parameter (0 is explicit, 1 is implicit).
+         * \param mode: The mode of the ODE. Whether the velocity gradient is known in the
+         *     current (mode 1) or reference (mode 2) configuration.
+         */
+
+        constexpr unsigned int sot_dim = dim * dim;
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( evolveF<dim>( Dt, previousDeformationGradient_begin, previousDeformationGradient_end, Lp_begin, Lp_end, L_begin, L_end,
+                                                    dF_begin, dF_end, deformationGradient_begin, deformationGradient_end, alpha, mode) );
+
+        //Compute the left hand side
+        std::array< T, sot_dim > invLHS;
+        auto invLHS_begin = std::begin( invLHS );
+
+        std::transform( L_begin, L_end, invLHS_begin, std::bind( std::multiplies<T>( ), std::placeholders::_1, -Dt * alpha ) );
+        for ( unsigned int i = 0; i < dim; ++i ){ *( invLHS_begin + dim * i + i ) += 1; }
+
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invLHS_map( &( *invLHS_begin ), dim, dim );
+
+        invLHS_map = invLHS_map.inverse( ).eval( );
+
+        //Compute the jacobian
+        std::fill( dFdL_begin, dFdL_end, 0 );
+
+        if ( mode == 1 ){
+            for ( unsigned int j = 0; j < dim; ++j ){
+                for ( unsigned int I = 0; I < dim; ++I ){
+                    for ( unsigned int k = 0; k < dim; ++k ){
+                        for ( unsigned int l = 0; l < dim; ++l ){
+                            *( dFdL_begin + dim * sot_dim * j + sot_dim * I + dim * k + l ) += Dt * alpha * ( *( invLHS_begin + dim * j + k ) ) * ( *( deformationGradient_begin + dim * l + I ) );
+                        }
+                    }
+                }
+            }
+        }
+        if ( mode == 2 ){
+            for ( unsigned int j = 0; j < dim; ++j ){
+                for ( unsigned int I = 0; I < dim; ++I ){
+                    for ( unsigned int K = 0; K < dim; ++K ){
+                        for ( unsigned int _L = 0; _L < dim; ++_L ){
+                            *( dFdL_begin + dim * sot_dim * j + sot_dim * I + dim * K + _L ) += Dt * alpha * ( *( invLHS_begin + dim * _L + I ) ) * ( *( deformationGradient_begin + dim * j + K ) );
+                        }
+                    }
+                }
+            }
+        }
+
+        return;
+
+    }
+
+    template<int dim, typename T, class v_in, class v_out, class M_out>
+    void evolveF(const T &Dt, const v_in &previousDeformationGradient_begin, const v_in &previousDeformationGradient_end,
+                 const v_in &Lp_begin, const v_in &Lp_end, const v_in &L_begin, const v_in &L_end,
+                 v_out dF_begin, v_out dF_end, v_out deformationGradient_begin, v_out deformationGradient_end,
+                 M_out dFdL_begin, M_out dFdL_end, M_out ddFdFp_begin, M_out ddFdFp_end, M_out dFdFp_begin, M_out dFdFp_end, M_out dFdLp_begin, M_out dFdLp_end,
+                 const floatType alpha, const unsigned int mode ){
+
+        constexpr unsigned int sot_dim = dim * dim;
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( evolveF<dim>( Dt, previousDeformationGradient_begin, previousDeformationGradient_end, Lp_begin, Lp_end, L_begin, L_end,
+                                                    dF_begin, dF_end, deformationGradient_begin, deformationGradient_end, alpha, mode) );
+
+        //Compute the left hand side
+        std::array< T, sot_dim > invLHS;
+        auto invLHS_begin = std::begin( invLHS );
+
+        std::transform( L_begin, L_end, invLHS_begin, std::bind( std::multiplies<T>( ), std::placeholders::_1, -Dt * alpha ) );
+        for ( unsigned int i = 0; i < dim; ++i ){ *( invLHS_begin + dim * i + i ) += 1; }
+
+        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invLHS_map( &( *invLHS_begin ), dim, dim );
+
+        invLHS_map = invLHS_map.inverse( ).eval( );
+
+        //Compute the jacobian
+        std::fill( dFdL_begin,   dFdL_end,   0 );
+        std::fill( ddFdFp_begin, ddFdFp_end, 0 );
+        std::fill( dFdLp_begin,  dFdLp_end,  0 );
+
+        if ( mode == 1 ){
+            for ( unsigned int j = 0; j < dim; ++j ){
+                for ( unsigned int I = 0; I < dim; ++I ){
+                    for ( unsigned int k = 0; k < dim; ++k ){
+                        for ( unsigned int l = 0; l < dim; ++l ){
+                            *( dFdL_begin + dim * sot_dim * j + sot_dim * I + dim * k + l )    += Dt * alpha * ( *( invLHS_begin + dim * j + k ) ) * ( *( deformationGradient_begin + dim * l + I ) );
+                            *( dFdLp_begin +  dim * sot_dim * j + sot_dim * I + dim * k + l )  += ( *( invLHS_begin + dim * j + k ) ) * Dt * ( 1 - alpha ) * ( *( previousDeformationGradient_begin + dim * l + I ) );
+                            *( ddFdFp_begin +  dim * sot_dim * j + sot_dim * I + dim * k + I ) += Dt * ( *( invLHS_begin + dim * j + l ) ) * ( ( 1 - alpha ) * ( *( Lp_begin + dim * l + k ) ) + alpha * ( *( L_begin + dim * l + k ) ) );
+                        }
+                    }
+                }
+            }
+        }
+        if ( mode == 2 ){
+            for ( unsigned int j = 0; j < dim; ++j ){
+                for ( unsigned int I = 0; I < dim; ++I ){
+                    for ( unsigned int K = 0; K < dim; ++K ){
+                        for ( unsigned int _L = 0; _L < dim; ++_L ){
+                            *( dFdL_begin + dim * sot_dim * j + sot_dim * I + dim * K + _L  ) += Dt * alpha * ( *( invLHS_begin + dim * _L + I ) ) * ( *( deformationGradient_begin + dim * j + K ) );
+                            *( dFdLp_begin + dim * sot_dim * j + sot_dim * I + dim * K + _L ) += Dt * ( 1 - alpha ) * ( *( invLHS_begin + dim * _L + I ) ) * ( *( previousDeformationGradient_begin + dim * j + K ) );
+                            *( ddFdFp_begin + dim * sot_dim * j + sot_dim * I + dim * j + K ) += Dt * ( ( 1 - alpha ) * ( *( Lp_begin + dim * K + _L ) ) + alpha * ( *( L_begin + dim * K + _L ) ) ) * ( *( invLHS_begin + dim * _L + I ) );
+                        }
+                    }
+                }
+            }
+        }
+
+        std::copy( ddFdFp_begin, ddFdFp_end, dFdFp_begin );
+        for ( unsigned int i = 0; i < sot_dim; ++i ){ *( dFdFp_begin + sot_dim * i + i ) += 1; }
+        return;
+
+    }
+
+    void evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+                     floatVector &dF, floatVector &deformationGradient, const floatType alpha, const unsigned int mode){
+        /*!
+         * Evolve the deformation gradient ( F ) using the midpoint integration method.
+         *
+         * mode 1:
+         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left(\alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \left( 1 - \alpha \right) \dot{F}_{iI}^{t} \right]\f$
+         *
+         * mode 2:
+         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \left( 1 - \alpha \right) \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
+         *
+         * \param &Dt: The change in time.
+         * \param &previousDeformationGradient: The previous value of the deformation gradient
+         * \param &Lp: The previous velocity gradient in the current configuration (mode 1) or
+         *     reference configuration (mode 2).
+         * \param &L: The current velocity gradient in the current configuration (mode 1) or
+         *     reference configuration (mode 2).
+         * \param &dF: The change in the deformation gradient \f$\Delta \bf{F}\f$ such that \f$F_{iI}^{t+1} = F_{iI}^t + \Delta F_{iI}\f$
+         * \param &deformationGradient: The computed current deformation gradient.
+         * \param alpha: The integration parameter (1 for implicit, 0 for explicit )
+         * \param mode: The mode of the ODE. Whether the velocity gradient is known in the
+         *     current (mode 1) or reference (mode 2) configuration.
+         */
+
+        //Assumes 3D
+        constexpr unsigned int dim = 3;
+
+        dF = floatVector( dim * dim );
+        deformationGradient = floatVector( dim * dim );
+
+        evolveF<dim>( Dt, std::cbegin( previousDeformationGradient ), std::cend( previousDeformationGradient ), std::cbegin( Lp ), std::cend( Lp ), std::cbegin( L ), std::cend( L ),
+                      std::begin( dF ), std::end( dF ), std::begin( deformationGradient ), std::end( deformationGradient ), alpha, mode );
 
         return;
 
@@ -2143,10 +2347,10 @@ namespace tardigradeConstitutiveTools{
          * Evolve the deformation gradient ( F ) using the midpoint integration method.
          *
          * mode 1:
-         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left(1 - \alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \alpha \dot{F}_{iI}^{t} \right]\f$
+         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left( \alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \left( 1 - \alpha \right) \dot{F}_{iI}^{t} \right]\f$
          *
          * mode 2:
-         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \alpha \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( 1- \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
+         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \left( 1 - \alpha \right) \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
          *
          * \param &Dt: The change in time.
          * \param &previousDeformationGradient: The previous value of the deformation gradient
@@ -2155,7 +2359,7 @@ namespace tardigradeConstitutiveTools{
          * \param &L: The current velocity gradient in the current configuration (mode 1) or
          *     reference configuration (mode 2).
          * \param &deformationGradient: The computed current deformation gradient.
-         * \param alpha: The integration parameter.
+         * \param alpha: The integration parameter ( 1 for implicit, 0 for explicit )
          * \param mode: The mode of the ODE. Whether the velocity gradient is known in the
          *     current (mode 1) or reference (mode 2) configuration.
          */
@@ -2172,12 +2376,12 @@ namespace tardigradeConstitutiveTools{
          * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
          *
          * mode 1:
-         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left(1 - \alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \alpha \dot{F}_{iI}^{t} \right]\f$
-         * \f$\frac{\partial F_{jI}^{t + 1}}{\partial L_{kl}^{t+1}} = \left[\delta_{kj} - \Delta t \left(1 - \alpha\right) L_{kj}\right]^{-1} \Delta t \left(1 - \alpha\right) F_{lI}^{t + 1}\f$
+         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left(\alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t ( 1 - \alpha ) \dot{F}_{iI}^{t} \right]\f$
+         * \f$\frac{\partial F_{jI}^{t + 1}}{\partial L_{kl}^{t+1}} = \left[\delta_{kj} - \Delta t \left(\alpha\right) L_{kj}\right]^{-1} \Delta t \left( \alpha\right) F_{lI}^{t + 1}\f$
          *
          * mode 2:
-         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \alpha \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( 1- \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
-         * \f$\frac{\partial F_{iJ}^{t + 1}}{\partial L_{KL}} = \Delta t (1 - \alpha) F_{iK}^{t + 1} \left[\delta_{JL} - \right ]\f$
+         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t ( 1 - \alpha ) \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
+         * \f$\frac{\partial F_{iJ}^{t + 1}}{\partial L_{KL}} = \Delta t (\alpha) F_{iK}^{t + 1} \left[\delta_{JL} - \right ]\f$
          *
          * \param &Dt: The change in time.
          * \param &previousDeformationGradient: The previous value of the deformation gradient
@@ -2186,16 +2390,23 @@ namespace tardigradeConstitutiveTools{
          * \param &dF: The change in the deformation gradient \f$\Delta \bf{F}\f$ such that \f$F_{iI}^{t+1} = F_{iI}^t + \Delta F_{iI}\f$
          * \param &deformationGradient: The computed current deformation gradient.
          * \param &dFdL: The derivative of the deformation gradient w.r.t. the velocity gradient
-         * \param alpha: The integration parameter ( 0 for implicit, 1 for explicit )
+         * \param alpha: The integration parameter ( 1 for implicit, 0 for explicit )
          * \param mode: The form of the ODE. See above for details.
          */
 
         constexpr unsigned int dim = 3;
-        const unsigned int sot_dim = dim * dim;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        floatVector _dFdL;
+        dF = floatVector( sot_dim );
 
-        TARDIGRADE_ERROR_TOOLS_CATCH( evolveFFlatJ( Dt, previousDeformationGradient, Lp, L, dF, deformationGradient, _dFdL, alpha, mode ) );
+        deformationGradient = floatVector( sot_dim );
+
+        floatVector _dFdL( sot_dim * sot_dim );
+
+        evolveF<dim>( Dt, std::cbegin( previousDeformationGradient ), std::cend( previousDeformationGradient ),
+                      std::cbegin( Lp ), std::cend( Lp ), std::cbegin( L ), std::cend( L ),
+                      std::begin( dF ), std::end( dF ), std::begin( deformationGradient ), std::end( deformationGradient ),
+                      std::begin( _dFdL ), std::end( _dFdL ), alpha, mode );
 
         dFdL = tardigradeVectorTools::inflate( _dFdL, sot_dim, sot_dim );
 
@@ -2209,12 +2420,12 @@ namespace tardigradeConstitutiveTools{
          * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
          *
          * mode 1:
-         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left(1 - \alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \alpha \dot{F}_{iI}^{t} \right]\f$
-         * \f$\frac{\partial F_{jI}^{t + 1}}{\partial L_{kl}^{t+1}} = \left[\delta_{kj} - \Delta t \left(1 - \alpha\right) L_{kj}\right]^{-1} \Delta t \left(1 - \alpha\right) F_{lI}^{t + 1}\f$
+         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left( \alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \left( 1 - \alpha \right) \dot{F}_{iI}^{t} \right]\f$
+         * \f$\frac{\partial F_{jI}^{t + 1}}{\partial L_{kl}^{t+1}} = \left[\delta_{kj} - \Delta t \left(\alpha\right) L_{kj}\right]^{-1} \Delta t \left( \alpha\right) F_{lI}^{t + 1}\f$
          *
          * mode 2:
-         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \alpha \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( 1- \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
-         * \f$\frac{\partial F_{iJ}^{t + 1}}{\partial L_{KL}} = \Delta t (1 - \alpha) F_{iK}^{t + 1} \left[\delta_{JL} - \right ]\f$
+         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \left( 1 - \alpha \right) \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
+         * \f$\frac{\partial F_{iJ}^{t + 1}}{\partial L_{KL}} = \Delta t ( \alpha) F_{iK}^{t + 1} \left[\delta_{JL} - \right ]\f$
          *
          * \param &Dt: The change in time.
          * \param &previousDeformationGradient: The previous value of the deformation gradient
@@ -2223,7 +2434,7 @@ namespace tardigradeConstitutiveTools{
          * \param &dF: The change in the deformation gradient \f$\Delta \bf{F}\f$ such that \f$F_{iI}^{t+1} = F_{iI}^t + \Delta F_{iI}\f$
          * \param &deformationGradient: The computed current deformation gradient.
          * \param &dFdL: The derivative of the deformation gradient w.r.t. the velocity gradient
-         * \param alpha: The integration parameter ( 0 for implicit, 1 for explicit )
+         * \param alpha: The integration parameter ( 1 for implicit, 0 for explicit )
          * \param mode: The form of the ODE. See above for details.
          */
 
@@ -2231,41 +2442,17 @@ namespace tardigradeConstitutiveTools{
         constexpr unsigned int dim = 3;
         const unsigned int sot_dim = dim * dim;
 
-        TARDIGRADE_ERROR_TOOLS_CATCH( evolveF( Dt, previousDeformationGradient, Lp, L, dF, deformationGradient, alpha, mode) );
+        dF = floatVector( sot_dim );
 
-        //Compute the left hand side
-        floatVector invLHS = -Dt * ( 1 - alpha ) * L;
-        for ( unsigned int i = 0; i < dim; ++i ){ invLHS[ dim * i + i ] += 1; }
+        deformationGradient = floatVector( sot_dim );
 
-        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invLHS_map( invLHS.data( ), dim, dim );
+        evolveF<dim>( Dt, std::cbegin( previousDeformationGradient ), std::cend( previousDeformationGradient ),
+                      std::cbegin( Lp ), std::cend( Lp ), std::cbegin( L ), std::cend( L ),
+                      std::begin( dF ), std::end( dF ), std::begin( deformationGradient ), std::end( deformationGradient ),
+                      std::begin( dFdL ), std::end( dFdL ), alpha, mode );
 
-        invLHS_map = invLHS_map.inverse( ).eval( );
-
-        //Compute the jacobian
-        dFdL = floatVector( sot_dim * sot_dim, 0 );
-        if ( mode == 1 ){
-            for ( unsigned int j = 0; j < dim; ++j ){
-                for ( unsigned int I = 0; I < dim; ++I ){
-                    for ( unsigned int k = 0; k < dim; ++k ){
-                        for ( unsigned int l = 0; l < dim; ++l ){
-                            dFdL[ dim * sot_dim * j + sot_dim * I + dim * k + l ] += Dt * ( 1 - alpha ) * invLHS[ dim * j + k ] * deformationGradient[ dim * l + I ];
-                        }
-                    }
-                }
-            }
-        }
-        if ( mode == 2 ){
-            for ( unsigned int j = 0; j < dim; ++j ){
-                for ( unsigned int I = 0; I < dim; ++I ){
-                    for ( unsigned int K = 0; K < dim; ++K ){
-                        for ( unsigned int _L = 0; _L < dim; ++_L ){
-                            dFdL[ dim * sot_dim * j + sot_dim * I + dim * K + _L ] += Dt * ( 1 - alpha ) * invLHS[ dim * _L + I ] * deformationGradient[ dim * j + K ];
-                        }
-                    }
-                }
-            }
-        }
         return;
+
     }
 
     void evolveFFlatJ( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
@@ -2274,12 +2461,12 @@ namespace tardigradeConstitutiveTools{
          * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
          *
          * mode 1:
-         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left(1 - \alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \alpha \dot{F}_{iI}^{t} \right]\f$
-         * \f$\frac{\partial F_{jI}^{t + 1}}{\partial L_{kl}^{t+1}} = \left[\delta_{kj} - \Delta t \left(1 - \alpha\right) L_{kj}\right]^{-1} \Delta t \left(1 - \alpha\right) F_{lI}^{t + 1}\f$
+         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left( \alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \left( 1 - \alpha \right) \dot{F}_{iI}^{t} \right]\f$
+         * \f$\frac{\partial F_{jI}^{t + 1}}{\partial L_{kl}^{t+1}} = \left[\delta_{kj} - \Delta t \left(\alpha\right) L_{kj}\right]^{-1} \Delta t \left(\alpha\right) F_{lI}^{t + 1}\f$
          *
          * mode 2:
-         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \alpha \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( 1- \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
-         * \f$\frac{\partial F_{iJ}^{t + 1}}{\partial L_{KL}} = \Delta t (1 - \alpha) F_{iK}^{t + 1} \left[\delta_{JL} - \right ]\f$
+         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \left( 1 - \alpha \right) \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
+         * \f$\frac{\partial F_{iJ}^{t + 1}}{\partial L_{KL}} = \Delta t (\alpha) F_{iK}^{t + 1} \left[\delta_{JL} - \right ]\f$
          *
          * \param &Dt: The change in time.
          * \param &previousDeformationGradient: The previous value of the deformation gradient
@@ -2287,7 +2474,7 @@ namespace tardigradeConstitutiveTools{
          * \param &L: The current velocity gradient.
          * \param &deformationGradient: The computed current deformation gradient.
          * \param &dFdL: The derivative of the deformation gradient w.r.t. the velocity gradient
-         * \param alpha: The integration parameter ( 0 for implicit, 1 for explicit )
+         * \param alpha: The integration parameter ( 1 for implicit, 0 for explicit )
          * \param mode: The form of the ODE. See above for details.
          */
 
@@ -2303,12 +2490,12 @@ namespace tardigradeConstitutiveTools{
          * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
          *
          * mode 1:
-         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left(1 - \alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \alpha \dot{F}_{iI}^{t} \right]\f$
-         * \f$\frac{\partial F_{jI}^{t + 1}}{\partial L_{kl}^{t+1}} = \left[\delta_{kj} - \Delta t \left(1 - \alpha\right) L_{kj}\right]^{-1} \Delta t \left(1 - \alpha\right) F_{lI}^{t + 1}\f$
+         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left( \alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \left( 1 - \alpha \right) \dot{F}_{iI}^{t} \right]\f$
+         * \f$\frac{\partial F_{jI}^{t + 1}}{\partial L_{kl}^{t+1}} = \left[\delta_{kj} - \Delta t \left( \alpha\right) L_{kj}\right]^{-1} \Delta t \left( \alpha\right) F_{lI}^{t + 1}\f$
          *
          * mode 2:
-         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \alpha \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( 1- \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
-         * \f$\frac{\partial F_{iJ}^{t + 1}}{\partial L_{KL}} = \Delta t (1 - \alpha) F_{iK}^{t + 1} \left[\delta_{JL} - \right ]\f$
+         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \left( 1 - \alpha \right) \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
+         * \f$\frac{\partial F_{iJ}^{t + 1}}{\partial L_{KL}} = \Delta t ( \alpha) F_{iK}^{t + 1} \left[\delta_{JL} - \right ]\f$
          *
          * \param &Dt: The change in time.
          * \param &previousDeformationGradient: The previous value of the deformation gradient
@@ -2316,7 +2503,7 @@ namespace tardigradeConstitutiveTools{
          * \param &L: The current velocity gradient.
          * \param &deformationGradient: The computed current deformation gradient.
          * \param &dFdL: The derivative of the deformation gradient w.r.t. the velocity gradient
-         * \param alpha: The integration parameter ( 0 for implicit, 1 for explicit )
+         * \param alpha: The integration parameter ( 1 for implicit, 0 for explicit )
          * \param mode: The form of the ODE. See above for details.
          */
 
@@ -2332,12 +2519,12 @@ namespace tardigradeConstitutiveTools{
          * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
          *
          * mode 1:
-         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left(1 - \alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \alpha \dot{F}_{iI}^{t} \right]\f$
-         * \f$\frac{\partial F_{jI}^{t + 1}}{\partial L_{kl}^{t+1}} = \left[\delta_{kj} - \Delta t \left(1 - \alpha\right) L_{kj}\right]^{-1} \Delta t \left(1 - \alpha\right) F_{lI}^{t + 1}\f$
+         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left( \alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \left( 1 - \alpha \right) \dot{F}_{iI}^{t} \right]\f$
+         * \f$\frac{\partial F_{jI}^{t + 1}}{\partial L_{kl}^{t+1}} = \left[\delta_{kj} - \Delta t \left( \alpha\right) L_{kj}\right]^{-1} \Delta t \left( \alpha\right) F_{lI}^{t + 1}\f$
          *
          * mode 2:
-         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \alpha \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( 1- \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
-         * \f$\frac{\partial F_{iJ}^{t + 1}}{\partial L_{KL}} = \Delta t (1 - \alpha) F_{iK}^{t + 1} \left[\delta_{JL} - \right ]\f$
+         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \left( 1 - \alpha \right) \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
+         * \f$\frac{\partial F_{iJ}^{t + 1}}{\partial L_{KL}} = \Delta t ( \alpha) F_{iK}^{t + 1} \left[\delta_{JL} - \right ]\f$
          *
          * \param &Dt: The change in time.
          * \param &previousDeformationGradient: The previous value of the deformation gradient
@@ -2349,21 +2536,26 @@ namespace tardigradeConstitutiveTools{
          * \param &ddFdFp: The derivative of the change in the deformation gradient w.r.t. the previous deformation gradient
          * \param &dFdFp: The derivative of the deformation gradient w.r.t. the previous deformation gradient
          * \param &dFdLp: The derivative of the deformation gradient w.r.t. the previous velocity gradient
-         * \param alpha: The integration parameter ( 0 for implicit, 1 for explicit )
+         * \param alpha: The integration parameter ( 1 for implicit, 0 for explicit )
          * \param mode: The form of the ODE. See above for details.
          */
 
         //Assumes 3D
         constexpr unsigned int dim = 3;
-        const unsigned int sot_dim = dim * dim;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        floatVector _dFdL;
-        floatVector _ddFdFp;
-        floatVector _dFdFp;
-        floatVector _dFdLp;
+        dF = floatVector( sot_dim );
+        deformationGradient = floatVector( sot_dim );
 
-        TARDIGRADE_ERROR_TOOLS_CATCH( evolveFFlatJ( Dt, previousDeformationGradient, Lp, L,
-                                                    dF, deformationGradient, _dFdL, _ddFdFp, _dFdFp, _dFdLp, alpha, mode ) );
+        floatVector _dFdL( sot_dim * sot_dim );
+        floatVector _ddFdFp( sot_dim * sot_dim );
+        floatVector _dFdFp( sot_dim * sot_dim );
+        floatVector _dFdLp( sot_dim * sot_dim );
+
+        evolveF<dim>( Dt, std::cbegin( previousDeformationGradient ), std::cend( previousDeformationGradient ),
+                      std::cbegin( Lp ), std::cend( Lp ), std::cbegin( L ), std::cend( L ), std::begin( dF ), std::end( dF ), std::begin( deformationGradient ), std::end( deformationGradient ),
+                      std::begin( _dFdL ), std::end( _dFdL ), std::begin( _ddFdFp ), std::end( _ddFdFp ), std::begin( _dFdFp ), std::end( _dFdFp ),
+                      std::begin( _dFdLp ), std::end( _dFdLp ), alpha, mode );
 
         dFdL   = tardigradeVectorTools::inflate( _dFdL,   sot_dim, sot_dim );
         ddFdFp = tardigradeVectorTools::inflate( _ddFdFp, sot_dim, sot_dim );
@@ -2379,12 +2571,12 @@ namespace tardigradeConstitutiveTools{
          * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
          *
          * mode 1:
-         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left(1 - \alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \alpha \dot{F}_{iI}^{t} \right]\f$
-         * \f$\frac{\partial F_{jI}^{t + 1}}{\partial L_{kl}^{t+1}} = \left[\delta_{kj} - \Delta t \left(1 - \alpha\right) L_{kj}\right]^{-1} \Delta t \left(1 - \alpha\right) F_{lI}^{t + 1}\f$
+         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left( \alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \left( 1 - \alpha \right) \dot{F}_{iI}^{t} \right]\f$
+         * \f$\frac{\partial F_{jI}^{t + 1}}{\partial L_{kl}^{t+1}} = \left[\delta_{kj} - \Delta t \left( \alpha\right) L_{kj}\right]^{-1} \Delta t \left( \alpha\right) F_{lI}^{t + 1}\f$
          *
          * mode 2:
-         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \alpha \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( 1- \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
-         * \f$\frac{\partial F_{iJ}^{t + 1}}{\partial L_{KL}} = \Delta t (1 - \alpha) F_{iK}^{t + 1} \left[\delta_{JL} - \right ]\f$
+         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \left( 1 - \alpha \right) \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
+         * \f$\frac{\partial F_{iJ}^{t + 1}}{\partial L_{KL}} = \Delta t ( \alpha) F_{iK}^{t + 1} \left[\delta_{JL} - \right ]\f$
          *
          * \param &Dt: The change in time.
          * \param &previousDeformationGradient: The previous value of the deformation gradient
@@ -2396,66 +2588,29 @@ namespace tardigradeConstitutiveTools{
          * \param &ddFdFp: The derivative of the change in the deformation gradient w.r.t. the previous deformation gradient
          * \param &dFdFp: The derivative of the deformation gradient w.r.t. the previous deformation gradient
          * \param &dFdLp: The derivative of the deformation gradient w.r.t. the previous velocity gradient
-         * \param alpha: The integration parameter ( 0 for implicit, 1 for explicit )
+         * \param alpha: The integration parameter ( 1 for implicit, 0 for explicit )
          * \param mode: The form of the ODE. See above for details.
          */
 
         //Assumes 3D
         constexpr unsigned int dim = 3;
-        const unsigned int sot_dim = dim * dim;
+        constexpr unsigned int sot_dim = dim * dim;
 
-        TARDIGRADE_ERROR_TOOLS_CATCH( evolveF( Dt, previousDeformationGradient, Lp, L, dF, deformationGradient, alpha, mode) );
+        dF = floatVector( sot_dim );
+        deformationGradient = floatVector( sot_dim );
 
-        //Compute L^{t + \alpha}
-        floatVector LtpAlpha = alpha * Lp + ( 1 - alpha ) * L;
+        dFdL   = floatVector( sot_dim * sot_dim );
+        ddFdFp = floatVector( sot_dim * sot_dim );
+        dFdFp  = floatVector( sot_dim * sot_dim );
+        dFdLp  = floatVector( sot_dim * sot_dim );
 
-        //Compute the left hand side
-        floatVector eye( dim * dim );
-
-        tardigradeVectorTools::eye( eye );
-
-        floatVector invLHS = -Dt * ( 1 - alpha ) * L;
-        for ( unsigned int i = 0; i < dim; ++i ){ invLHS[ dim * i + i ] += 1; }
-
-        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invLHS_map( invLHS.data( ), dim, dim );
-
-        invLHS_map = invLHS_map.inverse( ).eval( );
-
-        //Compute the jacobian
-        dFdL   = floatVector( sot_dim * sot_dim, 0 );
-        ddFdFp = floatVector( sot_dim * sot_dim, 0 );
-        dFdLp  = floatVector( sot_dim * sot_dim, 0 );
-        if ( mode == 1 ){
-            for ( unsigned int j = 0; j < dim; ++j ){
-                for ( unsigned int I = 0; I < dim; ++I ){
-                    for ( unsigned int k = 0; k < dim; ++k ){
-                        for ( unsigned int l = 0; l < dim; ++l ){
-                            dFdL[ dim * sot_dim * j + sot_dim * I + dim * k + l ]  += Dt * ( 1 - alpha ) * invLHS[ dim * j + k ] * deformationGradient[ dim * l + I ];
-                            dFdLp[ dim * sot_dim * j + sot_dim * I + dim * k + l ] += invLHS[ dim * j + k ] * Dt * alpha * previousDeformationGradient[ dim * l + I ];
-                            ddFdFp[ dim * sot_dim * j + sot_dim * I + dim * k + I ] += Dt * invLHS[ dim * j + l ] * LtpAlpha[ dim * l + k ];
-                        }
-                    }
-                }
-            }
-        }
-        if ( mode == 2 ){
-            for ( unsigned int j = 0; j < dim; ++j ){
-                for ( unsigned int I = 0; I < dim; ++I ){
-                    for ( unsigned int K = 0; K < dim; ++K ){
-                        for ( unsigned int _L = 0; _L < dim; ++_L ){
-                            dFdL[ dim * sot_dim * j + sot_dim * I + dim * K + _L ]  += Dt * ( 1 - alpha ) * invLHS[ dim * _L + I ] * deformationGradient[ dim * j + K ];
-                            dFdLp[ dim * sot_dim * j + sot_dim * I + dim * K + _L ] += Dt * alpha * invLHS[ dim * _L + I ] * previousDeformationGradient[ dim * j + K ];
-                            ddFdFp[ dim * sot_dim * j + sot_dim * I + dim * j + K ] += Dt * LtpAlpha[ dim * K + _L ] * invLHS[ dim * _L + I ];
-                        }
-                    }
-                }
-            }
-        }
-
-        dFdFp = ddFdFp;
-        for ( unsigned int i = 0; i < sot_dim; ++i ){ dFdFp[ sot_dim * i + i ] += 1; }
+        evolveF<dim>( Dt, std::cbegin( previousDeformationGradient ), std::cend( previousDeformationGradient ),
+                      std::cbegin( Lp ), std::cend( Lp ), std::cbegin( L ), std::cend( L ), std::begin( dF ), std::end( dF ), std::begin( deformationGradient ), std::end( deformationGradient ),
+                      std::begin( dFdL ), std::end( dFdL ), std::begin( ddFdFp ), std::end( ddFdFp ), std::begin( dFdFp ), std::end( dFdFp ),
+                      std::begin( dFdLp ), std::end( dFdLp ), alpha, mode );
 
         return;
+
     }
 
     void evolveFFlatJ( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
@@ -2464,12 +2619,12 @@ namespace tardigradeConstitutiveTools{
          * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
          *
          * mode 1:
-         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left(1 - \alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \alpha \dot{F}_{iI}^{t} \right]\f$
-         * \f$\frac{\partial F_{jI}^{t + 1}}{\partial L_{kl}^{t+1}} = \left[\delta_{kj} - \Delta t \left(1 - \alpha\right) L_{kj}\right]^{-1} \Delta t \left(1 - \alpha\right) F_{lI}^{t + 1}\f$
+         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left(\alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \left( 1 - \alpha \right) \dot{F}_{iI}^{t} \right]\f$
+         * \f$\frac{\partial F_{jI}^{t + 1}}{\partial L_{kl}^{t+1}} = \left[\delta_{kj} - \Delta t \left( \alpha\right) L_{kj}\right]^{-1} \Delta t \left( \alpha\right) F_{lI}^{t + 1}\f$
          *
          * mode 2:
-         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \alpha \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( 1- \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
-         * \f$\frac{\partial F_{iJ}^{t + 1}}{\partial L_{KL}} = \Delta t (1 - \alpha) F_{iK}^{t + 1} \left[\delta_{JL} - \right ]\f$
+         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \left( 1 - \alpha \right) \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
+         * \f$\frac{\partial F_{iJ}^{t + 1}}{\partial L_{KL}} = \Delta t ( \alpha) F_{iK}^{t + 1} \left[\delta_{JL} - \right ]\f$
          *
          * \param &Dt: The change in time.
          * \param &previousDeformationGradient: The previous value of the deformation gradient
@@ -2479,7 +2634,7 @@ namespace tardigradeConstitutiveTools{
          * \param &dFdL: The derivative of the deformation gradient w.r.t. the velocity gradient
          * \param &dFdFp: The derivative of the deformation gradient w.r.t. the previous deformation gradient
          * \param &dFdLp: The derivative of the deformation gradient w.r.t. the previous velocity gradient
-         * \param alpha: The integration parameter ( 0 for implicit, 1 for explicit )
+         * \param alpha: The integration parameter ( 1 for implicit, 0 for explicit )
          * \param mode: The form of the ODE. See above for details.
          */
 
@@ -2496,12 +2651,12 @@ namespace tardigradeConstitutiveTools{
          * Evolve the deformation gradient ( F ) using the midpoint integration method and return the jacobian w.r.t. L.
          *
          * mode 1:
-         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left(1 - \alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \alpha \dot{F}_{iI}^{t} \right]\f$
-         * \f$\frac{\partial F_{jI}^{t + 1}}{\partial L_{kl}^{t+1}} = \left[\delta_{kj} - \Delta t \left(1 - \alpha\right) L_{kj}\right]^{-1} \Delta t \left(1 - \alpha\right) F_{lI}^{t + 1}\f$
+         * \f$F_{iI}^{t + 1} = \left[\delta_{ij} - \Delta t \left( \alpha \right) L_{ij}^{t+1} \right]^{-1} \left[F_{iI}^{t} + \Delta t \left( 1 - \alpha \right) \dot{F}_{iI}^{t} \right]\f$
+         * \f$\frac{\partial F_{jI}^{t + 1}}{\partial L_{kl}^{t+1}} = \left[\delta_{kj} - \Delta t \left( \alpha\right) L_{kj}\right]^{-1} \Delta t \left( \alpha\right) F_{lI}^{t + 1}\f$
          *
          * mode 2:
-         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \alpha \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( 1- \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
-         * \f$\frac{\partial F_{iJ}^{t + 1}}{\partial L_{KL}} = \Delta t (1 - \alpha) F_{iK}^{t + 1} \left[\delta_{JL} - \right ]\f$
+         * \f$F_{iI}^{t + 1} = \left[F_{iJ}^{t} + \Delta t \left( 1 - \alpha \right) \dot{F}_{iJ}^{t} \right] \left[\delta_{IJ} - \Delta T \left( \alpha \right) L_{IJ}^{t+1} \right]^{-1}\f$
+         * \f$\frac{\partial F_{iJ}^{t + 1}}{\partial L_{KL}} = \Delta t ( \alpha) F_{iK}^{t + 1} \left[\delta_{JL} - \right ]\f$
          *
          * \param &Dt: The change in time.
          * \param &previousDeformationGradient: The previous value of the deformation gradient
@@ -2511,7 +2666,7 @@ namespace tardigradeConstitutiveTools{
          * \param &dFdL: The derivative of the deformation gradient w.r.t. the velocity gradient
          * \param &dFdFp: The derivative of the deformation gradient w.r.t. the previous deformation gradient
          * \param &dFdLp: The derivative of the deformation gradient w.r.t. the previous velocity gradient
-         * \param alpha: The integration parameter ( 0 for implicit, 1 for explicit )
+         * \param alpha: The integration parameter ( 1 for implicit, 0 for explicit )
          * \param mode: The form of the ODE. See above for details.
          */
 

@@ -164,35 +164,35 @@ namespace tardigradeConstitutiveTools{
                          floatMatrix &dDFDtdL, floatMatrix &dDFDtdF);
 
     template<typename T, class v_in, class v_out>
-    void midpointEvolution( T Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
+    void midpointEvolution( const T &Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
                             const v_in &DADt_begin, const v_in &DADt_end, v_out dA_begin, v_out dA_end, v_out A_begin, v_out A_end,
                             const v_in &alpha_begin, const v_in &alpha_end );
 
     template<typename T, class v_in, class v_out, class M_out>
-    void midpointEvolution( T Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
+    void midpointEvolution( const T &Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
                             const v_in &DADt_begin, const v_in &DADt_end, v_out dA_begin, v_out dA_end, v_out A_begin, v_out A_end,
                             M_out DADADt_begin, M_out DADADt_end,
                             const v_in &alpha_begin, const v_in &alpha_end );
 
     template<typename T, class v_in, class v_out, class M_out>
-    void midpointEvolution( T Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
+    void midpointEvolution( const T &Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
                             const v_in &DADt_begin, const v_in &DADt_end, v_out dA_begin, v_out dA_end, v_out A_begin, v_out A_end,
                             M_out DADADt_begin, M_out DADADt_end, M_out DADADtp_begin, M_out DADADtp_end,
                             const v_in &alpha_begin, const v_in &alpha_end );
 
     template<typename T, class v_in, class v_out>
-    void midpointEvolution( T Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
+    void midpointEvolution( const T &Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
                             const v_in &DADt_begin, const v_in &DADt_end, v_out dA_begin, v_out dA_end, v_out A_begin, v_out A_end,
                             const floatType alpha=0.5 );
 
     template<typename T, class v_in, class v_out, class M_out>
-    void midpointEvolution( T Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
+    void midpointEvolution( const T &Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
                             const v_in &DADt_begin, const v_in &DADt_end, v_out dA_begin, v_out dA_end, v_out A_begin, v_out A_end,
                             M_out DADADt_begin, M_out DADADt_end,
                             const floatType alpha=0.5 );
 
     template<typename T, class v_in, class v_out, class M_out>
-    void midpointEvolution( T Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
+    void midpointEvolution( const T &Dt, const v_in &Ap_begin, const v_in &Ap_end, const v_in &DApDt_begin, const v_in &DApDt_end,
                             const v_in &DADt_begin, const v_in &DADt_end, v_out dA_begin, v_out dA_end, v_out A_begin, v_out A_end,
                             M_out DADADt_begin, M_out DADADt_end, M_out DADADtp_begin, M_out DADADtp_end,
                             const floatType alpha=0.5 );
@@ -230,6 +230,26 @@ namespace tardigradeConstitutiveTools{
     void midpointEvolution(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                floatVector &dA, floatVector &A, floatMatrix &DADADt, floatMatrix &DADADtp,
                                const floatType alpha=0.5);
+
+    template<int dim, typename T, class v_in, class v_out>
+    void evolveF(const T &Dt, const v_in &previousDeformationGradient_begin, const v_in &previousDeformationGradient_end,
+                 const v_in &Lp_begin, const v_in &Lp_end, const v_in &L_begin, const v_in &L_end,
+                 v_out dF_begin, v_out dF_end, v_out deformationGradient_begin, v_out deformationGradient_end,
+                 const floatType alpha=0.5, const unsigned int mode = 1 );
+
+    template<int dim, typename T, class v_in, class v_out, class M_out>
+    void evolveF(const T &Dt, const v_in &previousDeformationGradient_begin, const v_in &previousDeformationGradient_end,
+                 const v_in &Lp_begin, const v_in &Lp_end, const v_in &L_begin, const v_in &L_end,
+                 v_out dF_begin, v_out dF_end, v_out deformationGradient_begin, v_out deformationGradient_end,
+                 M_out dFdL_begin, M_out dFdL_end,
+                 const floatType alpha=0.5, const unsigned int mode = 1 );
+
+    template<int dim, typename T, class v_in, class v_out, class M_out>
+    void evolveF(const T &Dt, const v_in &previousDeformationGradient_begin, const v_in &previousDeformationGradient_end,
+                 const v_in &Lp_begin, const v_in &Lp_end, const v_in &L_begin, const v_in &L_end,
+                 v_out dF_begin, v_out dF_end, v_out deformationGradient_begin, v_out deformationGradient_end,
+                 M_out dFdL_begin, M_out dFdL_end, M_out ddFdFp_begin, M_out ddFdFp_end, M_out dFdFp_begin, M_out dFdFp_end, M_out dFdLp_begin, M_out dFdLp_end,
+                 const floatType alpha=0.5, const unsigned int mode = 1 );
 
     void evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                      floatVector &dF, floatVector &deformationGradient, const floatType alpha=0.5, const unsigned int mode = 1);
