@@ -281,6 +281,23 @@ namespace tardigradeConstitutiveTools{
     void evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                      floatVector &dF, floatVector &deformationGradient, floatMatrix &dFdL, floatMatrix &ddFdFp, floatMatrix &dFdFp, floatMatrix &dFdLp, const floatType alpha=0.5, const unsigned int mode = 1);
 
+    template<int dim, typename T, class v_in, class v_out>
+    void evolveFExponentialMap( const T &Dt, const v_in &previousDeformationGradient_begin, const v_in &previousDeformationGradient_end,
+                                const v_in &Lp_begin, const v_in &Lp_end, const v_in &L_begin, const v_in &L_end,
+                                v_out deformationGradient_begin, v_out deformationGradient_end, const floatType alpha = 0.5 );
+
+    template<int dim, typename T, class v_in, class v_out, class M_out>
+    void evolveFExponentialMap( const T &Dt, const v_in &previousDeformationGradient_begin, const v_in &previousDeformationGradient_end,
+                                const v_in &Lp_begin, const v_in &Lp_end, const v_in &L_begin, const v_in &L_end,
+                                v_out deformationGradient_begin, v_out deformationGradient_end,
+                                M_out dFdL_begin, M_out dFdL_end, const floatType alpha = 0.5 );
+
+    template<int dim, typename T, class v_in, class v_out, class M_out>
+    void evolveFExponentialMap( const T &Dt, const v_in &previousDeformationGradient_begin, const v_in &previousDeformationGradient_end,
+                                const v_in &Lp_begin, const v_in &Lp_end, const v_in &L_begin, const v_in &L_end,
+                                v_out deformationGradient_begin, v_out deformationGradient_end,
+                                M_out dFdL_begin, M_out dFdL_end, M_out dFdLp_begin, M_out dFdLp_end, const floatType alpha = 0.5 );
+
     void evolveFExponentialMap( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                                 floatVector &deformationGradient, const floatType alpha=0.5 );
 
