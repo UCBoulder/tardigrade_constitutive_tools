@@ -284,13 +284,29 @@ namespace tardigradeConstitutiveTools{
     template<int dim, typename T, class v_in, class v_out>
     void evolveFExponentialMap( const T &Dt, const v_in &previousDeformationGradient_begin, const v_in &previousDeformationGradient_end,
                                 const v_in &Lp_begin, const v_in &Lp_end, const v_in &L_begin, const v_in &L_end,
+                                v_out tempVec1_begin, v_out tempVec1_end,
+                                v_out tempVec2_begin, v_out tempVec2_end,
+                                v_out tempVec3_begin, v_out tempVec3_end,
+                                v_out tempVec4_begin, v_out tempVec4_end,
                                 v_out deformationGradient_begin, v_out deformationGradient_end, const floatType alpha = 0.5 );
 
     template<int dim, typename T, class v_in, class v_out, class M_out>
     void evolveFExponentialMap( const T &Dt, const v_in &previousDeformationGradient_begin, const v_in &previousDeformationGradient_end,
                                 const v_in &Lp_begin, const v_in &Lp_end, const v_in &L_begin, const v_in &L_end,
+                                v_out tempVec1_begin, v_out tempVec1_end,
+                                v_out tempVec2_begin, v_out tempVec2_end,
+                                v_out tempVec3_begin, v_out tempVec3_end,
+                                v_out tempVec4_begin, v_out tempVec4_end,
+                                M_out tempMat1_begin, v_out tempMat1_end,
+                                M_out tempMat2_begin, v_out tempMat2_end,
                                 v_out deformationGradient_begin, v_out deformationGradient_end,
                                 M_out dFdL_begin, M_out dFdL_end, const floatType alpha = 0.5 );
+
+//    template<int dim, typename T, class v_in, class v_out, class M_out>
+//    void evolveFExponentialMap( const T &Dt, const v_in &previousDeformationGradient_begin, const v_in &previousDeformationGradient_end,
+//                                const v_in &Lp_begin, const v_in &Lp_end, const v_in &L_begin, const v_in &L_end,
+//                                v_out deformationGradient_begin, v_out deformationGradient_end,
+//                                M_out dFdL_begin, M_out dFdL_end, const floatType alpha = 0.5 );
 
     template<int dim, typename T, class v_in, class v_out, class M_out>
     void evolveFExponentialMap( const T &Dt, const v_in &previousDeformationGradient_begin, const v_in &previousDeformationGradient_end,

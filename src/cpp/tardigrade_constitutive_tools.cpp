@@ -3589,6 +3589,81 @@ namespace tardigradeConstitutiveTools{
 
     }
 
+    template<int dim, typename T, class v_in, class v_out>
+    void evolveFExponentialMap( const T &Dt, const v_in &previousDeformationGradient_begin, const v_in &previousDeformationGradient_end,
+                                const v_in &Lp_begin, const v_in &Lp_end, const v_in &L_begin, const v_in &L_end,
+                                v_out tempVec1_begin, v_out tempVec1_end,
+                                v_out tempVec2_begin, v_out tempVec2_end,
+                                v_out tempVec3_begin, v_out tempVec3_end,
+                                v_out tempVec4_begin, v_out tempVec4_end,
+                                v_out deformationGradient_begin, v_out deformationGradient_end, const floatType alpha ){
+        /*!
+         * Evolve the deformation gradient using the exponential map. Assumes the evolution equation is of the form
+         * 
+         * \f$ \dot{F}_{iI} = \ell_{ij} F_{jI} \f$
+         * 
+         * \param &Dt: The change in time
+         * \param &previousDeformationGradient_begin: The starting iterator of the previous value of the deformation gradient
+         * \param &previousDeformationGradient_end: The stopping iterator of the previous value of the deformation gradient
+         * \param &Lp_begin: The starting iterator of the previous value of the velocity gradient
+         * \param &Lp_end: The stopping iterator of the previous value of the velocity gradient
+         * \param &L: The starting iterator of the current value of the velocity gradient
+         * \param &L: The stopping iterator of the current value of the velocity gradient
+         * \param tempVec1_begin: The starting iterator of a temporary storage vector
+         * \param tempVec1_end: The stopping iterator of a temporary storage vector
+         * \param tempVec2_begin: The starting iterator of a temporary storage vector
+         * \param tempVec2_end: The stopping iterator of a temporary storage vector
+         * \param tempVec3_begin: The starting iterator of a temporary storage vector
+         * \param tempVec3_end: The stopping iterator of a temporary storage vector
+         * \param tempVec4_begin: The starting iterator of a temporary storage vector
+         * \param tempVec4_end: The stopping iterator of a temporary storage vector
+         * \param deformationGradient_begin: The starting iterator of the computed value of the deformation gradient
+         * \param deformationGradient_end: The stopping iterator of the computed value of the deformation gradient
+         * \param &alpha: The integration parameter (0 is explicit and 1 is implicit)
+         */
+
+        std::transform( Lp_begin, Lp_end, deformationGradient_begin, std::bind( std::multiplies< T >( ), std::placeholders::_1, Dt * ( 1 - alpha ) ) );
+
+        std::transform( L_begin, L_end, tempVec1_begin, std::bind( std::multiplies< T >( ), std::placeholders::_1, Dt * alpha ) );
+
+        std::transform( deformationGradient_begin, deformationGradient_end, tempVec1_begin, deformationGradient_begin, std::plus<T>( ) );
+
+        TARDIGRADE_ERROR_TOOLS_CATCH( tardigradeVectorTools::computeMatrixExponentialScalingAndSquaring( deformationGradient_begin, deformationGradient_end, dim,
+                                                                                                         tempVec1_begin, tempVec1_end,
+                                                                                                         tempVec2_begin, tempVec2_end,
+                                                                                                         tempVec3_begin, tempVec3_end,
+                                                                                                         tempVec4_begin, tempVec4_end ) );
+
+        std::fill( deformationGradient_begin, deformationGradient_end, 0 );
+
+        for ( unsigned int i = 0; i < dim; ++i ){
+
+            for ( unsigned int j = 0; j < dim; ++j ){
+
+                for ( unsigned int k = 0; k < dim; ++k ){
+
+                    *( deformationGradient_begin + dim * i + k ) += ( *( tempVec4_begin + dim * i + j ) ) * ( *( previousDeformationGradient_begin + dim * j + k ) );
+
+                }
+
+            }
+
+        }
+
+    }
+
+//    template<int dim, typename T, class v_in, class v_out, class M_out>
+//    void evolveFExponentialMap( const T &Dt, const v_in &previousDeformationGradient_begin, const v_in &previousDeformationGradient_end,
+//                                const v_in &Lp_begin, const v_in &Lp_end, const v_in &L_begin, const v_in &L_end,
+//                                v_out deformationGradient_begin, v_out deformationGradient_end,
+//                                M_out dFdL_begin, M_out dFdL_end, const floatType alpha = 0.5 );
+//
+//    template<int dim, typename T, class v_in, class v_out, class M_out>
+//    void evolveFExponentialMap( const T &Dt, const v_in &previousDeformationGradient_begin, const v_in &previousDeformationGradient_end,
+//                                const v_in &Lp_begin, const v_in &Lp_end, const v_in &L_begin, const v_in &L_end,
+//                                v_out deformationGradient_begin, v_out deformationGradient_end,
+//                                M_out dFdL_begin, M_out dFdL_end, M_out dFdLp_begin, M_out dFdLp_end, const floatType alpha = 0.5 );
+
     void evolveFExponentialMap( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                                 floatVector &deformationGradient, const floatType alpha ){
         /*!
@@ -3607,27 +3682,22 @@ namespace tardigradeConstitutiveTools{
         constexpr unsigned int dim = 3;
         constexpr unsigned int sot_dim = dim * dim;
 
-        floatVector DtLalpha = Dt * ( ( 1 - alpha ) * Lp + alpha * L );
-
-        floatVector expDtLalpha;
-
-        TARDIGRADE_ERROR_TOOLS_CATCH( tardigradeVectorTools::computeMatrixExponentialScalingAndSquaring( DtLalpha, dim, expDtLalpha ) )
+        floatVector tempVec1( sot_dim, 0 );
+        floatVector tempVec2( sot_dim, 0 );
+        floatVector tempVec3( sot_dim, 0 );
+        floatVector tempVec4( sot_dim, 0 );
 
         deformationGradient = floatVector( sot_dim, 0 );
 
-        for ( unsigned int i = 0; i < dim; ++i ){
-
-            for ( unsigned int j = 0; j < dim; ++j ){
-
-                for ( unsigned int k = 0; k < dim; ++k ){
-
-                    deformationGradient[ dim * i + k ] += expDtLalpha[ dim * i + j ] * previousDeformationGradient[ dim * j + k ];
-
-                }
-
-            }
-
-        }
+        evolveFExponentialMap<dim>( Dt, std::cbegin( previousDeformationGradient ), std::cend( previousDeformationGradient ),
+                                    std::cbegin( Lp ), std::cend( Lp ),
+                                    std::cbegin( L ),  std::cend( L ),
+                                    std::begin( tempVec1 ), std::end( tempVec1 ),
+                                    std::begin( tempVec2 ), std::end( tempVec2 ),
+                                    std::begin( tempVec3 ), std::end( tempVec3 ),
+                                    std::begin( tempVec4 ), std::end( tempVec4 ),
+                                    std::begin( deformationGradient ), std::end( deformationGradient ),
+                                    alpha );
 
     }
 
