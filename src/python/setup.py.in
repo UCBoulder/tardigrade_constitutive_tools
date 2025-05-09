@@ -1,0 +1,46 @@
+import os
+from distutils.core import setup
+from distutils.extension import Extension
+import pathlib
+
+from Cython.Distutils import build_ext
+
+CONDA_ENVIRONMENT = pathlib.Path(os.environ['CONDA_DEFAULT_ENV'])
+CONDA_ENVIRONMENT_INCLUDE = CONDA_ENVIRONMENT / "include"
+ROOT_DIRECTORY = pathlib.Path("@PROJECT_SOURCE_DIR@")
+BUILD_DIRECTORY = pathlib.Path("@PROJECT_BINARY_DIR@")
+PYTHON_SOURCE_SUBDIRECTORY = pathlib.Path("@PYTHON_SRC_PATH@")
+CPP_SOURCE_SUBDIRECTORY = pathlib.Path("@CPP_SRC_PATH@")
+CPP_SOURCE_DIRECTORY = ROOT_DIRECTORY / CPP_SOURCE_SUBDIRECTORY
+PYTHON_SOURCE_DIRECTORY = ROOT_DIRECTORY / PYTHON_SOURCE_SUBDIRECTORY
+PROJECT_NAME = "@PROJECT_NAME@"
+CXX_STANDARD = "@CMAKE_CXX_STANDARD@"
+EIGEN_DIR = "@EIGEN_DIR@"
+
+###########################################
+# Get the third-party include directories #
+###########################################
+include_dirs = [str(CPP_SOURCE_DIRECTORY), str(CONDA_ENVIRONMENT_INCLUDE)]
+
+############################
+# Get the static libraries #
+############################
+# Find current project static library
+project_shared_libraries = BUILD_DIRECTORY / CPP_SOURCE_SUBDIRECTORY / f"lib{PROJECT_NAME}.so"
+shared_libraries = [str(project_shared_libraries.resolve())]
+
+# Define the build configuration
+ext_modules = [Extension(PROJECT_NAME,
+                     sources=[f"{PROJECT_NAME}_python.pyx"],
+                     language='c++',
+                     extra_objects=shared_libraries,
+                     include_dirs=include_dirs,
+                     extra_compile_args=[f"-std=c++{CXX_STANDARD}"],
+                     extra_link_args=[f"-std=c++{CXX_STANDARD}"]
+                     )]
+
+setup(
+  name = PROJECT_NAME,
+  cmdclass = {'build_ext': build_ext},
+  ext_modules = ext_modules
+)

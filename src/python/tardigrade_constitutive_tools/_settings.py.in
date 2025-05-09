@@ -1,0 +1,7 @@
+import os
+import pathlib
+
+PROJECT_NAME = "@PROJECT_NAME@"
+
+_project_name = PROJECT_NAME
+_project_name_short = _project_name
