@@ -35,4 +35,4 @@ write_to = "@PROJECT_BINARY_DIR@/@PYTHON_SRC_PATH@/@PROJECT_NAME@/_version.py"
 
 [tool.pytest.ini_options]
 markers = ["unittest", "integrationtest", "systemtest"]
-addopts = "-vvv --capture=sys --tb=short -l --durations=10 --failed-first --strict-markers -r a -n 4
+addopts = "-vvv --capture=sys --tb=short -l --durations=10 --failed-first --strict-markers -r a -n 4"
