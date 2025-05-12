@@ -1,5 +1,6 @@
 set(CYTHON_SOURCE_FILES
     setup.py.in
+    main.pyx
     tardigrade_${PROJECT_NAME}_python.pxd
     tardigrade_${PROJECT_NAME}_python.pyx
 )
