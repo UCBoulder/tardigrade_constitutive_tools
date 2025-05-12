@@ -1,0 +1,87 @@
+import os
+from distutils.core import setup
+from distutils.extension import Extension
+import pathlib
+import warnings
+
+import numpy
+from Cython.Build import cythonize
+from Cython.Distutils import build_ext
+
+CONDA_ENVIRONMENT = pathlib.Path(os.environ['CONDA_PREFIX'])
+CONDA_ENVIRONMENT_INCLUDE = CONDA_ENVIRONMENT / "include"
+ROOT_DIRECTORY = pathlib.Path("@PROJECT_SOURCE_DIR@")
+BUILD_DIRECTORY = pathlib.Path("@PROJECT_BINARY_DIR@")
+PYTHON_SOURCE_SUBDIRECTORY = pathlib.Path("@PYTHON_SRC_PATH@")
+CYTHON_SOURCE_SUBDIRECTORY = pathlib.Path("@CYTHON_SRC_PATH@")
+CPP_SOURCE_SUBDIRECTORY = pathlib.Path("@CPP_SRC_PATH@")
+CPP_SOURCE_DIRECTORY = ROOT_DIRECTORY / CPP_SOURCE_SUBDIRECTORY
+UPSTREAM_PROJECTS = '@upstream_packages@'.split(';')
+STATIC_LIBRARY_PROJECTS = '@static_library_projects@'.split(';')
+PROJECT_NAME = "@PROJECT_NAME@"
+CXX_STANDARD = "@CMAKE_CXX_STANDARD@"
+EIGEN_DIR = "@EIGEN_DIR@"
+
+###########################################
+# Get the third-party include directories #
+###########################################
+include_dirs = [numpy.get_include(), str(CPP_SOURCE_DIRECTORY), EIGEN_DIR, str(CONDA_ENVIRONMENT_INCLUDE)]
+
+############################
+# Get the static libraries #
+############################
+static_libraries = []
+libdir="lib"
+for upstream_project in STATIC_LIBRARY_PROJECTS:
+    upstream_installed = CONDA_ENVIRONMENT / f"{libdir}/lib{upstream_project}.a"
+    upstream_insource = BUILD_DIRECTORY / f"_deps/{upstream_project}-build" / CPP_SOURCE_SUBDIRECTORY / f"lib{upstream_project}.a"
+    if upstream_installed.exists() and upstream_installed.is_file():
+        static_libraries.append(str(upstream_installed.resolve()))
+    elif upstream_insource.exists() and upstream_insource.is_file():
+        static_libraries.append(str(upstream_insource.resolve()))
+    else:
+        warnings.warn(f"Could not find upstream static library from '{upstream_project}'", RuntimeWarning)
+
+############################
+# Get the shared libraries #
+############################
+
+
+shared_libraries = [f"{PROJECT_NAME}"]
+shared_library_paths = [str(BUILD_DIRECTORY / CPP_SOURCE_SUBDIRECTORY )]
+
+################################################
+# Get the upstream project include directories #
+################################################
+
+# Get all of the possible in-source build include locations
+for upstream_project in UPSTREAM_PROJECTS:
+    upstream_insource = BUILD_DIRECTORY / f"_deps/{upstream_project}-src" / CPP_SOURCE_SUBDIRECTORY
+    if upstream_insource.exists() and upstream_insource.is_dir():
+        include_dirs.append(upstream_insource.resolve())
+    upstream_insource = BUILD_DIRECTORY / f"_deps/{upstream_project}-src" / PYTHON_SOURCE_SUBDIRECTORY
+    if upstream_insource.exists() and upstream_insource.is_dir():
+        include_dirs.append(upstream_insource.resolve())
+    upstream_insource = BUILD_DIRECTORY / f"_deps/{upstream_project}-src" / CYTHON_SOURCE_SUBDIRECTORY
+    if upstream_insource.exists() and upstream_insource.is_dir():
+        include_dirs.append(upstream_insource.resolve())
+
+# Define the build configuration
+ext_modules = [Extension(PROJECT_NAME,
+                     sources=[f"main.pyx"],
+                     language='c++',
+                     extra_objects=static_libraries,
+                     libraries=shared_libraries,
+                     library_dirs=shared_library_paths,
+                     include_dirs=include_dirs,
+                     extra_compile_args=[f"-std=c++{CXX_STANDARD}"],
+                     extra_link_args=[f"-std=c++{CXX_STANDARD}"]
+                     )]
+
+ext = cythonize(ext_modules, include_path=[str(CONDA_ENVIRONMENT_INCLUDE)])
+
+setup(
+  name = PROJECT_NAME,
+  cmdclass = {'build_ext': build_ext},
+  ext_modules = ext
+)

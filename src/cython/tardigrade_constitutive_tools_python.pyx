@@ -3,7 +3,6 @@ from libcpp.vector cimport vector
 import numpy as np
 cimport numpy as np
 
-cimport tardigrade_error_tools_python
 cimport tardigrade_constitutive_tools_python
 
 
@@ -106,16 +105,14 @@ def py_decomposeGreenLagrangeStrain(np.ndarray greenLagrangeStrain):
     cdef vector[double] c_greenLagrangeStrain
     cdef vector[double] c_isochoricGreenLagrangeStrain
     cdef double c_volumetricGreenLagrangeStrain = 0
-    cdef tardigrade_error_tools_python.Node *error
 
     cdef np.ndarray isochoricGreenLagrangeStrain
 
     c_greenLagrangeStrain = map_1D_array_to_vector(greenLagrangeStrain)
 
-    error = tardigrade_constitutive_tools_python.decomposeGreenLagrangeStrain(c_greenLagrangeStrain, c_isochoricGreenLagrangeStrain, c_volumetricGreenLagrangeStrain)
-
-    if error:
-        error.c_print(True)
+    try:
+        tardigrade_constitutive_tools_python.decomposeGreenLagrangeStrain(c_greenLagrangeStrain, c_isochoricGreenLagrangeStrain, c_volumetricGreenLagrangeStrain)
+    except:
         raise ValueError("Error in decompose Green-Lagrange strain")
 
     isochoricGreenLagrangeStrain = map_vector_to_1D_array(c_isochoricGreenLagrangeStrain)
@@ -148,7 +145,6 @@ def py_midpointEvolution(Dt, np.ndarray Ap, np.ndarray DApDt, np.ndarray DADt, n
     cdef vector[double] c_alpha = map_1D_array_to_vector(alpha)
     cdef vector[double] c_dA
     cdef vector[double] c_A
-    cdef tardigrade_error_tools_python.Node *error
 
     cdef vector[vector[double]] c_DADADT
 
@@ -157,10 +153,9 @@ def py_midpointEvolution(Dt, np.ndarray Ap, np.ndarray DApDt, np.ndarray DADt, n
 
     if compute_jacobians:
 
-        error = tardigrade_constitutive_tools_python.midpointEvolution(c_Dt, c_Ap, c_DApDt, c_DADt, c_dA, c_A, c_DADADT, alpha)
-
-        if error:
-            error.c_print(True)
+        try:
+            tardigrade_constitutive_tools_python.midpointEvolution(c_Dt, c_Ap, c_DApDt, c_DADt, c_dA, c_A, c_DADADT, alpha)
+        except:
             raise ValueError("Error in the midpoint evolution function")
 
         A = map_vector_to_1D_array(c_A)
@@ -171,10 +166,9 @@ def py_midpointEvolution(Dt, np.ndarray Ap, np.ndarray DApDt, np.ndarray DADt, n
 
     else:
 
-        error = tardigrade_constitutive_tools_python.midpointEvolution(c_Dt, c_Ap, c_DApDt, c_DADt, c_dA, c_A, alpha)
-
-        if error:
-            error.c_print(True)
+        try:
+            tardigrade_constitutive_tools_python.midpointEvolution(c_Dt, c_Ap, c_DApDt, c_DADt, c_dA, c_A, alpha)
+        except:
             raise ValueError("Error in the midpoint evolution function")
 
         A = map_vector_to_1D_array(c_A)

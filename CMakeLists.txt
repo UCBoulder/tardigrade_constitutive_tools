@@ -6,6 +6,9 @@ project(tardigrade_constitutive_tools)
 set(CPP_SRC_PATH "src/cpp")
 set(CPP_TEST_PATH "${CPP_SRC_PATH}/tests")
 set(PYTHON_SRC_PATH "src/python")
+set(PYTHON_TARGET ${PROJECT_NAME}_PYTHON)
+set(CYTHON_SRC_PATH "src/cython")
+set(CYTHON_TARGET ${PROJECT_NAME}_CYTHON)
 set(CMAKE_SRC_PATH "src/cmake")
 
 # Add a flag for whether the python bindings should be built or not
@@ -126,6 +129,7 @@ if(${not_conda_test} STREQUAL "true")
     add_subdirectory(${CPP_SRC_PATH})
     if(TARDIGRADE_CONSTITUTIVE_TOOLS_BUILD_PYTHON_BINDINGS)
         add_subdirectory(${PYTHON_SRC_PATH})
+        add_subdirectory(${CYTHON_SRC_PATH})
     endif()
 endif()
 
