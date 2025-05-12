@@ -1,6 +1,7 @@
 add_library(${PROJECT_NAME} SHARED "${PROJECT_NAME}.cpp" "${PROJECT_NAME}.h")
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER ${PROJECT_NAME}.h)
 target_link_libraries(${PROJECT_NAME} tardigrade_error_tools)
+target_link_options(${PROJECT_NAME} PUBLIC "SHELL:-Wl,--whole-archive $<TARGET_FILE:tardigrade_error_tools> -Wl,--no-whole-archive")
 target_compile_options(${PROJECT_NAME} PUBLIC)
 
 # Local builds of upstream projects require local include paths
