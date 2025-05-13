@@ -51,7 +51,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -DTARDIGRADE_CONSTITUTIVE_TOOLS_BUILD_PYTHON_BINDINGS=OFF
+          cmake .. -DTARDIGRADE_CONSTITUTIVE_TOOLS_BUILD_PYTHON_BINDINGS=ON
           make
       - name: Test
         shell: bash -el {0}
@@ -59,4 +59,4 @@ jobs:
         run: |
           conda activate test-environment
           cd build
-          ctest
+          ctest -V
