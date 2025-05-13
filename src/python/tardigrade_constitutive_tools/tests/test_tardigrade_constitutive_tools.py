@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-import tardigrade_constitutive_tools
+from tardigrade_constitutive_tools import tardigrade_constitutive_tools
 
 
 # Implement a numeric calculation of the Jacobian of a vector function
