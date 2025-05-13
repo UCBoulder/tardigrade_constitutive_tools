@@ -13,6 +13,7 @@ pytest-cov
 pytest-xdist
 python-build
 python
+numpy
 setuptools_scm>=6.2
 sphinx>=3.0.4
 sphinx_rtd_theme>=0.4.3

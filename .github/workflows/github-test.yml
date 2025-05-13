@@ -59,4 +59,4 @@ jobs:
         run: |
           conda activate test-environment
           cd build
-          ctest
+          ctest -V
