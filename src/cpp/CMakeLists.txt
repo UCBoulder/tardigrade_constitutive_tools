@@ -7,8 +7,8 @@ target_compile_options(${PROJECT_NAME} PUBLIC)
 # Local builds of upstream projects require local include paths
 if(NOT cmake_build_type_lower STREQUAL "release")
     target_include_directories(${PROJECT_NAME} PUBLIC
-                               "${tardigrade_error_tools_SOURCE_DIR}/src/cpp"
-                               "${tardigrade_vector_tools_SOURCE_DIR}/src/cpp")
+                               ${tardigrade_error_tools_SOURCE_DIR}/${CPP_SRC_PATH}
+                               ${tardigrade_vector_tools_SOURCE_DIR}/${CPP_SRC_PATH})
 endif()
 
 install(TARGETS ${PROJECT_NAME}
