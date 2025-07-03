@@ -161,6 +161,8 @@ namespace tardigradeConstitutiveTools{
 
     void computeUnitNormal(const floatVector &A, floatVector &Anorm);
 
+    void computeUnitNormal(const floatVector &A, floatVector &Anorm, floatVector &dAnormdA);
+
     void computeUnitNormal(const floatVector &A, floatVector &Anorm, floatMatrix &dAnormdA);
 
     void pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
