@@ -35,10 +35,7 @@ namespace tardigradeConstitutiveTools{
          * \param j: The second index
          */
 
-        if (i==j){
-            return 1.;
-        }
-        return 0;
+        return ( floatType )( i== j );
     }
 
     void rotateMatrix(const floatVector &A, const floatVector &Q, floatVector &rotatedA){
