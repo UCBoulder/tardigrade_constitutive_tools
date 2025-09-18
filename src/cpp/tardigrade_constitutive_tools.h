@@ -240,4 +240,8 @@ namespace tardigradeConstitutiveTools{
 
 }
 
+#ifdef TARDIGRADE_HEADER_ONLY
+    #include "tardigrade_constitutive_tools.cpp"
+#endif
+
 #endif
