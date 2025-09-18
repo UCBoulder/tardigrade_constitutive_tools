@@ -94,14 +94,18 @@ BOOST_AUTO_TEST_CASE( testRotateMatrix, * boost::unit_test::tolerance( DEFAULT_T
 
     BOOST_TEST( A == App, CHECK_PER_ELEMENT );
 
-    rotatedA = floatVector( A.size( ), 0 );
-    tardigradeConstitutiveTools::rotateMatrix<3>(
-        std::begin( A ), std::end( A ),
-        std::begin( Q ), std::end( Q ),
-        std::begin( rotatedA ), std::end( rotatedA )
-    );
+    #ifdef TARDIGRADE_HEADER_ONLY
 
-    BOOST_TEST( rotatedA == rotatedA_answer, CHECK_PER_ELEMENT );
+        rotatedA = floatVector( A.size( ), 0 );
+        tardigradeConstitutiveTools::rotateMatrix<3>(
+            std::begin( A ), std::end( A ),
+            std::begin( Q ), std::end( Q ),
+            std::begin( rotatedA ), std::end( rotatedA )
+        );
+
+        BOOST_TEST( rotatedA == rotatedA_answer, CHECK_PER_ELEMENT );
+
+    #endif
 
 
 }
