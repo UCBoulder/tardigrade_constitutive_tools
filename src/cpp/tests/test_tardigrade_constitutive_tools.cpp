@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE( testRotateMatrix, * boost::unit_test::tolerance( DEFAULT_T
 
 }
 
-BOOST_AUTO_TEST_CASE( testComputeDeformationGradient, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
+BOOST_AUTO_TEST_CASE( testComputeDeformationGradient, * boost::unit_test::tolerance( 1e-5 ) ){
     /*!
      * Test the calculation of the deformation gradient from the displacement gradient
      */

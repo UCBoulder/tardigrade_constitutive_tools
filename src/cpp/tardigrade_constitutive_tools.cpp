@@ -178,8 +178,8 @@ namespace tardigradeConstitutiveTools{
          *     current or previous position.
          * \param &displacementGradient_end: The stopping iterator of the gradient of the displacement with respect to either the
          *     current or previous position.
-         * \param &F_begin: The starting iterator of the deformation gradient
-         * \param &F_end: The stopping iterator of the deformation gradient
+         * \param &deformationGradient_begin: The starting iterator of the deformation gradient
+         * \param &deformationGradient_end: The stopping iterator of the deformation gradient
          * \param &isCurrent: Boolean indicating whether the gradient is taken w.r.t. the current (true)
          *     or reference (false) position.
          */
@@ -276,6 +276,104 @@ namespace tardigradeConstitutiveTools{
 
     }
 
+    template< unsigned int dim, class displacementGradient_iterator, class deformationGradient_iterator, class dFdGradU_iterator >
+    void computeDeformationGradient(
+        const displacementGradient_iterator &displacementGradient_begin, const displacementGradient_iterator &displacementGradient_end,
+        deformationGradient_iterator        deformationGradient_begin,   deformationGradient_iterator        deformationGradient_end,
+        dFdGradU_iterator                   dFdGradU_begin,              dFdGradU_iterator                   dFdGradU_end,
+        const bool isCurrent
+    ){
+        /*!
+         * Compute the deformation gradient from the gradient of the displacement
+         *
+         * If isCurrent = false
+         *
+         * \f$ \bf{F} = \frac{\partial \bf{u}}{\partial \bf{X} } u_i + \bf{I} \f$
+         *
+         * else if isCurrent = true
+         *
+         * \f$ \bf{F} = \left(\bf{I} - \frac{\partial \bf{u}}{\partial \bf{x}}\right)^{-1} \f$
+         *
+         * \param &displacementGradient: The starting iterator of the gradient of the displacement with respect to either the
+         *     current or previous position.
+         * \param &displacementGradient: The stopping iterator of the gradient of the displacement with respect to either the
+         *     current or previous position.
+         * \param &deformationGradient: The starting iterator of the deformation gradient
+         * \param &deformationGradient: The stopping iterator of the deformation gradient
+         * \param &dFdGradU: The starting iterator of the derivative of the deformation gradient w.r.t. the displacement gradient
+         * \param &dFdGradU: The stopping iterator of the derivative of the deformation gradient w.r.t. the displacement gradient
+         * \param &isCurrent: Boolean indicating whether the gradient is taken w.r.t. the current (true)
+         *     or reference (false) position.
+         */
+
+        using deformationGradient_type = typename std::iterator_traits<decltype(deformationGradient_begin)>::value_type;
+
+        constexpr unsigned int sot_dim = dim * dim;
+        constexpr unsigned int fot_dim = sot_dim * sot_dim;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( displacementGradient_end - displacementGradient_begin ) == sot_dim,
+            "The displacement gradient has " + std::to_string( ( unsigned int )( displacementGradient_end - displacementGradient_begin ) ) + " elements but must have " + std::to_string( sot_dim )
+        );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( deformationGradient_end - deformationGradient_begin ) == sot_dim,
+            "The deformation gradient has " + std::to_string( ( unsigned int )( deformationGradient_end - deformationGradient_begin ) ) + " elements but must have " + std::to_string( sot_dim )
+        );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( dFdGradU_end - dFdGradU_begin ) == fot_dim,
+            "The gradient of the deformation gradient with respect to the displacement gradient has a size of "  + std::to_string( ( unsigned int )( dFdGradU_end - dFdGradU_begin ) ) + " but should have a size of " + std::to_string( fot_dim )
+        );
+
+        std::copy(
+            displacementGradient_begin, displacementGradient_end,
+            deformationGradient_begin
+        );
+
+        std::fill(
+            dFdGradU_begin, dFdGradU_end, deformationGradient_type( )
+        );
+
+        if ( isCurrent ){
+
+            std::transform( deformationGradient_begin, deformationGradient_end, deformationGradient_begin, std::negate< >( ) );
+
+            for ( unsigned int i = 0; i < dim; ++i ){ *( deformationGradient_begin + dim * i + i ) += 1; }
+
+            Eigen::Map< Eigen::Matrix< deformationGradient_type, dim, dim > > map( &(*deformationGradient_begin) );
+            map = map.inverse( ).eval( );
+
+            for ( unsigned int i = 0; i < dim; ++i ){
+
+                for ( unsigned int j = 0; j < dim; ++j ){
+
+                    for ( unsigned int k = 0; k < dim; ++k ){
+
+                        for ( unsigned int l = 0; l < dim; ++l ){
+
+                            *( dFdGradU_begin + dim * sot_dim * i + sot_dim * j + dim * k + l )
+                                = ( *( deformationGradient_begin + dim * i + k ) ) * ( *( deformationGradient_begin + dim * l + j ) );
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+        else{
+
+            for ( unsigned int i = 0; i < dim; ++i ){ *( deformationGradient_begin + dim * i + i ) += 1.; }
+
+            for ( unsigned int i = 0; i < sot_dim; ++i ){ *( dFdGradU_begin + sot_dim * i + i ) += 1; }
+
+        }
+
+    }
+
     void computeDeformationGradient( const floatVector &displacementGradient, floatVector &F, floatVector &dFdGradU, const bool isCurrent ){
         /*!
          * Compute the deformation gradient from the gradient of the displacement
@@ -299,50 +397,37 @@ namespace tardigradeConstitutiveTools{
         const unsigned int dim = ( unsigned int )std::pow( displacementGradient.size( ), 0.5 );
         const unsigned int sot_dim = dim * dim;
 
-        TARDIGRADE_ERROR_TOOLS_CHECK( displacementGradient.size( ) == sot_dim, "The displacement gradienthas " + std::to_string( displacementGradient.size( ) ) + " values but the dimension has been determined to be " + std::to_string( dim ) + "." );
-
         F = floatVector( sot_dim, 0 );
-
         dFdGradU = floatVector( sot_dim * sot_dim, 0 );
 
-        std::copy( displacementGradient.begin( ),
-                   displacementGradient.end( ),
-                   F.begin( ) );
+        if ( dim == 3 ){
 
-        if ( isCurrent ){
-
-            std::transform( F.cbegin( ), F.cend( ), F.begin( ), std::negate< floatType >( ) );
-
-            for ( unsigned int i = 0; i < dim; i++ ){ F[ dim * i + i ] += 1; }
-
-            Eigen::Map< Eigen::Matrix< floatType, -1, -1 > > map( F.data( ), dim, dim );
-            map = map.inverse( ).eval( );
-
-            for ( unsigned int i = 0; i < dim; i++ ){
-
-                for ( unsigned int j = 0; j < dim; j++ ){
-
-                    for ( unsigned int k = 0; k < dim; k++ ){
-
-                        for ( unsigned int l = 0; l < dim; l++ ){
-
-                            dFdGradU[ dim * sot_dim * i + sot_dim * j + dim * k + l ]
-                                = F[ dim * i + k ] * F[ dim * l + j ];
-
-                        }
-
-                    }
-
-                }
-
-            }
+            computeDeformationGradient<3>(
+                std::begin( displacementGradient ), std::end( displacementGradient ),
+                std::begin( F ),                    std::end( F ),
+                std::begin( dFdGradU ),             std::end( dFdGradU ),
+                isCurrent
+            );
 
         }
-        else{
+        else if ( dim == 2 ){
 
-            for ( unsigned int i = 0; i < dim; i++ ){ F[ dim * i + i ] += 1.; }
+            computeDeformationGradient<2>(
+                std::begin( displacementGradient ), std::end( displacementGradient ),
+                std::begin( F ),                    std::end( F ),
+                std::begin( dFdGradU ),             std::end( dFdGradU ),
+                isCurrent
+            );
 
-            for ( unsigned int i = 0; i < sot_dim; i++ ){ dFdGradU[ sot_dim * i + i ] += 1; }
+        }
+        else if ( dim == 1 ){
+
+            computeDeformationGradient<1>(
+                std::begin( displacementGradient ), std::end( displacementGradient ),
+                std::begin( F ),                    std::end( F ),
+                std::begin( dFdGradU ),             std::end( dFdGradU ),
+                isCurrent
+            );
 
         }
 
