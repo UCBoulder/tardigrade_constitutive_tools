@@ -62,8 +62,8 @@ namespace tardigradeConstitutiveTools{
 
         TARDIGRADE_ERROR_TOOLS_CHECK( ( unsigned int )( rotatedA_end - rotatedA_begin ) == dim * dim, "rotatedA has a size of " + std::to_string( ( unsigned int )( rotatedA_end - rotatedA_begin ) ) + " and must be a square matrix of size " + std::to_string( dim * dim ) );
 
-        using rotatedAtype = decltype( *rotatedA_begin );
-        std::array< rotatedAtype, dim * dim > temp;
+        using rotatedA_type = typename std::iterator_traits<decltype(rotatedA_begin)>::value_type;
+        std::array< rotatedA_type, dim * dim > temp;
         std::fill( std::begin( temp ), std::end( temp ), 0 );
 
         for ( unsigned int i = 0; i < dim; ++i ){
@@ -111,8 +111,8 @@ namespace tardigradeConstitutiveTools{
 
         TARDIGRADE_ERROR_TOOLS_CHECK( ( unsigned int )( rotatedA_end - rotatedA_begin ) == dim * dim, "rotatedA has a size of " + std::to_string( ( unsigned int )( rotatedA_end - rotatedA_begin ) ) + " and must be a square matrix of size " + std::to_string( dim * dim ) );
 
-        using rotatedAtype = decltype( *rotatedA_begin );
-        std::vector< rotatedAtype > temp( dim * dim, rotatedAtype( ) );
+        using rotatedA_type = typename std::iterator_traits<decltype(rotatedA_begin)>::value_type;
+        std::vector< rotatedA_type > temp( dim * dim, rotatedA_type( ) );
 
         for ( unsigned int i = 0; i < dim; ++i ){
             for ( unsigned int j = 0; j < dim; ++j ){
