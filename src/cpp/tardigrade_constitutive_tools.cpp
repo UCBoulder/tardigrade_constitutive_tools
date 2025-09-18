@@ -38,6 +38,101 @@ namespace tardigradeConstitutiveTools{
         return ( floatType )( i== j );
     }
 
+    template< unsigned int dim, class A_iterator, class Q_iterator, class rotatedA_iterator >
+    void rotateMatrix( const A_iterator &A_begin, const A_iterator &A_end,
+                       const Q_iterator &Q_begin, const Q_iterator &Q_end,
+                       rotatedA_iterator rotatedA_begin, rotatedA_iterator rotatedA_end ){
+        /*!
+         * Rotate a matrix \f$A\f$ using the orthogonal matrix \f$Q\f$ with the form
+         * 
+         * \f$A'_{ij} = Q_{Ii} A_{IJ} Q_{Jj}\f$
+         *
+         * TODO: Generalize to non square matrices
+         *
+         * \param &A_begin: The starting iterator of the matrix to be rotated ( \f$A\f$ )
+         * \param &A_end: The stopping iterator matrix to be rotated ( \f$A\f$ )
+         * \param &Q_begin: The starting iterator of the rotation matrix ( \f$Q\f$Q )
+         * \param &Q_end: The stopping iterator of the rotation matrix ( \f$Q\f$Q )
+         * \param &rotatedA: The rotated matrix ( \f$A'\f$ )
+         */
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( unsigned int )( A_end - A_begin ) == dim * dim, "A has a size of " + std::to_string( ( unsigned int )( A_end - A_begin ) ) + " and must be a square matrix of size " + std::to_string( dim * dim ) );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( unsigned int )( Q_end - Q_begin ) == dim * dim, "Q has a size of " + std::to_string( ( unsigned int )( Q_end - Q_begin ) ) + " and must be a square matrix of size " + std::to_string( dim * dim ) );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( unsigned int )( rotatedA_end - rotatedA_begin ) == dim * dim, "rotatedA has a size of " + std::to_string( ( unsigned int )( rotatedA_end - rotatedA_begin ) ) + " and must be a square matrix of size " + std::to_string( dim * dim ) );
+
+        using rotatedAtype = decltype( *rotatedA_begin );
+        std::array< rotatedAtype, dim * dim > temp;
+        std::fill( std::begin( temp ), std::end( temp ), 0 );
+
+        for ( unsigned int i = 0; i < dim; ++i ){
+            for ( unsigned int j = 0; j < dim; ++j ){
+                for ( unsigned int k = 0; k < dim; ++k ){
+                    temp[ dim * j + k ] += *( Q_begin + dim * i + j ) * ( *( A_begin + dim * i + k ) );
+                }
+            }
+        }
+
+        for ( unsigned int i = 0; i < dim; ++i ){
+            for ( unsigned int j = 0; j < dim; ++j ){
+                for ( unsigned int k = 0; k < dim; ++k ){
+                    *( rotatedA_begin + dim * i + k ) += temp[ dim * i + j ] * ( *( Q_begin + dim * j + k ) );
+                }
+            }
+        }
+
+        return;
+    }
+
+    template< class A_iterator, class Q_iterator, class rotatedA_iterator >
+    void rotateMatrix( const A_iterator &A_begin, const A_iterator &A_end,
+                       const Q_iterator &Q_begin, const Q_iterator &Q_end,
+                       const unsigned int dim,
+                       rotatedA_iterator rotatedA_begin, rotatedA_iterator rotatedA_end ){
+        /*!
+         * Rotate a matrix \f$A\f$ using the orthogonal matrix \f$Q\f$ with the form
+         * 
+         * \f$A'_{ij} = Q_{Ii} A_{IJ} Q_{Jj}\f$
+         *
+         * TODO: Generalize to non square matrices
+         *
+         * \param &A_begin: The starting iterator of the matrix to be rotated ( \f$A\f$ )
+         * \param &A_end: The stopping iterator matrix to be rotated ( \f$A\f$ )
+         * \param &Q_begin: The starting iterator of the rotation matrix ( \f$Q\f$Q )
+         * \param &Q_end: The stopping iterator of the rotation matrix ( \f$Q\f$Q )
+         * \param dim: The number of rows/columns in the matrices
+         * \param &rotatedA: The rotated matrix ( \f$A'\f$ )
+         */
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( unsigned int )( A_end - A_begin ) == dim * dim, "A has a size of " + std::to_string( ( unsigned int )( A_end - A_begin ) ) + " and must be a square matrix of size " + std::to_string( dim * dim ) );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( unsigned int )( Q_end - Q_begin ) == dim * dim, "Q has a size of " + std::to_string( ( unsigned int )( Q_end - Q_begin ) ) + " and must be a square matrix of size " + std::to_string( dim * dim ) );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK( ( unsigned int )( rotatedA_end - rotatedA_begin ) == dim * dim, "rotatedA has a size of " + std::to_string( ( unsigned int )( rotatedA_end - rotatedA_begin ) ) + " and must be a square matrix of size " + std::to_string( dim * dim ) );
+
+        using rotatedAtype = decltype( *rotatedA_begin );
+        std::vector< rotatedAtype > temp( dim * dim, rotatedAtype( ) );
+
+        for ( unsigned int i = 0; i < dim; ++i ){
+            for ( unsigned int j = 0; j < dim; ++j ){
+                for ( unsigned int k = 0; k < dim; ++k ){
+                    temp[ dim * j + k ] += *( Q_begin + dim * i + j ) * ( *( A_begin + dim * i + k ) );
+                }
+            }
+        }
+
+        for ( unsigned int i = 0; i < dim; ++i ){
+            for ( unsigned int j = 0; j < dim; ++j ){
+                for ( unsigned int k = 0; k < dim; ++k ){
+                    *( rotatedA_begin + dim * i + k ) += temp[ dim * i + j ] * ( *( Q_begin + dim * j + k ) );
+                }
+            }
+        }
+
+        return;
+    }
+
     void rotateMatrix(const floatVector &A, const floatVector &Q, floatVector &rotatedA){
         /*!
          * Rotate a matrix \f$A\f$ using the orthogonal matrix \f$Q\f$ with the form
@@ -51,25 +146,13 @@ namespace tardigradeConstitutiveTools{
          * \param &rotatedA: The rotated matrix ( \f$A'\f$ )
          */
 
-        //Check the size of A
-        TARDIGRADE_ERROR_TOOLS_CHECK( A.size( ) == Q.size( ), "A and Q must have the same number of values" );
-
-        //Set the dimension to be the square-root of the size of A
-        const unsigned int dim = std::sqrt(A.size());
-        TARDIGRADE_ERROR_TOOLS_CHECK( ( A.size() % dim ) == 0, "A must be square");
-
-        //Resize rotated A
-        rotatedA.resize(A.size());
-
-        for (unsigned int i=0; i<dim; i++){
-            for (unsigned int j=0; j<dim; j++){
-                for (unsigned int I=0; I<dim; I++){
-                    for (unsigned int J=0; J<dim; J++){
-                        rotatedA[i*dim + j] += Q[I*dim + i] * A[I*dim + J] * Q[J*dim + j];
-                    }
-                }
-            }
-        }
+        rotatedA = floatVector( A.size( ), 0 );
+        rotateMatrix(
+            std::cbegin( A ),       std::cend( A ),
+            std::cbegin( Q ),       std::cend( Q ),
+            std::sqrt(A.size()),
+            std::begin( rotatedA ), std::end( rotatedA )
+        );
 
         return;
     }

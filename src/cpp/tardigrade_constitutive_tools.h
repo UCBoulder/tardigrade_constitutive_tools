@@ -38,6 +38,17 @@ namespace tardigradeConstitutiveTools{
 
     floatType deltaDirac(const unsigned int i, const unsigned int j);
 
+    template< unsigned int dim, class A_iterator, class Q_iterator, class rotatedA_iterator >
+    void rotateMatrix( const A_iterator &A_begin, const A_iterator &A_end,
+                       const Q_iterator &Q_begin, const Q_iterator &Q_end,
+                       rotatedA_iterator rotatedA_begin, rotatedA_iterator rotatedA_end );
+
+    template< class A_iterator, class Q_iterator, class rotatedA_iterator >
+    void rotateMatrix( const A_iterator &A_begin, const A_iterator &A_end,
+                       const Q_iterator &Q_begin, const Q_iterator &Q_end,
+                       const unsigned int dim,
+                       rotatedA_iterator rotatedA_begin, rotatedA_iterator rotatedA_end );
+
     void rotateMatrix(const floatVector &A, const floatVector &Q, floatVector &rotatedA);
 
     void computeDeformationGradient( const floatVector &displacementGradient, floatVector &F, const bool isCurrent );
