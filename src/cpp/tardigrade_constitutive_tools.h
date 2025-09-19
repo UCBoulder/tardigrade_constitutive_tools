@@ -93,6 +93,19 @@ namespace tardigradeConstitutiveTools{
 
     void computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C, floatMatrix &dCdF );
 
+    template< unsigned int dim, class deformationGradient_iterator, class E_iterator>
+    void computeGreenLagrangeStrain(
+        const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
+        E_iterator E_begin,                                            E_iterator E_end
+    );
+
+    template< unsigned int dim, class deformationGradient_iterator, class E_iterator, class dEdF_iterator>
+    void computeGreenLagrangeStrain(
+        const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
+        E_iterator E_begin,                                            E_iterator E_end,
+        dEdF_iterator dEdF_begin,                                      dEdF_iterator dEdF_end
+    );
+
     void computeGreenLagrangeStrain(const floatVector &deformationGradient, floatVector &E);
 
     void computeGreenLagrangeStrain(const floatVector &deformationGradient, floatVector &E, floatVector &dEdF);
