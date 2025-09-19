@@ -146,6 +146,13 @@ namespace tardigradeConstitutiveTools{
     void decomposeGreenLagrangeStrain(const floatVector &E, floatVector &Ebar, floatType &J,
                                           floatMatrix &dEbardE, floatVector &dJdE);
 
+    template< unsigned int dim, class PK2Stress_iterator, class deformationGradient_iterator, class cauchyStress_iterator >
+    void mapPK2toCauchy(
+        const PK2Stress_iterator           &PK2Stress_begin,           const PK2Stress_iterator           &PK2Stress_end,
+        const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
+        cauchyStress_iterator              cauchyStress_begin,         cauchyStress_iterator              cauchyStress_end
+    );
+
     void mapPK2toCauchy(const floatVector &PK2Stress, const floatVector &deformationGradient, floatVector &cauchyStress);
 
     void WLF(const floatType &temperature, const floatVector &WLFParameters, floatType &factor);
