@@ -112,6 +112,12 @@ namespace tardigradeConstitutiveTools{
 
     void computeGreenLagrangeStrain(const floatVector &deformationGradient, floatVector &E, floatMatrix &dEdF);
 
+    template< unsigned int dim, class deformationGradient_iterator, class dEdF_iterator >
+    void computeDGreenLagrangeStrainDF(
+        const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
+        dEdF_iterator dEdF_begin,                                      dEdF_iterator dEdF_end
+    );
+
     void computeDGreenLagrangeStrainDF(const floatVector &deformationGradient, floatVector &dEdF);
 
     void computeDGreenLagrangeStrainDF(const floatVector &deformationGradient, floatMatrix &dEdF);

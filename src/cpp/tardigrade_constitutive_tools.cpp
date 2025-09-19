@@ -909,6 +909,47 @@ namespace tardigradeConstitutiveTools{
         return;
     }
 
+    template< unsigned int dim, class deformationGradient_iterator, class dEdF_iterator >
+    void computeDGreenLagrangeStrainDF(
+        const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
+        dEdF_iterator dEdF_begin,                                      dEdF_iterator dEdF_end
+    ){
+        /*!
+         * Compute the derivative of the Green-Lagrange strain ( \f$E\f$ )w.r.t. the deformation gradient ( \f$F\f$ ).
+         *
+         * \f$\frac{\partial E_{IJ}}{\partial F_{kK}} = 0.5 ( \delta_{IK} F_{kJ} + F_{kI} \delta_{JK})\f$
+         *
+         * Where \f$F\f$ is the deformation gradient and \f$\delta\f$ is the kronecker delta.
+         *
+         * \param &deformationGradient_begin: The starting iterator of the deformation gradient ( \f$F\f$ ).
+         * \param &deformationGradient_end: The stopping iterator of the deformation gradient ( \f$F\f$ ).
+         * \param &dEdF_begin: The starting iterator of the resulting gradient ( \f$\frac{\partial E}{\partial F}\f$ ).
+         * \param &dEdF_end: The stopping iterator resulting gradient ( \f$\frac{\partial E}{\partial F}\f$ ).
+         *
+         * The deformation gradient is organized as  F11, F12, F13, F21, F22, F23, F31, F32, F33
+         */
+
+        using dEdF_type = typename std::iterator_traits<dEdF_iterator>::value_type;
+        std::fill(
+            dEdF_begin, dEdF_end, dEdF_type( )
+        );
+        
+        for ( unsigned int I = 0; I < dim; ++I ){
+            for ( unsigned int J = 0; J < dim; ++J ){
+                for ( unsigned int k = 0; k < dim; ++k ){
+                    *( dEdF_begin + dim * dim * dim * I + dim * dim * J + dim * k + I ) += *( deformationGradient_begin + dim * k + J );
+                    *( dEdF_begin + dim * dim * dim * I + dim * dim * J + dim * k + J ) += *( deformationGradient_begin + dim * k + I );
+                }
+            }
+        }
+
+        std::transform(
+            dEdF_begin, dEdF_end, dEdF_begin,
+            std::bind( std::multiplies< >( ), std::placeholders::_1, 0.5 )
+        );
+
+    }
+
     void computeDGreenLagrangeStrainDF(const floatVector &deformationGradient, floatMatrix &dEdF){
         /*!
          * Compute the derivative of the Green-Lagrange strain ( \f$E\f$ )w.r.t. the deformation gradient ( \f$F\f$ ).
@@ -947,16 +988,38 @@ namespace tardigradeConstitutiveTools{
          * The deformation gradient is organized as  F11, F12, F13, F21, F22, F23, F31, F32, F33
          */
 
-        TARDIGRADE_ERROR_TOOLS_CHECK( deformationGradient.size( ) == 9, "the Green-Lagrange strain must be 3D" );
+        const unsigned int dim = ( unsigned int )std::pow( deformationGradient.size( ), 0.5 );
 
-        dEdF = floatVector( 81, 0 );
-        for ( unsigned int I = 0; I < 3; I++ ){
-            for ( unsigned int J = 0; J < 3; J++ ){
-                for ( unsigned int k = 0; k < 3; k++ ){
-                    dEdF[ 3 * 9 * I + 9 * J + 3 * k + I ] += 0.5 * deformationGradient[ 3 * k + J ];
-                    dEdF[ 3 * 9 * I + 9 * J + 3 * k + J ] += 0.5 * deformationGradient[ 3 * k + I ];
-                }
-            }
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( dim == 3 ) || ( dim == 2 ) || ( dim == 1 ),
+            "The dimension of the deformation gradient is " + std::to_string( dim ) + " but must be 1, 2, or 3"
+        );
+
+        dEdF = floatVector( dim * dim * dim * dim, 0 );
+
+        if ( dim == 3 ){
+
+            computeDGreenLagrangeStrainDF<3>(
+                std::begin( deformationGradient ), std::end( deformationGradient ),
+                std::begin( dEdF ),                std::end( dEdF )
+            );
+
+        }
+        else if ( dim == 2 ){
+
+            computeDGreenLagrangeStrainDF<2>(
+                std::begin( deformationGradient ), std::end( deformationGradient ),
+                std::begin( dEdF ),                std::end( dEdF )
+            );
+
+        }
+        else if ( dim == 1 ){
+
+            computeDGreenLagrangeStrainDF<1>(
+                std::begin( deformationGradient ), std::end( deformationGradient ),
+                std::begin( dEdF ),                std::end( dEdF )
+            );
+
         }
 
         return;
