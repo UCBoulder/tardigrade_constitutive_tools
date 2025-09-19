@@ -155,9 +155,21 @@ namespace tardigradeConstitutiveTools{
 
     void mapPK2toCauchy(const floatVector &PK2Stress, const floatVector &deformationGradient, floatVector &cauchyStress);
 
+    template< typename temperature_type, class WLFParameters_iterator, typename factor_type >
+    void WLF(
+        const temperature_type &temperature, const WLFParameters_iterator &WLFParameters_begin, const WLFParameters_iterator &WLFParameters_end,
+        factor_type &factor
+    );
+
+    template< typename temperature_type, class WLFParameters_iterator, typename factor_type, typename dFactordT_type >
+    void WLF(
+        const temperature_type &temperature, const WLFParameters_iterator &WLFParameters_begin, const WLFParameters_iterator &WLFParameters_end,
+        factor_type &factor, dFactordT_type &dFactordT
+    );
+
     void WLF(const floatType &temperature, const floatVector &WLFParameters, floatType &factor);
 
-    void WLF(const floatType &temperature, const floatVector &WLFParameters, floatType &factor, floatType &dfactordT);
+    void WLF(const floatType &temperature, const floatVector &WLFParameters, floatType &factor, floatType &dFactordT);
 
     void computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt);
 
