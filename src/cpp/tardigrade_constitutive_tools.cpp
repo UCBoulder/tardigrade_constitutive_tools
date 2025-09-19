@@ -53,7 +53,8 @@ namespace tardigradeConstitutiveTools{
          * \param &A_end: The stopping iterator matrix to be rotated ( \f$A\f$ )
          * \param &Q_begin: The starting iterator of the rotation matrix ( \f$Q\f$Q )
          * \param &Q_end: The stopping iterator of the rotation matrix ( \f$Q\f$Q )
-         * \param &rotatedA: The rotated matrix ( \f$A'\f$ )
+         * \param &rotatedA_begin: The rotated matrix ( \f$A'\f$ )
+         * \param &rotatedA_end: The rotated matrix ( \f$A'\f$ )
          */
 
         TARDIGRADE_ERROR_TOOLS_CHECK( ( unsigned int )( A_end - A_begin ) == dim * dim, "A has a size of " + std::to_string( ( unsigned int )( A_end - A_begin ) ) + " and must be a square matrix of size " + std::to_string( dim * dim ) );
@@ -62,7 +63,7 @@ namespace tardigradeConstitutiveTools{
 
         TARDIGRADE_ERROR_TOOLS_CHECK( ( unsigned int )( rotatedA_end - rotatedA_begin ) == dim * dim, "rotatedA has a size of " + std::to_string( ( unsigned int )( rotatedA_end - rotatedA_begin ) ) + " and must be a square matrix of size " + std::to_string( dim * dim ) );
 
-        using rotatedA_type = typename std::iterator_traits<decltype(rotatedA_begin)>::value_type;
+        using rotatedA_type = typename std::iterator_traits<rotatedA_iterator>::value_type;
         std::array< rotatedA_type, dim * dim > temp;
         std::fill( std::begin( temp ), std::end( temp ), 0 );
 
@@ -102,7 +103,8 @@ namespace tardigradeConstitutiveTools{
          * \param &Q_begin: The starting iterator of the rotation matrix ( \f$Q\f$Q )
          * \param &Q_end: The stopping iterator of the rotation matrix ( \f$Q\f$Q )
          * \param dim: The number of rows/columns in the matrices
-         * \param &rotatedA: The rotated matrix ( \f$A'\f$ )
+         * \param &rotatedA_begin: The rotated matrix ( \f$A'\f$ )
+         * \param &rotatedA_end: The rotated matrix ( \f$A'\f$ )
          */
 
         TARDIGRADE_ERROR_TOOLS_CHECK( ( unsigned int )( A_end - A_begin ) == dim * dim, "A has a size of " + std::to_string( ( unsigned int )( A_end - A_begin ) ) + " and must be a square matrix of size " + std::to_string( dim * dim ) );
@@ -111,7 +113,7 @@ namespace tardigradeConstitutiveTools{
 
         TARDIGRADE_ERROR_TOOLS_CHECK( ( unsigned int )( rotatedA_end - rotatedA_begin ) == dim * dim, "rotatedA has a size of " + std::to_string( ( unsigned int )( rotatedA_end - rotatedA_begin ) ) + " and must be a square matrix of size " + std::to_string( dim * dim ) );
 
-        using rotatedA_type = typename std::iterator_traits<decltype(rotatedA_begin)>::value_type;
+        using rotatedA_type = typename std::iterator_traits<rotatedA_iterator>::value_type;
         std::vector< rotatedA_type > temp( dim * dim, rotatedA_type( ) );
 
         for ( unsigned int i = 0; i < dim; ++i ){
@@ -184,7 +186,7 @@ namespace tardigradeConstitutiveTools{
          *     or reference (false) position.
          */
 
-        using deformationGradient_type = typename std::iterator_traits<decltype(deformationGradient_begin)>::value_type;
+        using deformationGradient_type = typename std::iterator_traits<deformationGradient_iterator>::value_type;
 
         constexpr unsigned int sot_dim = dim * dim;
 
@@ -294,19 +296,19 @@ namespace tardigradeConstitutiveTools{
          *
          * \f$ \bf{F} = \left(\bf{I} - \frac{\partial \bf{u}}{\partial \bf{x}}\right)^{-1} \f$
          *
-         * \param &displacementGradient: The starting iterator of the gradient of the displacement with respect to either the
+         * \param &displacementGradient_begin: The starting iterator of the gradient of the displacement with respect to either the
          *     current or previous position.
-         * \param &displacementGradient: The stopping iterator of the gradient of the displacement with respect to either the
+         * \param &displacementGradient_end: The stopping iterator of the gradient of the displacement with respect to either the
          *     current or previous position.
-         * \param &deformationGradient: The starting iterator of the deformation gradient
-         * \param &deformationGradient: The stopping iterator of the deformation gradient
-         * \param &dFdGradU: The starting iterator of the derivative of the deformation gradient w.r.t. the displacement gradient
-         * \param &dFdGradU: The stopping iterator of the derivative of the deformation gradient w.r.t. the displacement gradient
+         * \param &deformationGradient_begin: The starting iterator of the deformation gradient
+         * \param &deformationGradient_end: The stopping iterator of the deformation gradient
+         * \param &dFdGradU_begin: The starting iterator of the derivative of the deformation gradient w.r.t. the displacement gradient
+         * \param &dFdGradU_end: The stopping iterator of the derivative of the deformation gradient w.r.t. the displacement gradient
          * \param &isCurrent: Boolean indicating whether the gradient is taken w.r.t. the current (true)
          *     or reference (false) position.
          */
 
-        using deformationGradient_type = typename std::iterator_traits<decltype(deformationGradient_begin)>::value_type;
+        using deformationGradient_type = typename std::iterator_traits<deformationGradient_iterator>::value_type;
 
         constexpr unsigned int sot_dim = dim * dim;
         constexpr unsigned int fot_dim = sot_dim * sot_dim;
@@ -460,8 +462,8 @@ namespace tardigradeConstitutiveTools{
          * The Right Cauchy-Green deformation tensor is organized as C11, C12, C13, C21, C22, C23, C31, C32, C33
          */
 
-        using deformationGradient_type = typename std::iterator_traits<decltype(deformationGradient_begin)>::value_type;
-        using C_type = typename std::iterator_traits<decltype(C_begin)>::value_type;
+        using deformationGradient_type = typename std::iterator_traits<deformationGradient_iterator>::value_type;
+        using C_type = typename std::iterator_traits<C_iterator>::value_type;
 
         constexpr unsigned int sot_dim = dim * dim;
 
@@ -535,6 +537,61 @@ namespace tardigradeConstitutiveTools{
 
     }
 
+    template< unsigned int dim, class deformationGradient_iterator, class C_iterator, class dCdF_iterator >
+    void computeRightCauchyGreen(
+        const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
+        C_iterator C_begin,       C_iterator C_end,
+        dCdF_iterator dCdF_begin, dCdF_iterator dCdF_end
+    ){
+        /*!
+         * Compute the Right Cauchy-Green deformation tensor ( \f$C\f$ ) from the deformation gradient ( \f$F\f$ )
+         * 
+         * \f$C_{IJ} = F_{iI} F_{iJ}\f$
+         * 
+         * \param &deformationGradient_begin: The starting iterator of the deformation gradient ( \f$F\f$ )
+         * \param &deformationGradient_end: The stopping iterator of the deformation gradient ( \f$F\f$ )
+         * \param &C_begin: The starting iterator of the resulting Right Cauchy-Green deformation tensor ( \f$C\f$ )
+         * \param &C_end: The starting iterator of the resulting Right Cauchy-Green deformation tensor ( \f$C\f$ )
+         * \param &dCdF_begin: The starting iterator of the Jacobian of the Right Cauchy-Green deformation tensor
+         *     with regards to the deformation gradient ( \f$\frac{\partial C}{\partial F}\f$ ).
+         * \param &dCdF_end: The stopping iterator of the Jacobian of the Right Cauchy-Green deformation tensor
+         *     with regards to the deformation gradient ( \f$\frac{\partial C}{\partial F}\f$ ).
+         *
+         * The deformation gradient is organized as F11, F12, F13, F21, F22, F23, F31, F32, F33
+         *
+         * The Right Cauchy-Green deformation tensor is organized as C11, C12, C13, C21, C22, C23, C31, C32, C33
+         */
+
+        using dCdF_type = typename std::iterator_traits<dCdF_iterator>::value_type;
+
+        TARDIGRADE_ERROR_TOOLS_CATCH(
+            computeRightCauchyGreen<dim>(
+                deformationGradient_begin, deformationGradient_end,
+                C_begin,                   C_end
+            )
+        );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( dCdF_end - dCdF_begin ),
+            "The derivative of the right Cauchy-Green deformation tensor with respect to the deformation gradient has a size of " + std::to_string( ( unsigned int )( dCdF_end - dCdF_begin ) ) + " but must have a size of " + std::to_string( dim * dim * dim * dim )
+        )
+        
+        //Assemble the Jacobian
+        std::fill(
+            dCdF_begin, dCdF_end, dCdF_type( )
+        );
+        
+        for ( unsigned int I = 0; I < dim; ++I ){
+            for ( unsigned int J = 0; J < dim; ++J ){
+                for ( unsigned int k = 0; k < dim; ++k ){
+                    *( dCdF_begin + dim * dim * dim * I + dim * dim * J + dim * k + I ) += *( deformationGradient_begin + dim * k + J );
+                    *( dCdF_begin + dim * dim * dim * I + dim * dim * J + dim * k + J ) += *( deformationGradient_begin + dim * k + I );
+                }
+            }
+        }
+
+    }
+
     void computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C, floatMatrix &dCdF ){
         /*!
          * Compute the Right Cauchy-Green deformation tensor ( \f$C\f$ ) from the deformation gradient ( \f$F\f$ )
@@ -580,23 +637,42 @@ namespace tardigradeConstitutiveTools{
          * The Right Cauchy-Green deformation tensor is organized as C11, C12, C13, C21, C22, C23, C31, C32, C33
          */
 
-        //Assume 3D
-        constexpr unsigned int dim = 3;
-        constexpr unsigned int sot_dim = dim * dim;
+        const unsigned int dim = ( unsigned int )std::pow( deformationGradient.size( ), 0.5 );
 
-        TARDIGRADE_ERROR_TOOLS_CATCH( computeRightCauchyGreen( deformationGradient, C ) );
-        
-        //Assemble the Jacobian
-        
-        dCdF = floatVector( sot_dim * sot_dim, 0 );
-        
-        for ( unsigned int I = 0; I < dim; I++ ){
-            for ( unsigned int J = 0; J < dim; J++ ){
-                for ( unsigned int k = 0; k < dim; k++ ){
-                    dCdF[ dim * sot_dim * I + sot_dim * J + dim * k + I ] += deformationGradient[ dim * k + J ];
-                    dCdF[ dim * sot_dim * I + sot_dim * J + dim * k + J ] += deformationGradient[ dim * k + I ];
-                }
-            }
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( dim == 3 ) || ( dim == 2 ) || ( dim == 1 ),
+            "The dimension of the deformation gradient is " + std::to_string( dim ) + " but must be 1, 2, or 3"
+        );
+
+        C    = floatVector( dim * dim, 0 );
+        dCdF = floatVector( dim * dim * dim * dim, 0 );
+
+        if ( dim == 3 ){
+
+            computeRightCauchyGreen<3>(
+                std::begin( deformationGradient ), std::end( deformationGradient ),
+                std::begin( C ),                   std::end( C ),
+                std::begin( dCdF ),                std::end( dCdF )
+            );
+
+        }
+        else if ( dim == 2 ){
+
+            computeRightCauchyGreen<2>(
+                std::begin( deformationGradient ), std::end( deformationGradient ),
+                std::begin( C ),                   std::end( C ),
+                std::begin( dCdF ),                std::end( dCdF )
+            );
+
+        }
+        else if ( dim == 1 ){
+
+            computeRightCauchyGreen<1>(
+                std::begin( deformationGradient ), std::end( deformationGradient ),
+                std::begin( C ),                   std::end( C ),
+                std::begin( dCdF ),                std::end( dCdF )
+            );
+
         }
 
         return;
