@@ -195,6 +195,104 @@ namespace tardigradeConstitutiveTools{
     void computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt,
                          floatMatrix &dDFDtdL, floatMatrix &dDFDtdF);
 
+    template<
+        typename Dt_type,
+        class Ap_iterator, class DApDt_iterator, class DADt_iterator,
+        class dA_iterator, class A_iterator, class alpha_iterator
+    >
+    void midpointEvolution(
+        const Dt_type &Dt,
+        const Ap_iterator    &Ap_begin,    const Ap_iterator    &Ap_end,
+        const DApDt_iterator &DApDt_begin, const DApDt_iterator &DApDt_end,
+        const DADt_iterator  &DADt_begin,  const DADt_iterator  &DADt_end,
+        dA_iterator          dA_begin,     dA_iterator          dA_end,
+        A_iterator           A_begin,      A_iterator           A_end,
+        alpha_iterator       alpha_begin,  alpha_iterator       alpha_end
+    );
+
+    template<
+        typename Dt_type,
+        class Ap_iterator, class DApDt_iterator, class DADt_iterator,
+        class dA_iterator, class A_iterator, class DADADt_iterator, class alpha_iterator
+    >
+    void midpointEvolution(
+        const Dt_type &Dt,
+        const Ap_iterator    &Ap_begin,    const Ap_iterator    &Ap_end,
+        const DApDt_iterator &DApDt_begin, const DApDt_iterator &DApDt_end,
+        const DADt_iterator  &DADt_begin,  const DADt_iterator  &DADt_end,
+        dA_iterator          dA_begin,     dA_iterator          dA_end,
+        A_iterator           A_begin,      A_iterator           A_end,
+        DADADt_iterator      DADADt_begin, DADADt_iterator      DADADt_end,
+        alpha_iterator       alpha_begin,  alpha_iterator       alpha_end
+    );
+
+    template<
+        typename Dt_type,
+        class Ap_iterator, class DApDt_iterator, class DADt_iterator,
+        class dA_iterator, class A_iterator, class DADADt_iterator, class DADApDt_iterator,
+        class alpha_iterator
+    >
+    void midpointEvolution(
+        const Dt_type &Dt,
+        const Ap_iterator    &Ap_begin,     const Ap_iterator    &Ap_end,
+        const DApDt_iterator &DApDt_begin,  const DApDt_iterator &DApDt_end,
+        const DADt_iterator  &DADt_begin,   const DADt_iterator  &DADt_end,
+        dA_iterator          dA_begin,      dA_iterator          dA_end,
+        A_iterator           A_begin,       A_iterator           A_end,
+        DADADt_iterator      DADADt_begin,  DADADt_iterator      DADADt_end,
+        DADApDt_iterator     DADApDt_begin, DADApDt_iterator     DADApDt_end,
+        alpha_iterator       alpha_begin,   alpha_iterator       alpha_end
+    );
+
+    template<
+        typename Dt_type,
+        class Ap_iterator, class DApDt_iterator, class DADt_iterator,
+        class dA_iterator, class A_iterator, typename alpha_type
+    >
+    void midpointEvolution(
+        const Dt_type &Dt,
+        const Ap_iterator    &Ap_begin,    const Ap_iterator    &Ap_end,
+        const DApDt_iterator &DApDt_begin, const DApDt_iterator &DApDt_end,
+        const DADt_iterator  &DADt_begin,  const DADt_iterator  &DADt_end,
+        dA_iterator          dA_begin,     dA_iterator          dA_end,
+        A_iterator           A_begin,      A_iterator           A_end,
+        alpha_type alpha = 0.5
+    );
+
+    template<
+        typename Dt_type,
+        class Ap_iterator, class DApDt_iterator, class DADt_iterator,
+        class dA_iterator, class A_iterator, class DADADt_iterator, typename alpha_type
+    >
+    void midpointEvolution(
+        const Dt_type &Dt,
+        const Ap_iterator    &Ap_begin,    const Ap_iterator    &Ap_end,
+        const DApDt_iterator &DApDt_begin, const DApDt_iterator &DApDt_end,
+        const DADt_iterator  &DADt_begin,  const DADt_iterator  &DADt_end,
+        dA_iterator          dA_begin,     dA_iterator          dA_end,
+        A_iterator           A_begin,      A_iterator           A_end,
+        DADADt_iterator      DADADt_begin, DADADt_iterator      DADADt_end,
+        alpha_type alpha = 0.5
+    );
+
+    template<
+        typename Dt_type,
+        class Ap_iterator, class DApDt_iterator, class DADt_iterator,
+        class dA_iterator, class A_iterator, class DADADt_iterator, class DADApDt_iterator,
+        typename alpha_type
+    >
+    void midpointEvolution(
+        const Dt_type &Dt,
+        const Ap_iterator    &Ap_begin,     const Ap_iterator    &Ap_end,
+        const DApDt_iterator &DApDt_begin,  const DApDt_iterator &DApDt_end,
+        const DADt_iterator  &DADt_begin,   const DADt_iterator  &DADt_end,
+        dA_iterator          dA_begin,      dA_iterator          dA_end,
+        A_iterator           A_begin,       A_iterator           A_end,
+        DADADt_iterator      DADADt_begin,  DADADt_iterator      DADADt_end,
+        DADApDt_iterator     DADApDt_begin, DADApDt_iterator     DADApDt_end,
+        alpha_type alpha = 0.5
+    );
+
     void midpointEvolution(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                floatVector &dA, floatVector &A, const floatVector &alpha);
 

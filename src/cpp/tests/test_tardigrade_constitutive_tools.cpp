@@ -461,29 +461,21 @@ BOOST_AUTO_TEST_CASE( testMidpointEvolution, * boost::unit_test::tolerance( DEFA
     //Test implicit integration
     tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, 0 );
 
-    
-
     BOOST_TEST( dA == Dt * DADt, CHECK_PER_ELEMENT );
 
     //Test explicit integration
     tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, 1 );
-
-    
 
     BOOST_TEST( dA == Dt*DApDt, CHECK_PER_ELEMENT );
 
     //Test midpoint integration
     tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA, A );
 
-    
-
     BOOST_TEST(  A == Ap + Dt*0.5*( DApDt + DADt ), CHECK_PER_ELEMENT );
 
     BOOST_TEST( dA == Dt*0.5*( DApDt + DADt ), CHECK_PER_ELEMENT );
 
     tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, alphaVec );
-
-    
 
     floatVector A_answer  = { 20.5, 23., 25.5, 28. };
     floatVector dA_answer = { 11.5, 13., 14.5, 16. };
@@ -502,8 +494,6 @@ BOOST_AUTO_TEST_CASE( testMidpointEvolution, * boost::unit_test::tolerance( DEFA
     tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, alphaVec );
 
     tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA0, A0, DADADt, alphaVec );
-
-    
 
     BOOST_TEST( A0 == A, CHECK_PER_ELEMENT );
 
@@ -582,6 +572,83 @@ BOOST_AUTO_TEST_CASE( testMidpointEvolution, * boost::unit_test::tolerance( DEFA
     }
 
     BOOST_TEST( tardigradeVectorTools::appendVectors( DADADtp ) == tardigradeVectorTools::appendVectors( DADADtp_answer ), CHECK_PER_ELEMENT );
+
+}
+
+BOOST_AUTO_TEST_CASE( testMidpointEvolution2, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
+    /*!
+     * Test the midpoint evolution algorithm.
+     */
+
+    floatType Dt = 2.5;
+
+    floatVector Ap    = { 9, 10, 11, 12 };
+
+    floatVector DApDt = { 1, 2, 3, 4 };
+
+    floatVector DADt  = { 5, 6, 7, 8 };
+
+    floatVector dA, A;
+
+    floatType alpha = 0.67;
+
+    floatVector dA_answer = Dt * alpha * DApDt + Dt * ( 1 - alpha ) * DADt;
+
+    floatVector A_answer = Ap + dA_answer;
+
+    tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, alpha );
+
+    BOOST_TEST( dA == dA_answer, CHECK_PER_ELEMENT );
+
+    BOOST_TEST(  A ==  A_answer, CHECK_PER_ELEMENT );
+
+    //Add test for the jacobian
+    floatType eps = 1e-6;
+
+    floatMatrix DADADt, DADApDt;
+
+    dA.clear( );
+    A.clear( );
+
+    std::cerr << "entering midpointEvolution with Jacobian\n";
+    tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, DADADt, DADApDt, alpha );
+
+    BOOST_TEST( dA == dA_answer, CHECK_PER_ELEMENT );
+
+    BOOST_TEST(  A ==  A_answer, CHECK_PER_ELEMENT );
+
+    {
+
+        constexpr unsigned int VAR_SIZE = 4;
+        constexpr unsigned int OUT_SIZE = 4;
+
+        floatVector X( std::begin( DADt ), std::end( DADt ) );
+
+        for ( unsigned int i = 0; i < VAR_SIZE; ++i ){
+
+            floatType delta = eps * std::fabs( X[ i ] ) + eps;
+
+            floatVector xp = X;
+            floatVector xm = X;
+
+            xp[ i ] += delta;
+            xm[ i ] -= delta;
+
+            floatVector rp,  rm;
+            floatVector rp2, rm2;
+            tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, xp, rp, rp2, alpha ); 
+            tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, xm, rp, rp2, alpha ); 
+
+            for ( unsigned int j = 0; j < OUT_SIZE; ++j ){
+
+                BOOST_TEST( DADADt[ j ][ i ] == ( rp[  j ] - rm[  j ] ) / ( 2 * delta ) );
+                BOOST_TEST( DADADt[ j ][ i ] == ( rp2[ j ] - rm2[ j ] ) / ( 2 * delta ) );
+
+            }
+
+        }
+
+    }
 
 }
 
