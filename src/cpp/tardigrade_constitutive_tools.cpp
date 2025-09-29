@@ -2214,7 +2214,6 @@ namespace tardigradeConstitutiveTools{
             "DADADt has a size of " + std::to_string( ( unsigned int )( DADADt_end - DADADt_begin ) ) + " but must have a size of " + std::to_string( Ap_size * Ap_size )
         );
 
-        std::cerr << "here 2\n";
         TARDIGRADE_ERROR_TOOLS_CATCH(
             midpointEvolution(
                 Dt,
@@ -2223,13 +2222,9 @@ namespace tardigradeConstitutiveTools{
             )
         )
 
-        std::cerr << "yo!\n";
-
         std::fill(
             DADADt_begin, DADADt_end, DADADt_type( )
         );
-
-        std::cerr << "derp2\n";
 
         for (
             auto v = std::pair< unsigned int, Ap_iterator >( 0, Ap_begin );
@@ -2294,7 +2289,6 @@ namespace tardigradeConstitutiveTools{
             "DADApDt has a size of " + std::to_string( ( unsigned int )( DADApDt_end - DADApDt_begin ) ) + " but must have a size of " + std::to_string( Ap_size * Ap_size )
         );
 
-        std::cerr << "here 1\n";
         TARDIGRADE_ERROR_TOOLS_CATCH(
             midpointEvolution(
                 Dt,
@@ -2307,8 +2301,6 @@ namespace tardigradeConstitutiveTools{
         std::fill(
             DADApDt_begin, DADApDt_end, DADApDt_type( )
         );
-
-        std::cerr << "derp3\n";
 
         for (
             auto v = std::pair< unsigned int, Ap_iterator >( 0, Ap_begin );
@@ -2457,7 +2449,6 @@ namespace tardigradeConstitutiveTools{
          * \param &alpha: The integration parameter.
          */
 
-        std::cerr << "here 1c\n";
         const unsigned int A_size = Ap.size( );
 
         dA      = floatVector( A_size, 0 );
@@ -2506,7 +2497,6 @@ namespace tardigradeConstitutiveTools{
          * \param &alpha: The integration parameter.
          */
 
-        std::cerr << "here 1b\n";
         floatVector _DADADt, _DADADtp;
 
         TARDIGRADE_ERROR_TOOLS_CATCH( midpointEvolutionFlatJ( Dt, Ap, DApDt, DADt, dA, A, _DADADt, _DADADtp, alpha ) );
@@ -2661,8 +2651,6 @@ namespace tardigradeConstitutiveTools{
          * \param alpha: The integration parameter.
          */
 
-        std::cerr << "here 2a\n";
-
         return midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, DADADt, alpha * floatVector( Ap.size( ), 1 ) );
 
     }
@@ -2689,8 +2677,6 @@ namespace tardigradeConstitutiveTools{
          * \param &DADADtp: The derivative of the vector w.r.t. the previous rate of change of the vector.
          * \param alpha: The integration parameter.
          */
-
-        std::cerr << "here 1a\n";
 
         return midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, DADADt, DADADtp, alpha * floatVector( Ap.size( ), 1 ) );
 

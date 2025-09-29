@@ -605,13 +605,12 @@ BOOST_AUTO_TEST_CASE( testMidpointEvolution2, * boost::unit_test::tolerance( DEF
     //Add test for the jacobian
     floatType eps = 1e-6;
 
-    floatMatrix DADADt, DADApDt;
+    floatVector DADADt, DADApDt;
 
     dA.clear( );
     A.clear( );
 
-    std::cerr << "entering midpointEvolution with Jacobian\n";
-    tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, DADt, dA, A, DADADt, DADApDt, alpha );
+    tardigradeConstitutiveTools::midpointEvolutionFlatJ( Dt, Ap, DApDt, DADt, dA, A, DADADt, DADApDt, alpha );
 
     BOOST_TEST( dA == dA_answer, CHECK_PER_ELEMENT );
 
@@ -637,12 +636,45 @@ BOOST_AUTO_TEST_CASE( testMidpointEvolution2, * boost::unit_test::tolerance( DEF
             floatVector rp,  rm;
             floatVector rp2, rm2;
             tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, xp, rp, rp2, alpha ); 
-            tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, xm, rp, rp2, alpha ); 
+            tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, DApDt, xm, rm, rm2, alpha ); 
 
             for ( unsigned int j = 0; j < OUT_SIZE; ++j ){
 
-                BOOST_TEST( DADADt[ j ][ i ] == ( rp[  j ] - rm[  j ] ) / ( 2 * delta ) );
-                BOOST_TEST( DADADt[ j ][ i ] == ( rp2[ j ] - rm2[ j ] ) / ( 2 * delta ) );
+                BOOST_TEST( DADADt[ VAR_SIZE * j + i ] == ( rp[  j ] - rm[  j ] ) / ( 2 * delta ) );
+                BOOST_TEST( DADADt[ VAR_SIZE * j + i ] == ( rp2[ j ] - rm2[ j ] ) / ( 2 * delta ) );
+
+            }
+
+        }
+
+    }
+
+    {
+
+        constexpr unsigned int VAR_SIZE = 4;
+        constexpr unsigned int OUT_SIZE = 4;
+
+        floatVector X( std::begin( DApDt ), std::end( DApDt ) );
+
+        for ( unsigned int i = 0; i < VAR_SIZE; ++i ){
+
+            floatType delta = eps * std::fabs( X[ i ] ) + eps;
+
+            floatVector xp = X;
+            floatVector xm = X;
+
+            xp[ i ] += delta;
+            xm[ i ] -= delta;
+
+            floatVector rp,  rm;
+            floatVector rp2, rm2;
+            tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, xp, DADt, rp, rp2, alpha ); 
+            tardigradeConstitutiveTools::midpointEvolution( Dt, Ap, xm, DADt, rm, rm2, alpha ); 
+
+            for ( unsigned int j = 0; j < OUT_SIZE; ++j ){
+
+                BOOST_TEST( DADApDt[ VAR_SIZE * j + i ] == ( rp[  j ] - rm[  j ] ) / ( 2 * delta ) );
+                BOOST_TEST( DADApDt[ VAR_SIZE * j + i ] == ( rp2[ j ] - rm2[ j ] ) / ( 2 * delta ) );
 
             }
 
