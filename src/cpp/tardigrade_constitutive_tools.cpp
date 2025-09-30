@@ -4567,6 +4567,351 @@ namespace tardigradeConstitutiveTools{
 
     }
 
+    template<
+        unsigned int dim,
+        typename Dt_type,
+        class previousDeformationGradient_iterator,
+        class Lp_iterator, class L_iterator,
+        class deformationGradient_iterator,
+        typename alpha_type
+    >
+    void evolveFExponentialMap(
+        const Dt_type &Dt,
+        const previousDeformationGradient_iterator &previousDeformationGradient_begin, const previousDeformationGradient_iterator &previousDeformationGradient_end,
+        const Lp_iterator &Lp_begin, const Lp_iterator &Lp_end, const L_iterator &L_begin, const L_iterator &L_end,
+        deformationGradient_iterator deformationGradient_begin, deformationGradient_iterator deformationGradient_end, const alpha_type alpha
+    ){
+        /*!
+         * Evolve the deformation gradient using the exponential map. Assumes the evolution equation is of the form
+         * 
+         * \f$ \dot{F}_{iI} = \ell_{ij} F_{jI} \f$
+         * 
+         * \param &Dt: The change in time
+         * \param &previousDeformationGradient_begin: The starting iterator of the previous value of the deformation gradient
+         * \param &previousDeformationGradient_end: The stopping iterator of the previous value of the deformation gradient
+         * \param &Lp_begin: The starting iterator of the previous value of the velocity gradient
+         * \param &Lp_end: The stopping iterator of the previous value of the velocity gradient
+         * \param &L_begin: The starting iterator of the current value of the velocity gradient
+         * \param &L_end: The stopping iterator of the current value of the velocity gradient
+         * \param &deformationGradient_begin: The starting iterator of the computed value of the deformation gradient
+         * \param &deformationGradient_end: The stopping iterator of the computed value of the deformation gradient
+         * \param &alpha: The integration parameter (0 is explicit and 1 is implicit)
+         */
+
+        using deformationGradient_type  = typename std::iterator_traits<deformationGradient_iterator>::value_type;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( previousDeformationGradient_end - previousDeformationGradient_begin ),
+            "The previous deformation gradient has a size of " + std::to_string( ( unsigned int )( previousDeformationGradient_end - previousDeformationGradient_begin ) ) + " but must have a size of " + std::to_string( dim * dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( Lp_end - Lp_begin ),
+            "The previous velocity gradient has a size of " + std::to_string( ( unsigned int )( Lp_end - Lp_begin ) ) + " but must have a size of " + std::to_string( dim * dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( L_end - L_begin ),
+            "The velocity gradient has a size of " + std::to_string( ( unsigned int )( L_end - L_begin ) ) + " but must have a size of " + std::to_string( dim * dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( deformationGradient_end - deformationGradient_begin ),
+            "The velocity gradient has a size of " + std::to_string( ( unsigned int )( L_end - L_begin ) ) + " but must have a size of " + std::to_string( dim * dim )
+        )
+
+        std::array<
+            deformationGradient_type, dim * dim
+        > DtLalpha, expDtLalpha, tempVector1, tempVector2, tempVector3;
+
+        for ( unsigned int i = 0; i < dim * dim; ++i ){
+            DtLalpha[ i ] = Dt * ( ( 1 - alpha ) * ( *( Lp_begin + i ) ) + alpha * ( *( L_begin + i ) ) );
+        }
+
+        TARDIGRADE_ERROR_TOOLS_CATCH(
+            tardigradeVectorTools::computeMatrixExponentialScalingAndSquaring( std::begin( DtLalpha ),    std::end( DtLalpha ), dim,
+                                                                               std::begin( tempVector1 ), std::end( tempVector1 ),
+                                                                               std::begin( tempVector2 ), std::end( tempVector2 ),
+                                                                               std::begin( tempVector3 ), std::end( tempVector3 ),
+                                                                               std::begin( expDtLalpha ), std::end( expDtLalpha )
+            )
+        )
+
+        std::fill(
+            deformationGradient_begin, deformationGradient_end, deformationGradient_type( )
+        );
+
+        for ( unsigned int i = 0; i < dim; ++i ){
+
+            for ( unsigned int j = 0; j < dim; ++j ){
+
+                for ( unsigned int k = 0; k < dim; ++k ){
+
+                    *( deformationGradient_begin + dim * i + k ) += expDtLalpha[ dim * i + j ] * ( *( previousDeformationGradient_begin + dim * j + k ) );
+
+                }
+
+            }
+
+        }
+
+    }
+
+    template<
+        unsigned int dim,
+        typename Dt_type,
+        class previousDeformationGradient_iterator,
+        class Lp_iterator, class L_iterator,
+        class deformationGradient_iterator,
+        class dFdL_iterator,
+        typename alpha_type
+    >
+    void evolveFExponentialMap(
+        const Dt_type &Dt,
+        const previousDeformationGradient_iterator &previousDeformationGradient_begin, const previousDeformationGradient_iterator &previousDeformationGradient_end,
+        const Lp_iterator &Lp_begin, const Lp_iterator &Lp_end, const L_iterator &L_begin, const L_iterator &L_end,
+        deformationGradient_iterator deformationGradient_begin, deformationGradient_iterator deformationGradient_end,
+        dFdL_iterator dFdL_begin, dFdL_iterator dFdL_end,
+        const alpha_type alpha
+    ){
+        /*!
+         * Evolve the deformation gradient using the exponential map. Assumes the evolution equation is of the form
+         * 
+         * \f$ \dot{F}_{iI} = \ell_{ij} F_{jI} \f$
+         * 
+         * \param &Dt: The change in time
+         * \param &previousDeformationGradient_begin: The starting iterator of the previous value of the deformation gradient
+         * \param &previousDeformationGradient_end: The stopping iterator of the previous value of the deformation gradient
+         * \param &Lp_begin: The starting iterator of the previous value of the velocity gradient
+         * \param &Lp_end: The stopping iterator of the previous value of the velocity gradient
+         * \param &L_begin: The starting iterator of the current value of the velocity gradient
+         * \param &L_end: The stopping iterator of the current value of the velocity gradient
+         * \param &deformationGradient_begin: The starting iterator of the computed value of the deformation gradient
+         * \param &deformationGradient_end: The stopping iterator of the computed value of the deformation gradient
+         * \param &dFdL_begin: The starting iterator of the derivative of the deformation gradient w.r.t. the velocity gradient
+         * \param &dFdL_end: The stopping iterator of the derivative of the deformation gradient w.r.t. the velocity gradient
+         * \param &alpha: The integration parameter (0 is explicit and 1 is implicit)
+         */
+
+        using deformationGradient_type  = typename std::iterator_traits<deformationGradient_iterator>::value_type;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( previousDeformationGradient_end - previousDeformationGradient_begin ),
+            "The previous deformation gradient has a size of " + std::to_string( ( unsigned int )( previousDeformationGradient_end - previousDeformationGradient_begin ) ) + " but must have a size of " + std::to_string( dim * dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( Lp_end - Lp_begin ),
+            "The previous velocity gradient has a size of " + std::to_string( ( unsigned int )( Lp_end - Lp_begin ) ) + " but must have a size of " + std::to_string( dim * dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( L_end - L_begin ),
+            "The velocity gradient has a size of " + std::to_string( ( unsigned int )( L_end - L_begin ) ) + " but must have a size of " + std::to_string( dim * dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( deformationGradient_end - deformationGradient_begin ),
+            "The velocity gradient has a size of " + std::to_string( ( unsigned int )( L_end - L_begin ) ) + " but must have a size of " + std::to_string( dim * dim )
+        )
+
+        std::array<
+            deformationGradient_type, dim * dim
+        > DtLalpha, expDtLalpha, tempVector1, tempVector2, tempVector3;
+
+        for ( unsigned int i = 0; i < dim * dim; ++i ){
+            DtLalpha[ i ] = Dt * ( ( 1 - alpha ) * ( *( Lp_begin + i ) ) + alpha * ( *( L_begin + i ) ) );
+        }
+
+        std::array<
+            deformationGradient_type, dim * dim * dim * dim
+        > dExpDtLalphadL, tempMatrix1, tempMatrix2;
+
+        TARDIGRADE_ERROR_TOOLS_CATCH(
+            tardigradeVectorTools::computeMatrixExponentialScalingAndSquaring( std::begin( DtLalpha ),       std::end( DtLalpha ), dim,
+                                                                               std::begin( tempVector1 ),    std::end( tempVector1 ),
+                                                                               std::begin( tempVector2 ),    std::end( tempVector2 ),
+                                                                               std::begin( tempVector3 ),    std::end( tempVector3 ),
+                                                                               std::begin( tempMatrix1 ),    std::end( tempMatrix1 ),
+                                                                               std::begin( tempMatrix2 ),    std::end( tempMatrix2 ),
+                                                                               std::begin( expDtLalpha ),    std::end( expDtLalpha ),
+                                                                               std::begin( dExpDtLalphadL ), std::end( dExpDtLalphadL )
+            )
+        )
+
+        std::transform(
+            std::begin( dExpDtLalphadL ), std::end( dExpDtLalphadL ), std::begin( dExpDtLalphadL ),
+            std::bind( std::multiplies< >( ), std::placeholders::_1, Dt * alpha )
+        );
+
+        std::fill(
+            deformationGradient_begin, deformationGradient_end, deformationGradient_type( )
+        );
+
+        std::fill(
+            dFdL_begin, dFdL_end, deformationGradient_type( )
+        );
+
+        for ( unsigned int i = 0; i < dim; ++i ){
+
+            for ( unsigned int j = 0; j < dim; ++j ){
+
+                for ( unsigned int k = 0; k < dim; ++k ){
+
+                    *( deformationGradient_begin + dim * i + k ) += expDtLalpha[ dim * i + j ] * ( *( previousDeformationGradient_begin + dim * j + k ) );
+
+                    for ( unsigned int ab = 0; ab < dim * dim; ++ab ){
+
+                        *( dFdL_begin + dim * dim * dim * i + dim * dim * k + ab ) += dExpDtLalphadL[ dim * dim * dim * i + dim * dim * j + ab ] * ( *( previousDeformationGradient_begin + dim * j + k ) );
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    template<
+        unsigned int dim,
+        typename Dt_type,
+        class previousDeformationGradient_iterator,
+        class Lp_iterator, class L_iterator,
+        class deformationGradient_iterator,
+        class dFdL_iterator, class dFdFp_iterator, class dFdLp_iterator,
+        typename alpha_type
+    >
+    void evolveFExponentialMap(
+        const Dt_type &Dt,
+        const previousDeformationGradient_iterator &previousDeformationGradient_begin, const previousDeformationGradient_iterator &previousDeformationGradient_end,
+        const Lp_iterator &Lp_begin, const Lp_iterator &Lp_end, const L_iterator &L_begin, const L_iterator &L_end,
+        deformationGradient_iterator deformationGradient_begin, deformationGradient_iterator deformationGradient_end,
+        dFdL_iterator dFdL_begin, dFdL_iterator dFdL_end, dFdFp_iterator dFdFp_begin, dFdFp_iterator dFdFp_end, dFdLp_iterator dFdLp_begin, dFdLp_iterator dFdLp_end,
+        const alpha_type alpha
+    ){
+        /*!
+         * Evolve the deformation gradient using the exponential map. Assumes the evolution equation is of the form
+         * 
+         * \f$ \dot{F}_{iI} = \ell_{ij} F_{jI} \f$
+         * 
+         * \param &Dt: The change in time
+         * \param &previousDeformationGradient_begin: The starting iterator of the previous value of the deformation gradient
+         * \param &previousDeformationGradient_end: The stopping iterator of the previous value of the deformation gradient
+         * \param &Lp_begin: The starting iterator of the previous value of the velocity gradient
+         * \param &Lp_end: The stopping iterator of the previous value of the velocity gradient
+         * \param &L_begin: The starting iterator of the current value of the velocity gradient
+         * \param &L_end: The stopping iterator of the current value of the velocity gradient
+         * \param &deformationGradient_begin: The starting iterator of the computed value of the deformation gradient
+         * \param &deformationGradient_end: The stopping iterator of the computed value of the deformation gradient
+         * \param &dFdL_begin: The starting iterator of the derivative of the deformation gradient w.r.t. the velocity gradient
+         * \param &dFdL_end: The stopping iterator of the derivative of the deformation gradient w.r.t. the velocity gradient
+         * \param &dFdFp_begin: The starting iterator of the derivative of the deformation gradient w.r.t. the previous deformation gradient
+         * \param &dFdFp_end: The stopping iterator of the derivative of the deformation gradient w.r.t. the previous deformation gradient
+         * \param &dFdLp_begin: The starting iterator of the derivative of the deformation gradient w.r.t. the previous velocity gradient
+         * \param &dFdLp_end: The stopping iterator of the derivative of the deformation gradient w.r.t. the previous velocity gradient
+         * \param &alpha: The integration parameter (0 is explicit and 1 is implicit)
+         */
+
+        using deformationGradient_type  = typename std::iterator_traits<deformationGradient_iterator>::value_type;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( previousDeformationGradient_end - previousDeformationGradient_begin ),
+            "The previous deformation gradient has a size of " + std::to_string( ( unsigned int )( previousDeformationGradient_end - previousDeformationGradient_begin ) ) + " but must have a size of " + std::to_string( dim * dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( Lp_end - Lp_begin ),
+            "The previous velocity gradient has a size of " + std::to_string( ( unsigned int )( Lp_end - Lp_begin ) ) + " but must have a size of " + std::to_string( dim * dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( L_end - L_begin ),
+            "The velocity gradient has a size of " + std::to_string( ( unsigned int )( L_end - L_begin ) ) + " but must have a size of " + std::to_string( dim * dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( deformationGradient_end - deformationGradient_begin ),
+            "The velocity gradient has a size of " + std::to_string( ( unsigned int )( L_end - L_begin ) ) + " but must have a size of " + std::to_string( dim * dim )
+        )
+
+        std::array<
+            deformationGradient_type, dim * dim
+        > DtLalpha, expDtLalpha, tempVector1, tempVector2, tempVector3;
+
+        for ( unsigned int i = 0; i < dim * dim; ++i ){
+            DtLalpha[ i ] = Dt * ( ( 1 - alpha ) * ( *( Lp_begin + i ) ) + alpha * ( *( L_begin + i ) ) );
+        }
+
+        std::array<
+            deformationGradient_type, dim * dim * dim * dim
+        > dExpDtLalphadL, dExpDtLalphadLp, tempMatrix1, tempMatrix2;
+
+        TARDIGRADE_ERROR_TOOLS_CATCH(
+            tardigradeVectorTools::computeMatrixExponentialScalingAndSquaring( std::begin( DtLalpha ),       std::end( DtLalpha ), dim,
+                                                                               std::begin( tempVector1 ),    std::end( tempVector1 ),
+                                                                               std::begin( tempVector2 ),    std::end( tempVector2 ),
+                                                                               std::begin( tempVector3 ),    std::end( tempVector3 ),
+                                                                               std::begin( tempMatrix1 ),    std::end( tempMatrix1 ),
+                                                                               std::begin( tempMatrix2 ),    std::end( tempMatrix2 ),
+                                                                               std::begin( expDtLalpha ),    std::end( expDtLalpha ),
+                                                                               std::begin( dExpDtLalphadL ), std::end( dExpDtLalphadL )
+            )
+        )
+
+        std::transform(
+            std::begin( dExpDtLalphadL ), std::end( dExpDtLalphadL ), std::begin( dExpDtLalphadLp ),
+            std::bind( std::multiplies< >( ), std::placeholders::_1, Dt * ( 1 - alpha ) )
+        );
+
+        std::transform(
+            std::begin( dExpDtLalphadL ), std::end( dExpDtLalphadL ), std::begin( dExpDtLalphadL ),
+            std::bind( std::multiplies< >( ), std::placeholders::_1, Dt * alpha )
+        );
+
+        std::fill(
+            deformationGradient_begin, deformationGradient_end, deformationGradient_type( )
+        );
+
+        std::fill(
+            dFdL_begin, dFdL_end, deformationGradient_type( )
+        );
+
+        std::fill(
+            dFdFp_begin, dFdFp_end, deformationGradient_type( )
+        );
+
+        std::fill(
+            dFdLp_begin, dFdLp_end, deformationGradient_type( )
+        );
+
+        for ( unsigned int i = 0; i < dim; ++i ){
+
+            for ( unsigned int j = 0; j < dim; ++j ){
+
+                for ( unsigned int k = 0; k < dim; ++k ){
+
+                    *( deformationGradient_begin + dim * i + k ) += expDtLalpha[ dim * i + j ] * ( *( previousDeformationGradient_begin + dim * j + k ) );
+
+                    *( dFdFp_begin + dim * dim * dim * i + dim * dim * j + dim * k + j ) += expDtLalpha[ dim * i + k ];
+
+                    for ( unsigned int ab = 0; ab < dim * dim; ++ab ){
+
+                        *( dFdL_begin + dim * dim * dim * i + dim * dim * k + ab ) += dExpDtLalphadL[ dim * dim * dim * i + dim * dim * j + ab ] * ( *( previousDeformationGradient_begin + dim * j + k ) );
+
+                        *( dFdLp_begin + dim * dim * dim * i + dim * dim * k + ab ) += dExpDtLalphadLp[ dim * dim * dim * i + dim * dim * j + ab ] * ( *( previousDeformationGradient_begin + dim * j + k ) );
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
     void evolveFExponentialMap( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                                 floatVector &deformationGradient, const floatType alpha ){
         /*!
@@ -4582,29 +4927,35 @@ namespace tardigradeConstitutiveTools{
          * \param &alpha: The integration parameter (0 is explicit and 1 is implicit)
          */
 
-        constexpr unsigned int dim = 3;
-        constexpr unsigned int sot_dim = dim * dim;
+        const unsigned int dim = ( unsigned int )std::pow( previousDeformationGradient.size( ), 0.5 );
 
-        floatVector DtLalpha = Dt * ( ( 1 - alpha ) * Lp + alpha * L );
+        deformationGradient = floatVector( dim * dim, 0 );
 
-        floatVector expDtLalpha;
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( dim == 3 ) || ( dim == 2 ) || ( dim == 1 ),
+            "The dimension of the deformation gradient is " + std::to_string( dim ) + " but must be 1, 2, or 3"
+        );
 
-        TARDIGRADE_ERROR_TOOLS_CATCH( tardigradeVectorTools::computeMatrixExponentialScalingAndSquaring( DtLalpha, dim, expDtLalpha ) )
-
-        deformationGradient = floatVector( sot_dim, 0 );
-
-        for ( unsigned int i = 0; i < dim; i++ ){
-
-            for ( unsigned int j = 0; j < dim; j++ ){
-
-                for ( unsigned int k = 0; k < dim; k++ ){
-
-                    deformationGradient[ dim * i + k ] += expDtLalpha[ dim * i + j ] * previousDeformationGradient[ dim * j + k ];
-
-                }
-
-            }
-
+        if ( dim == 3 ){
+            evolveFExponentialMap< 3  >(
+                Dt, std::begin( previousDeformationGradient ), std::end( previousDeformationGradient ),
+                std::begin( Lp ), std::end( Lp ), std::begin( L ), std::end( L ),
+                std::begin( deformationGradient ), std::end( deformationGradient ), alpha
+            );
+        }
+        else if ( dim == 2 ){
+            evolveFExponentialMap< 2 >(
+                Dt, std::begin( previousDeformationGradient ), std::end( previousDeformationGradient ),
+                std::begin( Lp ), std::end( Lp ), std::begin( L ), std::end( L ),
+                std::begin( deformationGradient ), std::end( deformationGradient ), alpha
+            );
+        }
+        else if ( dim == 1 ){
+            evolveFExponentialMap< 1 >(
+                Dt, std::begin( previousDeformationGradient ), std::end( previousDeformationGradient ),
+                std::begin( Lp ), std::end( Lp ), std::begin( L ), std::end( L ),
+                std::begin( deformationGradient ), std::end( deformationGradient ), alpha
+            );
         }
 
     }
@@ -4625,41 +4976,40 @@ namespace tardigradeConstitutiveTools{
          * \param &alpha: The integration parameter (0 is explicit and 1 is implicit)
          */
 
-        constexpr unsigned int dim = 3;
-        constexpr unsigned int sot_dim = dim * dim;
 
-        floatVector DtLalpha = Dt * ( ( 1 - alpha ) * Lp + alpha * L );
+        const unsigned int dim = ( unsigned int )std::pow( previousDeformationGradient.size( ), 0.5 );
 
-        floatVector expDtLalpha;
+        deformationGradient = floatVector( dim * dim, 0 );
+        dFdL = floatVector( dim * dim * dim * dim, 0 );
 
-        floatVector dExpDtLalphadL;
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( dim == 3 ) || ( dim == 2 ) || ( dim == 1 ),
+            "The dimension of the deformation gradient is " + std::to_string( dim ) + " but must be 1, 2, or 3"
+        );
 
-        TARDIGRADE_ERROR_TOOLS_CATCH( tardigradeVectorTools::computeMatrixExponentialScalingAndSquaring( DtLalpha, dim, expDtLalpha, dExpDtLalphadL ) )
-
-        dExpDtLalphadL *= Dt * alpha;
-
-        deformationGradient = floatVector( sot_dim, 0 );
-
-        dFdL = floatVector( sot_dim * sot_dim, 0 );
-
-        for ( unsigned int i = 0; i < dim; i++ ){
-
-            for ( unsigned int j = 0; j < dim; j++ ){
-
-                for ( unsigned int k = 0; k < dim; k++ ){
-
-                    deformationGradient[ dim * i + k ] += expDtLalpha[ dim * i + j ] * previousDeformationGradient[ dim * j + k ];
-
-                    for ( unsigned int ab = 0; ab < sot_dim; ab++ ){
-
-                        dFdL[ dim * sot_dim * i + sot_dim * k + ab ] += dExpDtLalphadL[ dim * sot_dim * i + sot_dim * j + ab ] * previousDeformationGradient[ dim * j + k ];
-
-                    }
-
-                }
-
-            }
-
+        if ( dim == 3 ){
+            evolveFExponentialMap< 3  >(
+                Dt, std::begin( previousDeformationGradient ), std::end( previousDeformationGradient ),
+                std::begin( Lp ), std::end( Lp ), std::begin( L ), std::end( L ),
+                std::begin( deformationGradient ), std::end( deformationGradient ),
+                std::begin( dFdL ), std::end( dFdL ), alpha
+            );
+        }
+        else if ( dim == 2 ){
+            evolveFExponentialMap< 2 >(
+                Dt, std::begin( previousDeformationGradient ), std::end( previousDeformationGradient ),
+                std::begin( Lp ), std::end( Lp ), std::begin( L ), std::end( L ),
+                std::begin( deformationGradient ), std::end( deformationGradient ),
+                std::begin( dFdL ), std::end( dFdL ), alpha
+            );
+        }
+        else if ( dim == 1 ){
+            evolveFExponentialMap< 1 >(
+                Dt, std::begin( previousDeformationGradient ), std::end( previousDeformationGradient ),
+                std::begin( Lp ), std::end( Lp ), std::begin( L ), std::end( L ),
+                std::begin( deformationGradient ), std::end( deformationGradient ),
+                std::begin( dFdL ), std::end( dFdL ), alpha
+            );
         }
 
     }
@@ -4682,51 +5032,44 @@ namespace tardigradeConstitutiveTools{
          * \param &alpha: The integration parameter (0 is explicit and 1 is implicit)
          */
 
-        constexpr unsigned int dim = 3;
-        constexpr unsigned int sot_dim = dim * dim;
+        const unsigned int dim = ( unsigned int )std::pow( previousDeformationGradient.size( ), 0.5 );
 
-        floatVector DtLalpha = Dt * ( ( 1 - alpha ) * Lp + alpha * L );
+        deformationGradient = floatVector( dim * dim, 0 );
+        dFdL = floatVector( dim * dim * dim * dim, 0 );
+        dFdFp = floatVector( dim * dim * dim * dim, 0 );
+        dFdLp = floatVector( dim * dim * dim * dim, 0 );
 
-        floatVector expDtLalpha;
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( dim == 3 ) || ( dim == 2 ) || ( dim == 1 ),
+            "The dimension of the deformation gradient is " + std::to_string( dim ) + " but must be 1, 2, or 3"
+        );
 
-        floatVector dExpDtLalphadL;
-
-        TARDIGRADE_ERROR_TOOLS_CATCH( tardigradeVectorTools::computeMatrixExponentialScalingAndSquaring( DtLalpha, dim, expDtLalpha, dExpDtLalphadL ) )
-
-        floatVector dExpDtLalphadLp = dExpDtLalphadL * Dt * ( 1 - alpha );
-
-        dExpDtLalphadL *= Dt * alpha;
-
-        deformationGradient = floatVector( sot_dim, 0 );
-
-        dFdFp = floatVector( sot_dim * sot_dim, 0 );
-
-        dFdL = floatVector( sot_dim * sot_dim, 0 );
-
-        dFdLp = floatVector( sot_dim * sot_dim, 0 );
-
-        for ( unsigned int i = 0; i < dim; i++ ){
-
-            for ( unsigned int j = 0; j < dim; j++ ){
-
-                for ( unsigned int k = 0; k < dim; k++ ){
-
-                    deformationGradient[ dim * i + k ] += expDtLalpha[ dim * i + j ] * previousDeformationGradient[ dim * j + k ];
-
-                    dFdFp[ dim * sot_dim * i + sot_dim * j + dim * k + j ] += expDtLalpha[ dim * i + k ];
-
-                    for ( unsigned int ab = 0; ab < sot_dim; ab++ ){
-
-                        dFdL[ dim * sot_dim * i + sot_dim * k + ab ] += dExpDtLalphadL[ dim * sot_dim * i + sot_dim * j + ab ] * previousDeformationGradient[ dim * j + k ];
-                        dFdLp[ dim * sot_dim * i + sot_dim * k + ab ] += dExpDtLalphadLp[ dim * sot_dim * i + sot_dim * j + ab ] * previousDeformationGradient[ dim * j + k ];
-
-
-                    }
-
-                }
-
-            }
-
+        if ( dim == 3 ){
+            evolveFExponentialMap< 3  >(
+                Dt, std::begin( previousDeformationGradient ), std::end( previousDeformationGradient ),
+                std::begin( Lp ), std::end( Lp ), std::begin( L ), std::end( L ),
+                std::begin( deformationGradient ), std::end( deformationGradient ),
+                std::begin( dFdL ), std::end( dFdL ), std::begin( dFdFp ), std::end( dFdFp ),
+                std::begin( dFdLp ), std::end( dFdLp ), alpha
+            );
+        }
+        else if ( dim == 2 ){
+            evolveFExponentialMap< 2 >(
+                Dt, std::begin( previousDeformationGradient ), std::end( previousDeformationGradient ),
+                std::begin( Lp ), std::end( Lp ), std::begin( L ), std::end( L ),
+                std::begin( deformationGradient ), std::end( deformationGradient ),
+                std::begin( dFdL ), std::end( dFdL ), std::begin( dFdFp ), std::end( dFdFp ),
+                std::begin( dFdLp ), std::end( dFdLp ), alpha
+            );
+        }
+        else if ( dim == 1 ){
+            evolveFExponentialMap< 1 >(
+                Dt, std::begin( previousDeformationGradient ), std::end( previousDeformationGradient ),
+                std::begin( Lp ), std::end( Lp ), std::begin( L ), std::end( L ),
+                std::begin( deformationGradient ), std::end( deformationGradient ),
+                std::begin( dFdL ), std::end( dFdL ), std::begin( dFdFp ), std::end( dFdFp ),
+                std::begin( dFdLp ), std::end( dFdLp ), alpha
+            );
         }
 
     }
