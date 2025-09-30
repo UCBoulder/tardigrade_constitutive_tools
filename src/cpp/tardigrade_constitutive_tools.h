@@ -327,6 +327,63 @@ namespace tardigradeConstitutiveTools{
                                floatVector &dA, floatVector &A, floatMatrix &DADADt, floatMatrix &DADADtp,
                                const floatType alpha=0.5);
 
+    template<
+      unsigned int dim, unsigned int mode,
+      typename Dt_type,
+      class previousDeformationGradient_iterator,
+      class Lp_iterator, class L_iterator,
+      class dF_iterator, class deformationGradient_iterator,
+      typename alpha_type
+    >
+    void evolveF(
+        const Dt_type &Dt,
+        const previousDeformationGradient_iterator &previousDeformationGradient_begin, const previousDeformationGradient_iterator &previousDeformationGradient_end,
+        const Lp_iterator &Lp_begin, const Lp_iterator &Lp_end, const L_iterator &L_begin, const L_iterator &L_end,
+        dF_iterator dF_begin,                                   dF_iterator dF_end,
+        deformationGradient_iterator deformationGradient_begin, deformationGradient_iterator deformationGradient_end,
+        const alpha_type alpha
+    );
+
+    template<
+      unsigned int dim, unsigned int mode,
+      typename Dt_type,
+      class previousDeformationGradient_iterator,
+      class Lp_iterator, class L_iterator,
+      class dF_iterator, class deformationGradient_iterator,
+      class dFdL_iterator,
+      typename alpha_type
+    >
+    void evolveF(
+        const Dt_type &Dt,
+        const previousDeformationGradient_iterator &previousDeformationGradient_begin, const previousDeformationGradient_iterator &previousDeformationGradient_end,
+        const Lp_iterator &Lp_begin, const Lp_iterator &Lp_end, const L_iterator &L_begin, const L_iterator &L_end,
+        dF_iterator dF_begin,                                   dF_iterator dF_end,
+        deformationGradient_iterator deformationGradient_begin, deformationGradient_iterator deformationGradient_end,
+        dFdL_iterator dFdL_begin,                               dFdL_iterator dFdL_end,
+        const alpha_type alpha
+    );
+
+    template<
+      unsigned int dim, unsigned int mode,
+      typename Dt_type,
+      class previousDeformationGradient_iterator,
+      class Lp_iterator, class L_iterator,
+      class dF_iterator, class deformationGradient_iterator,
+      class dFdL_iterator, class dFdFp_iterator, class dFdLp_iterator,
+      typename alpha_type
+    >
+    void evolveF(
+        const Dt_type &Dt,
+        const previousDeformationGradient_iterator &previousDeformationGradient_begin, const previousDeformationGradient_iterator &previousDeformationGradient_end,
+        const Lp_iterator &Lp_begin, const Lp_iterator &Lp_end, const L_iterator &L_begin, const L_iterator &L_end,
+        dF_iterator dF_begin,                                   dF_iterator dF_end,
+        deformationGradient_iterator deformationGradient_begin, deformationGradient_iterator deformationGradient_end,
+        dFdL_iterator dFdL_begin,                               dFdL_iterator dFdL_end,
+        dFdFp_iterator dFdFp_begin,                             dFdFp_iterator dFdFp_end,
+        dFdLp_iterator dFdLp_begin,                             dFdLp_iterator dFdLp_end,
+        const alpha_type alpha
+    );
+
     void evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                      floatVector &dF, floatVector &deformationGradient, const floatType alpha=0.5, const unsigned int mode = 1);
 
