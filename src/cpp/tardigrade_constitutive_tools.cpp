@@ -2781,7 +2781,7 @@ namespace tardigradeConstitutiveTools{
             deformationGradient_type, dim * dim
         > LHS;
         std::transform(
-            L_begin, L_end, std::begin( LHS ), std::begin( LHS ),
+            L_begin, L_end, std::begin( LHS ),
             std::bind( std::multiplies< >( ), std::placeholders::_1, -Dt * ( 1 - alpha ) )
         );
 
@@ -2880,7 +2880,7 @@ namespace tardigradeConstitutiveTools{
             deformationGradient_type, dim * dim
         > LHS, inv_LHS;
         std::transform(
-            L_begin, L_end, std::begin( LHS ), std::begin( LHS ),
+            L_begin, L_end, std::begin( LHS ),
             std::bind( std::multiplies< >( ), std::placeholders::_1, -Dt * ( 1 - alpha ) )
         );
 
@@ -3685,6 +3685,126 @@ namespace tardigradeConstitutiveTools{
 
     }
 
+    template<
+        class A_iterator, class Anorm_iterator
+    >
+    void computeUnitNormal(
+        const A_iterator &A_begin,  const A_iterator &A_end,
+        Anorm_iterator Anorm_begin, Anorm_iterator Anorm_end
+    ){
+        /*!
+         * Compute the unit normal of a second order tensor (or strictly speaking
+         * any tensor).
+         *
+         * \param &A_begin: The starting iterator for the incoming vector
+         * \param &A_end: The stopping iterator for the incoming vector
+         * \param &Anorm_begin: The starting iterator of the unit normal in the direction of A
+         * \param &Anorm_end: The stopping iterator of the unit normal in the direction of A
+         */
+
+        using A_type     = typename std::iterator_traits<A_iterator>::value_type;
+        using Anorm_type = typename std::iterator_traits<Anorm_iterator>::value_type;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( A_end - A_begin ) == ( unsigned int )( Anorm_end - Anorm_begin ),
+            "A has a size of " + std::to_string( ( unsigned int )( A_end - A_begin ) ) + " but Anorm has a size of " + std::to_string( ( unsigned int )( Anorm_end - Anorm_begin ) )
+        );
+
+        auto norm = tardigradeVectorTools::l2norm<A_type>( A_begin, A_end );
+
+        if ( tardigradeVectorTools::fuzzyEquals( norm, 0. ) ){
+            std::fill( Anorm_begin, Anorm_end, Anorm_type( ) );
+        }
+        else {
+
+            std::transform(
+                A_begin, A_end, Anorm_begin,
+                std::bind( std::divides< >( ), std::placeholders::_1, norm )
+            );
+
+        }
+
+    }
+
+    template<
+        class A_iterator, class Anorm_iterator, class dAnormdA_iterator
+    >
+    void computeUnitNormal(
+        const A_iterator &A_begin,        const A_iterator &A_end,
+        Anorm_iterator Anorm_begin,       Anorm_iterator Anorm_end,
+        dAnormdA_iterator dAnormdA_begin, dAnormdA_iterator dAnormdA_end
+    ){
+        /*!
+         * Compute the unit normal of a second order tensor (or strictly speaking
+         * any tensor).
+         *
+         * \param &A_begin: The starting iterator for the incoming vector
+         * \param &A_end: The stopping iterator for the incoming vector
+         * \param &Anorm_begin: The starting iterator of the unit normal in the direction of A
+         * \param &Anorm_end: The stopping iterator of the unit normal in the direction of A
+         * \param &dAnormdA_begin: The starting iterator of the gradient of the unit normal in the direction of A w.r.t. A
+         * \param &dAnormdA_end: The stopping iterator of the gradient of the unit normal in the direction of A w.r.t. A
+         */
+
+        using A_type     = typename std::iterator_traits<A_iterator>::value_type;
+        using Anorm_type = typename std::iterator_traits<Anorm_iterator>::value_type;
+
+        auto size = ( unsigned int )( A_end - A_begin );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            size == ( unsigned int )( Anorm_end - Anorm_begin ),
+            "A has a size of " + std::to_string( size ) + " but Anorm has a size of " + std::to_string( ( unsigned int )( Anorm_end - Anorm_begin ) )
+        );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            size * size == ( unsigned int )( dAnormdA_end - dAnormdA_begin ),
+            "dAnormdA should have a size of " + std::to_string( size * size ) + " but it has a size of " + std::to_string( ( unsigned int )( dAnormdA_end - dAnormdA_begin ) )
+        );
+
+        auto norm = tardigradeVectorTools::l2norm<A_type>( A_begin, A_end );
+
+        if ( tardigradeVectorTools::fuzzyEquals( norm, 0. ) ){
+            std::fill( Anorm_begin, Anorm_end, Anorm_type( ) );
+        }
+        else {
+
+            std::transform(
+                A_begin, A_end, Anorm_begin,
+                std::bind( std::divides< >( ), std::placeholders::_1, norm )
+            );
+
+        }
+
+        std::fill( dAnormdA_begin, dAnormdA_end, Anorm_type( ) );
+
+        for (
+            auto v = std::pair< unsigned int, Anorm_iterator >( 0, Anorm_begin );
+            v.second != Anorm_end;
+            ++v.first, ++v.second
+        ){
+
+            *( dAnormdA_begin + size * v.first + v.first ) += 1;
+
+            for (
+                auto w = std::pair< unsigned int, Anorm_iterator >( 0, Anorm_begin );
+                w.second != Anorm_end;
+               ++w.first, ++w.second
+            ){
+
+                *( dAnormdA_begin + size * v.first + w.first ) -= ( *v.second ) * ( *w.second );
+
+            }
+
+
+        }
+
+        std::transform(
+            dAnormdA_begin, dAnormdA_end, dAnormdA_begin,
+            std::bind( std::divides< >( ), std::placeholders::_1, norm )
+        );
+
+    }
+
     void computeUnitNormal(const floatVector &A, floatVector &Anorm){
         /*!
          * Compute the unit normal of a second order tensor (or strictly speaking
@@ -3694,16 +3814,12 @@ namespace tardigradeConstitutiveTools{
          * \param &Anorm: The unit normal in the direction of A
          */
 
-        const unsigned int A_size = A.size( );
+        Anorm = floatVector( A.size( ), 0 );
 
-        floatType norm = sqrt(tardigradeVectorTools::inner(A, A));
-
-        if ( tardigradeVectorTools::fuzzyEquals( norm, 0. ) ){
-            Anorm = floatVector( A_size, 0 );
-        }
-        else {
-            Anorm = A/norm;
-        }
+        computeUnitNormal(
+            std::begin( A ),     std::end( A ),
+            std::begin( Anorm ), std::end( Anorm )
+        );
 
         return;
     }
@@ -3718,32 +3834,53 @@ namespace tardigradeConstitutiveTools{
          * \param &dAnormdA: The gradient of the unit normal w.r.t. A
          */
 
-        const unsigned int A_size = A.size( );
+        Anorm    = floatVector( A.size( ), 0 );
+        dAnormdA = floatVector( A.size( ) * A.size( ), 0 );
 
-        floatType norm = sqrt(tardigradeVectorTools::inner(A, A));
-
-        if ( tardigradeVectorTools::fuzzyEquals( norm, 0. ) ){
-            Anorm = floatVector( A_size, 0 );
-        }
-        else {
-            Anorm = A/norm;
-        }
-
-        dAnormdA = floatVector( A_size * A_size, 0 );
-
-        for ( unsigned int i = 0; i < A_size; i++ ){
-
-            dAnormdA[ A_size * i + i ] += 1;
-
-            for ( unsigned int j = 0; j < A_size; j++ ){
-
-                dAnormdA[ A_size * i + j ] -= Anorm[ i ] * Anorm[ j ];
-
-            }
-
-        }
-
-        dAnormdA /= norm;
+        computeUnitNormal(
+            std::begin( A ),        std::end( A ),
+            std::begin( Anorm ),    std::end( Anorm ),
+            std::begin( dAnormdA ), std::end( dAnormdA )
+        );
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//        const unsigned int A_size = A.size( );
+//
+//        floatType norm = sqrt(tardigradeVectorTools::inner(A, A));
+//
+//        if ( tardigradeVectorTools::fuzzyEquals( norm, 0. ) ){
+//            Anorm = floatVector( A_size, 0 );
+//        }
+//        else {
+//            Anorm = A/norm;
+//        }
+//
+//        dAnormdA = floatVector( A_size * A_size, 0 );
+//
+//        for ( unsigned int i = 0; i < A_size; i++ ){
+//
+//            dAnormdA[ A_size * i + i ] += 1;
+//
+//            for ( unsigned int j = 0; j < A_size; j++ ){
+//
+//                dAnormdA[ A_size * i + j ] -= Anorm[ i ] * Anorm[ j ];
+//
+//            }
+//
+//        }
+//
+//        dAnormdA /= norm;
 
         return;
     }

@@ -507,6 +507,23 @@ namespace tardigradeConstitutiveTools{
         return mac( x );
     }
 
+    template<
+        class A_iterator, class Anorm_iterator
+    >
+    void computeUnitNormal(
+        const A_iterator &A_begin,  const A_iterator &A_end,
+        Anorm_iterator Anorm_begin, Anorm_iterator Anorm_end
+    );
+
+    template<
+        class A_iterator, class Anorm_iterator, class dAnormdA_iterator
+    >
+    void computeUnitNormal(
+        const A_iterator &A_begin,        const A_iterator &A_end,
+        Anorm_iterator Anorm_begin,       Anorm_iterator Anorm_end,
+        dAnormdA_iterator dAnormdA_begin, dAnormdA_iterator dAnormdA_end
+    );
+
     void computeUnitNormal(const floatVector &A, floatVector &Anorm);
 
     void computeUnitNormal(const floatVector &A, floatVector &Anorm, floatVector &dAnormdA);
