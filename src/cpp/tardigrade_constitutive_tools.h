@@ -530,6 +530,31 @@ namespace tardigradeConstitutiveTools{
 
     void computeUnitNormal(const floatVector &A, floatVector &Anorm, floatMatrix &dAnormdA);
 
+    template<
+        unsigned int dim,
+        class velocityGradient_iterator, class deformationGradient_iterator,
+        class pulledBackVelocityGradient_iterator
+    >
+    void pullBackVelocityGradient(
+        const velocityGradient_iterator &velocityGradient_begin,       const velocityGradient_iterator &velocityGradient_end,
+        const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
+        pulledBackVelocityGradient_iterator pulledBackVelocityGradient_begin, pulledBackVelocityGradient_iterator pulledBackVelocityGradient_end
+    );
+
+    template<
+        unsigned int dim,
+        class velocityGradient_iterator, class deformationGradient_iterator,
+        class pulledBackVelocityGradient_iterator,
+        class dPullBackLdL_iterator, class dPullBackLdF_iterator
+    >
+    void pullBackVelocityGradient(
+        const velocityGradient_iterator &velocityGradient_begin,       const velocityGradient_iterator &velocityGradient_end,
+        const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
+        pulledBackVelocityGradient_iterator pulledBackVelocityGradient_begin, pulledBackVelocityGradient_iterator pulledBackVelocityGradient_end,
+        dPullBackLdL_iterator dPullBackLdL_begin, dPullBackLdL_iterator dPullBackLdL_end,
+        dPullBackLdF_iterator dPullBackLdF_begin, dPullBackLdF_iterator dPullBackLdF_end
+    );
+
     void pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
                                       floatVector &pulledBackVelocityGradient);
 
