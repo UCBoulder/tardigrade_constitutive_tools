@@ -3842,45 +3842,6 @@ namespace tardigradeConstitutiveTools{
             std::begin( Anorm ),    std::end( Anorm ),
             std::begin( dAnormdA ), std::end( dAnormdA )
         );
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//        const unsigned int A_size = A.size( );
-//
-//        floatType norm = sqrt(tardigradeVectorTools::inner(A, A));
-//
-//        if ( tardigradeVectorTools::fuzzyEquals( norm, 0. ) ){
-//            Anorm = floatVector( A_size, 0 );
-//        }
-//        else {
-//            Anorm = A/norm;
-//        }
-//
-//        dAnormdA = floatVector( A_size * A_size, 0 );
-//
-//        for ( unsigned int i = 0; i < A_size; i++ ){
-//
-//            dAnormdA[ A_size * i + i ] += 1;
-//
-//            for ( unsigned int j = 0; j < A_size; j++ ){
-//
-//                dAnormdA[ A_size * i + j ] -= Anorm[ i ] * Anorm[ j ];
-//
-//            }
-//
-//        }
-//
-//        dAnormdA /= norm;
 
         return;
     }
