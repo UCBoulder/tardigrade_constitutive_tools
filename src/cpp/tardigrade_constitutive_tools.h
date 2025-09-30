@@ -423,9 +423,37 @@ namespace tardigradeConstitutiveTools{
     void evolveFExponentialMap( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                                 floatVector &deformationGradient, floatVector &dFdL, floatVector &dFdFp, floatVector &dFdLp, const floatType alpha=0.5 );
 
-    floatType mac(const floatType &x);
+    template<typename T>
+    T mac(const T &x){
+        /*!
+         * Compute the Macaulay brackets of a scalar x
+         *
+         * returns x if x>0, 0 otherwise
+         *
+         * \param &x: The incoming scalar.
+         */
 
-    floatType mac(const floatType &x, floatType &dmacdx);
+        return 0.5 * ( std::fabs( x ) + x );
+    }
+
+    template<typename T>
+    T mac(const T &x, T &dmacdx){
+        /*!
+         * Compute the Macaulay brackets of the scalar x and
+         * return the jacobian as well.
+         * 
+         * returns x if x>0, 0 otherwise
+         * 
+         * The Jacobian is the Heaviside function
+         * 
+         * \param &x: The incoming scalar
+         * \param &dmacdx: The returned jacobian
+         */
+
+        dmacdx = 0;
+        if ( x >= 0 ){ dmacdx = 1; }
+        return mac( x );
+    }
 
     void computeUnitNormal(const floatVector &A, floatVector &Anorm);
 

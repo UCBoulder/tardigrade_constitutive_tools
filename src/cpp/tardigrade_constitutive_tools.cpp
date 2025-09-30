@@ -3685,36 +3685,6 @@ namespace tardigradeConstitutiveTools{
 
     }
 
-    floatType mac(const floatType &x){
-        /*!
-         * Compute the Macaulay brackets of a scalar x
-         *
-         * returns x if x>0, 0 otherwise
-         *
-         * \param &x: The incoming scalar.
-         */
-
-        return 0.5 * ( fabs( x ) + x );
-    }
-
-    floatType mac( const floatType &x, floatType &dmacdx ){
-        /*!
-         * Compute the Macaulay brackets of the scalar x and
-         * return the jacobian as well.
-         * 
-         * returns x if x>0, 0 otherwise
-         * 
-         * The Jacobian is the Heaviside function
-         * 
-         * \param &x: The incoming scalar
-         * \param &dmacdx: The returned jacobian
-         */
-
-        dmacdx = 0;
-        if ( x >= 0 ){ dmacdx = 1; }
-        return mac( x );
-    }
-
     void computeUnitNormal(const floatVector &A, floatVector &Anorm){
         /*!
          * Compute the unit normal of a second order tensor (or strictly speaking
