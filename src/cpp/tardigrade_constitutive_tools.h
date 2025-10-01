@@ -599,6 +599,31 @@ namespace tardigradeConstitutiveTools{
                                        const floatVector &linearParameters, const floatVector &quadraticParameters,
                                        floatVector &thermalExpansion, floatVector &thermalExpansionJacobian);
 
+    template<
+        unsigned int dim,
+        class greenLagrangeStrain_iterator, class deformationGradient_iterator,
+        class almansiStrain_iterator
+    >
+    void pushForwardGreenLagrangeStrain(
+        const greenLagrangeStrain_iterator &greenLagrangeStrain_begin, const greenLagrangeStrain_iterator &greenLagrangeStrain_end,
+        const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
+        almansiStrain_iterator almansiStrain_begin, almansiStrain_iterator almansiStrain_end
+    );
+
+    template<
+        unsigned int dim,
+        class greenLagrangeStrain_iterator, class deformationGradient_iterator,
+        class almansiStrain_iterator,
+        class dAlmansiStraindE_iterator, class dAlmansiStraindF_iterator
+    >
+    void pushForwardGreenLagrangeStrain(
+        const greenLagrangeStrain_iterator &greenLagrangeStrain_begin, const greenLagrangeStrain_iterator &greenLagrangeStrain_end,
+        const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
+        almansiStrain_iterator almansiStrain_begin,       almansiStrain_iterator almansiStrain_end,
+        dAlmansiStraindE_iterator dAlmansiStraindE_begin, dAlmansiStraindE_iterator dAlmansiStraindE_end,
+        dAlmansiStraindF_iterator dAlmansiStraindF_begin, dAlmansiStraindF_iterator dAlmansiStraindF_end
+    );
+
     void pushForwardGreenLagrangeStrain(const floatVector &greenLagrangeStrain, const floatVector &deformationGradient,
                                             floatVector &almansiStrain);
 
