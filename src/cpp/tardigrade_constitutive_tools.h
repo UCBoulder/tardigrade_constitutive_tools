@@ -633,6 +633,31 @@ namespace tardigradeConstitutiveTools{
     void pushForwardGreenLagrangeStrain(const floatVector &greenLagrangeStrain, const floatVector &deformationGradient,
                                             floatVector &almansiStrain, floatMatrix &dAlmansiStraindE, floatMatrix &dAlmansiStraindF);
 
+    template<
+        unsigned int dim,
+        class almansiStrain_iterator, class deformationGradient_iterator,
+        class greenLagrangeStrain_iterator
+    >
+    void pullBackAlmansiStrain(
+        const almansiStrain_iterator &almansiStrain_begin, const almansiStrain_iterator &almansiStrain_end,
+        const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
+        greenLagrangeStrain_iterator greenLagrangeStrain_begin, greenLagrangeStrain_iterator greenLagrangeStrain_end
+    );
+
+    template<
+        unsigned int dim,
+        class almansiStrain_iterator, class deformationGradient_iterator,
+        class greenLagrangeStrain_iterator,
+        class dEde_iterator, class dEdF_iterator
+    >
+    void pullBackAlmansiStrain(
+        const almansiStrain_iterator &almansiStrain_begin, const almansiStrain_iterator &almansiStrain_end,
+        const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
+        greenLagrangeStrain_iterator greenLagrangeStrain_begin, greenLagrangeStrain_iterator greenLagrangeStrain_end,
+        dEde_iterator dEde_begin, dEde_iterator dEde_end,
+        dEdF_iterator dEdF_begin, dEdF_iterator dEdF_end
+    );
+
     void pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
                                     floatVector &greenLagrangeStrain );
 

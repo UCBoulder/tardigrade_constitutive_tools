@@ -4688,6 +4688,132 @@ namespace tardigradeConstitutiveTools{
 
     } 
 
+    template<
+        unsigned int dim,
+        class almansiStrain_iterator, class deformationGradient_iterator,
+        class greenLagrangeStrain_iterator
+    >
+    void pullBackAlmansiStrain(
+        const almansiStrain_iterator &almansiStrain_begin, const almansiStrain_iterator &almansiStrain_end,
+        const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
+        greenLagrangeStrain_iterator greenLagrangeStrain_begin, greenLagrangeStrain_iterator greenLagrangeStrain_end
+    ){
+        /*!
+         * Pull back the almansi strain to the configuration indicated by the deformation gradient.
+         *
+         * \param &almansiStrain_begin: The starting iterator of the strain in the deformation gradient's current configuration.
+         * \param &almansiStrain_end: The stopping iterator of the strain in the deformation gradient's current configuration.
+         * \param &deformationGradient_begin: The starting iterator of the deformation gradient between configurations.
+         * \param &deformationGradient_end: The stopping iterator of the deformation gradient between configurations.
+         * \param &greenLagrangeStrain_begin: The starting iterator of the Green-Lagrange strain which corresponds to the reference
+         *     configuration of the deformation gradient.
+         * \param &greenLagrangeStrain_end: The stopping iterator of the Green-Lagrange strain which corresponds to the reference
+         *     configuration of the deformation gradient.
+         */
+
+        using almansiStrain_type       = typename std::iterator_traits<almansiStrain_iterator>::value_type;
+        using deformationGradient_type = typename std::iterator_traits<deformationGradient_iterator>::value_type;
+        using greenLagrangeStrain_type = typename std::iterator_traits<greenLagrangeStrain_iterator>::value_type;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            dim * dim == ( unsigned int )( almansiStrain_end - almansiStrain_begin ),
+            "The Almansi strain has a size of " + std::to_string( ( unsigned int )( almansiStrain_end - almansiStrain_begin ) ) + " but should have a size of " + std::to_string( dim * dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            dim * dim == ( unsigned int )( deformationGradient_end - deformationGradient_begin ),
+            "The deformation gradient has a size of " + std::to_string( ( unsigned int )( deformationGradient_end - deformationGradient_begin ) ) + " but should have a size of " + std::to_string( dim * dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            dim * dim == ( unsigned int )( greenLagrangeStrain_end - greenLagrangeStrain_begin ),
+            "The Green-Lagrange strain has a size of " + std::to_string( ( unsigned int )( greenLagrangeStrain_end - greenLagrangeStrain_begin ) ) + " but should have a size of " + std::to_string( dim * dim )
+        )
+
+        Eigen::Map< const Eigen::Matrix< deformationGradient_type, dim, dim, Eigen::RowMajor > > F( &(*deformationGradient_begin) );
+
+        Eigen::Map< Eigen::Matrix< greenLagrangeStrain_type, dim, dim, Eigen::RowMajor > > E( &(*greenLagrangeStrain_begin) );
+        Eigen::Map< const Eigen::Matrix< almansiStrain_type, dim, dim, Eigen::RowMajor > > e( &(*almansiStrain_begin) );
+
+        E = ( F.transpose( ) * e * F ).eval( );
+
+        return;
+
+    }
+
+    template<
+        unsigned int dim,
+        class almansiStrain_iterator, class deformationGradient_iterator,
+        class greenLagrangeStrain_iterator,
+        class dEde_iterator, class dEdF_iterator
+    >
+    void pullBackAlmansiStrain(
+        const almansiStrain_iterator &almansiStrain_begin, const almansiStrain_iterator &almansiStrain_end,
+        const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
+        greenLagrangeStrain_iterator greenLagrangeStrain_begin, greenLagrangeStrain_iterator greenLagrangeStrain_end,
+        dEde_iterator dEde_begin, dEde_iterator dEde_end,
+        dEdF_iterator dEdF_begin, dEdF_iterator dEdF_end
+    ){
+        /*!
+         * Pull back the almansi strain to the configuration indicated by the deformation gradient.
+         *
+         * \param &almansiStrain_begin: The starting iterator of the strain in the deformation gradient's current configuration.
+         * \param &almansiStrain_end: The stopping iterator of the strain in the deformation gradient's current configuration.
+         * \param &deformationGradient_begin: The starting iterator of the deformation gradient between configurations.
+         * \param &deformationGradient_end: The stopping iterator of the deformation gradient between configurations.
+         * \param greenLagrangeStrain_begin: The starting iterator of the Green-Lagrange strain which corresponds to the reference
+         *     configuration of the deformation gradient.
+         * \param greenLagrangeStrain_end: The stopping iterator of the Green-Lagrange strain which corresponds to the reference
+         *     configuration of the deformation gradient.
+         * \param dEde_begin: The starting iterator of the Jacobian of the Green-Lagrange strain w.r.t. the Almansi strain
+         * \param dEde_end: The stopping iterator of the Jacobian of the Green-Lagrange strain w.r.t. the Almansi strain
+         * \param dEdF_begin: The starting iterator of the Jacobian of the Green-Lagrange strain w.r.t. the deformation gradient
+         * \param dEdF_end: The stopping iterator of the Jacobian of the Green-Lagrange strain w.r.t. the deformation gradient
+         */
+
+        using almansiStrain_type       = typename std::iterator_traits<almansiStrain_iterator>::value_type;
+        using deformationGradient_type = typename std::iterator_traits<deformationGradient_iterator>::value_type;
+        using greenLagrangeStrain_type = typename std::iterator_traits<greenLagrangeStrain_iterator>::value_type;
+        using dEde_type                = typename std::iterator_traits<dEde_iterator>::value_type;
+        using dEdF_type                = typename std::iterator_traits<dEdF_iterator>::value_type;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            dim * dim == ( unsigned int )( almansiStrain_end - almansiStrain_begin ),
+            "The Almansi strain has a size of " + std::to_string( ( unsigned int )( almansiStrain_end - almansiStrain_begin ) ) + " but should have a size of " + std::to_string( dim * dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            dim * dim == ( unsigned int )( deformationGradient_end - deformationGradient_begin ),
+            "The deformation gradient has a size of " + std::to_string( ( unsigned int )( deformationGradient_end - deformationGradient_begin ) ) + " but should have a size of " + std::to_string( dim * dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            dim * dim == ( unsigned int )( greenLagrangeStrain_end - greenLagrangeStrain_begin ),
+            "The Green-Lagrange strain has a size of " + std::to_string( ( unsigned int )( greenLagrangeStrain_end - greenLagrangeStrain_begin ) ) + " but should have a size of " + std::to_string( dim * dim )
+        )
+
+        Eigen::Map< const Eigen::Matrix< deformationGradient_type, dim, dim, Eigen::RowMajor > > F( &(*deformationGradient_begin) );
+
+        Eigen::Map< Eigen::Matrix< greenLagrangeStrain_type, dim, dim, Eigen::RowMajor > > E( &(*greenLagrangeStrain_begin) );
+        Eigen::Map< const Eigen::Matrix< almansiStrain_type, dim, dim, Eigen::RowMajor > > e( &(*almansiStrain_begin) );
+
+        E = ( F.transpose( ) * e * F ).eval( );
+        std::fill( dEde_begin, dEde_end, dEde_type( ) );
+        std::fill( dEdF_begin, dEdF_end, dEdF_type( ) );
+
+        for ( unsigned int I = 0; I < dim; ++I ){
+            for ( unsigned int J = 0; J < dim; ++J ){
+                for ( unsigned int K = 0; K < dim; ++K ){
+                    for ( unsigned int L = 0; L < dim; ++L ){
+                        *( dEde_begin + dim * dim * dim * I + dim * dim * J + dim * K + L ) = ( *( deformationGradient_begin + dim * K + I ) ) * ( *( deformationGradient_begin + dim * L + J ) );
+                        *( dEdF_begin + dim * dim * dim * I + dim * dim * J + dim * K + I ) += ( *( almansiStrain_begin + dim * K + L ) ) * ( *( deformationGradient_begin + dim * L + J ) );
+                        *( dEdF_begin + dim * dim * dim * I + dim * dim * J + dim * K + J ) += ( *( deformationGradient_begin + dim * L + I ) ) * ( *( almansiStrain_begin + dim * L + K ) );
+                    }
+                }
+            }
+        }
+    }
+
     void pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
                                     floatVector &greenLagrangeStrain ){
         /*!
@@ -4699,18 +4825,36 @@ namespace tardigradeConstitutiveTools{
          *     configuration of the deformation gradient.
          */
 
-        //Assume 3d
-        constexpr unsigned int dim = 3;
-        constexpr unsigned int sot_dim = dim * dim;
+        const unsigned int dim = ( unsigned int )std::pow( almansiStrain.size( ), 0.5 );
 
-        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F( deformationGradient.data( ), dim, dim );
+        greenLagrangeStrain = floatVector( dim * dim, 0 );
 
-        greenLagrangeStrain = floatVector( sot_dim, 0 );
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( dim == 3 ) || ( dim == 2 ) || ( dim == 1 ),
+            "The dimension of the deformation gradient is " + std::to_string( dim ) + " but must be 1, 2, or 3"
+        );
 
-        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > E( greenLagrangeStrain.data( ), dim, dim );
-        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > e( almansiStrain.data( ), dim, dim );
-
-        E = ( F.transpose( ) * e * F ).eval( );
+        if ( dim == 3 ){
+            pullBackAlmansiStrain< 3 >(
+                std::begin( almansiStrain ),       std::end( almansiStrain ),
+                std::begin( deformationGradient ), std::end( deformationGradient ),
+                std::begin( greenLagrangeStrain ), std::end( greenLagrangeStrain )
+            );
+        }
+        else if ( dim == 2 ){
+            pullBackAlmansiStrain< 2 >(
+                std::begin( almansiStrain ),       std::end( almansiStrain ),
+                std::begin( deformationGradient ), std::end( deformationGradient ),
+                std::begin( greenLagrangeStrain ), std::end( greenLagrangeStrain )
+            );
+        }
+        else if ( dim == 1 ){
+            pullBackAlmansiStrain< 1 >(
+                std::begin( almansiStrain ),       std::end( almansiStrain ),
+                std::begin( deformationGradient ), std::end( deformationGradient ),
+                std::begin( greenLagrangeStrain ), std::end( greenLagrangeStrain )
+            );
+        }
 
         return;
     }
@@ -4730,31 +4874,47 @@ namespace tardigradeConstitutiveTools{
          * \param &dEdF: The derivative of the Green-Lagrange strain w.r.t. the deformation gradient
          */
 
-        //Assume 3d
-        constexpr unsigned int dim = 3;
-        constexpr unsigned int sot_dim = dim * dim;
+        const unsigned int dim = ( unsigned int )std::pow( almansiStrain.size( ), 0.5 );
 
-        TARDIGRADE_ERROR_TOOLS_CATCH( pullBackAlmansiStrain( almansiStrain, deformationGradient, greenLagrangeStrain ) )
+        greenLagrangeStrain = floatVector( dim * dim, 0 );
+        dEde = floatVector( dim * dim * dim * dim, 0 );
+        dEdF = floatVector( dim * dim * dim * dim, 0 );
 
-        floatVector eye( dim * dim );
-        tardigradeVectorTools::eye( eye );
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( dim == 3 ) || ( dim == 2 ) || ( dim == 1 ),
+            "The dimension of the deformation gradient is " + std::to_string( dim ) + " but must be 1, 2, or 3"
+        );
 
-        dEde = floatVector( sot_dim * sot_dim, 0 );
-        dEdF = floatVector( sot_dim * sot_dim, 0 );
-
-        for ( unsigned int I = 0; I < dim; I++ ){
-            for ( unsigned int J = 0; J < dim; J++ ){
-                for ( unsigned int K = 0; K < dim; K++ ){
-                    for ( unsigned int L = 0; L < dim; L++ ){
-                        dEde[ sot_dim * dim * I + sot_dim * J + dim * K + L ] = deformationGradient[ dim * K + I ] * deformationGradient[ dim * L + J ];
-                        dEdF[ sot_dim * dim * I + sot_dim * J + dim * K + I ] += almansiStrain[ dim * K + L ] * deformationGradient[ dim * L + J ];
-                        dEdF[ sot_dim * dim * I + sot_dim * J + dim * K + J ] += deformationGradient[ dim * L + I ] * almansiStrain[ dim * L + K ];
-                    }
-                }
-            }
+        if ( dim == 3 ){
+            pullBackAlmansiStrain< 3 >(
+                std::begin( almansiStrain ),       std::end( almansiStrain ),
+                std::begin( deformationGradient ), std::end( deformationGradient ),
+                std::begin( greenLagrangeStrain ), std::end( greenLagrangeStrain ),
+                std::begin( dEde ),                std::end( dEde ),
+                std::begin( dEdF ),                std::end( dEdF )
+            );
+        }
+        else if ( dim == 2 ){
+            pullBackAlmansiStrain< 2 >(
+                std::begin( almansiStrain ),       std::end( almansiStrain ),
+                std::begin( deformationGradient ), std::end( deformationGradient ),
+                std::begin( greenLagrangeStrain ), std::end( greenLagrangeStrain ),
+                std::begin( dEde ),                std::end( dEde ),
+                std::begin( dEdF ),                std::end( dEdF )
+            );
+        }
+        else if ( dim == 1 ){
+            pullBackAlmansiStrain< 1 >(
+                std::begin( almansiStrain ),       std::end( almansiStrain ),
+                std::begin( deformationGradient ), std::end( deformationGradient ),
+                std::begin( greenLagrangeStrain ), std::end( greenLagrangeStrain ),
+                std::begin( dEde ),                std::end( dEde ),
+                std::begin( dEdF ),                std::end( dEdF )
+            );
         }
 
         return;
+
     }
 
     void pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
