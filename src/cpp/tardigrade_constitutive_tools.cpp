@@ -4188,6 +4188,132 @@ namespace tardigradeConstitutiveTools{
         return;
     }
 
+    template<
+        typename temperature_type, typename referenceTemperature_type,
+        class linearParameters_iterator, class quadraticParameters_iterator,
+        class thermalExpansion_iterator
+    >
+    void quadraticThermalExpansion(
+        const temperature_type &temperature, const referenceTemperature_type &referenceTemperature,
+        const linearParameters_iterator       &linearParameters_begin, const linearParameters_iterator       &linearParameters_end,
+        const quadraticParameters_iterator &quadraticParameters_begin, const quadraticParameters_iterator &quadraticParameters_end,
+        thermalExpansion_iterator thermalExpansion_begin, thermalExpansion_iterator thermalExpansion_end
+    ){
+        /*!
+         * Define a quadratic equation for the thermal expansion. This could be the
+         * thermal strain or the value of the stretch tensor.
+         * 
+         * \f$ e^{\theta}_{ij} = a_{ij} \left(\theta - \theta_0\right) + b_{ij} \left(\theta^2 - \theta_0^2\right)\f$
+         * 
+         * Where \f$e^{\theta}_{ij}\f$ is the thermal expansion, \f$a_{ij}\f$ are the linear parameters,
+         * \f$b_{ij}\f$ are the quadratic parameters, \f$\theta\f$ is the current temperature, and \f$\theta_0\f$
+         * is the reference temperature.
+         *
+         * \param &temperature: The temperature
+         * \param &referenceTemperature: The reference temperature
+         * \param &linearParameters_begin: The starting iterator of the linear thermal expansion parameters.
+         * \param &linearParameters_end: The stopping iterator of the linear thermal expansion parameters.
+         * \param &quadraticParameters_begin: The starting iterator of the quadratic thermal expansion parameters.
+         * \param &quadraticParameters_end: The stopping iterator of the quadratic thermal expansion parameters.
+         * \param &thermalExpansion_begin: The starting iterator of the resulting thermal expansion.
+         * \param &thermalExpansion_end: The stopping iterator of the resulting thermal expansion.
+         */
+
+        TARDIGRADE_ERROR_TOOLS_EVAL(
+            const unsigned int parameters_dim = ( unsigned int )( linearParameters_end - linearParameters_begin );
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            parameters_dim == ( unsigned int )( quadraticParameters_end - quadraticParameters_begin ),
+            "The quadratic parameters array has a size of " + std::to_string( ( unsigned int )( quadraticParameters_end - quadraticParameters_begin ) ) + " and should have a size of " + std::to_string( parameters_dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            parameters_dim == ( unsigned int )( thermalExpansion_end - thermalExpansion_begin ),
+            "The thermal expansion array has a size of " + std::to_string( ( unsigned int )( thermalExpansion_end - thermalExpansion_begin ) ) + " and should have a size of " + std::to_string( parameters_dim )
+        )
+
+        for (
+            auto v = std::pair< unsigned int, thermalExpansion_iterator >( 0, thermalExpansion_begin );
+            v.second != thermalExpansion_end;
+            ++v.first, ++v.second
+        ){
+
+            *v.second = ( *( linearParameters_begin + v.first ) ) * temperature          + ( *( quadraticParameters_begin + v.first ) ) * temperature * temperature
+                      - ( *( linearParameters_begin + v.first ) ) * referenceTemperature - ( *( quadraticParameters_begin + v.first ) ) * referenceTemperature * referenceTemperature; 
+
+        }
+
+    }
+
+    template<
+        typename temperature_type, typename referenceTemperature_type,
+        class linearParameters_iterator, class quadraticParameters_iterator,
+        class thermalExpansion_iterator, class thermalExpansionJacobian_iterator
+    >
+    void quadraticThermalExpansion(
+        const temperature_type &temperature, const referenceTemperature_type &referenceTemperature,
+        const linearParameters_iterator          &linearParameters_begin, const linearParameters_iterator          &linearParameters_end,
+        const quadraticParameters_iterator    &quadraticParameters_begin, const quadraticParameters_iterator    &quadraticParameters_end,
+        thermalExpansion_iterator                 thermalExpansion_begin, thermalExpansion_iterator                 thermalExpansion_end,
+        thermalExpansionJacobian_iterator thermalExpansionJacobian_begin, thermalExpansionJacobian_iterator thermalExpansionJacobian_end
+    ){
+        /*!
+         * Define a quadratic equation for the thermal expansion. This could be the
+         * thermal strain or the value of the stretch tensor.
+         * 
+         * \f$ e^{\theta}_{ij} = a_{ij} \left(\theta - \theta_0\right) + b_{ij} \left(\theta^2 - \theta_0^2\right)\f$
+         * 
+         * Where \f$e^{\theta}_{ij}\f$ is the thermal expansion, \f$a_{ij}\f$ are the linear parameters,
+         * \f$b_{ij}\f$ are the quadratic parameters, \f$\theta\f$ is the current temperature, and \f$\theta_0\f$
+         * is the reference temperature.
+         *
+         * \param &temperature: The temperature
+         * \param &referenceTemperature: The reference temperature
+         * \param &linearParameters_begin: The starting iterator of the linear thermal expansion parameters.
+         * \param &linearParameters_end: The stopping iterator of the linear thermal expansion parameters.
+         * \param &quadraticParameters_begin: The starting iterator of the quadratic thermal expansion parameters.
+         * \param &quadraticParameters_end: The stopping iterator of the quadratic thermal expansion parameters.
+         * \param thermalExpansion_begin: The starting iterator of the resulting thermal expansion.
+         * \param thermalExpansion_end: The stopping iterator of the resulting thermal expansion.
+         * \param thermalExpansionJacobian_begin: The starting iterator of the Jacobian of the thermal expansion w.r.t. temperature
+         * \param thermalExpansionJacobian_end: The stopping iterator of the Jacobian of the thermal expansion w.r.t. temperature
+         */
+
+        TARDIGRADE_ERROR_TOOLS_EVAL(
+            const unsigned int parameters_dim = ( unsigned int )( linearParameters_end - linearParameters_begin );
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            parameters_dim == ( unsigned int )( quadraticParameters_end - quadraticParameters_begin ),
+            "The quadratic parameters array has a size of " + std::to_string( ( unsigned int )( quadraticParameters_end - quadraticParameters_begin ) ) + " and should have a size of " + std::to_string( parameters_dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            parameters_dim == ( unsigned int )( thermalExpansion_end - thermalExpansion_begin ),
+            "The thermal expansion array has a size of " + std::to_string( ( unsigned int )( thermalExpansion_end - thermalExpansion_begin ) ) + " and should have a size of " + std::to_string( parameters_dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            parameters_dim == ( unsigned int )( thermalExpansionJacobian_end - thermalExpansionJacobian_begin ),
+            "The thermal expansion Jacobian array has a size of " + std::to_string( ( unsigned int )( thermalExpansion_end - thermalExpansion_begin ) ) + " and should have a size of " + std::to_string( parameters_dim )
+        )
+
+        for (
+            auto v = std::pair< unsigned int, thermalExpansion_iterator >( 0, thermalExpansion_begin );
+            v.second != thermalExpansion_end;
+            ++v.first, ++v.second
+        ){
+
+            *v.second = ( *( linearParameters_begin + v.first ) ) * temperature          + ( *( quadraticParameters_begin + v.first ) ) * temperature * temperature
+                      - ( *( linearParameters_begin + v.first ) ) * referenceTemperature - ( *( quadraticParameters_begin + v.first ) ) * referenceTemperature * referenceTemperature; 
+
+            *( thermalExpansionJacobian_begin + v.first ) = ( *( linearParameters_begin + v.first ) ) + 2 * ( *( quadraticParameters_begin + v.first ) ) * temperature;
+
+        }
+
+    }
+
     void quadraticThermalExpansion(const floatType &temperature, const floatType &referenceTemperature,
                                        const floatVector &linearParameters, const floatVector &quadraticParameters,
                                        floatVector &thermalExpansion){
@@ -4208,10 +4334,14 @@ namespace tardigradeConstitutiveTools{
          * \param &thermalExpansion: The resulting thermal expansion.
          */
 
-        TARDIGRADE_ERROR_TOOLS_CHECK( linearParameters.size() == quadraticParameters.size(), "The linear and quadratic parameters must have the same length");
+        thermalExpansion = floatVector( linearParameters.size( ), 0 );
 
-        thermalExpansion = linearParameters * temperature          + quadraticParameters * temperature * temperature
-                         - linearParameters * referenceTemperature - quadraticParameters * referenceTemperature * referenceTemperature;
+        quadraticThermalExpansion(
+            temperature, referenceTemperature,
+            std::begin( linearParameters ),    std::end( linearParameters ),
+            std::begin( quadraticParameters ), std::end( quadraticParameters ),
+            std::begin( thermalExpansion ),    std::end( thermalExpansion )
+        );
 
         return;
     }
@@ -4238,12 +4368,19 @@ namespace tardigradeConstitutiveTools{
          *     the temperature.
          */
 
-        TARDIGRADE_ERROR_TOOLS_CATCH( quadraticThermalExpansion(temperature, referenceTemperature, linearParameters, quadraticParameters,
-                                                                thermalExpansion) )
+        thermalExpansion         = floatVector( linearParameters.size( ), 0 );
+        thermalExpansionJacobian = floatVector( linearParameters.size( ), 0 );
 
-        thermalExpansionJacobian = linearParameters + 2 * quadraticParameters * temperature;
+        quadraticThermalExpansion(
+            temperature, referenceTemperature,
+            std::begin( linearParameters ),         std::end( linearParameters ),
+            std::begin( quadraticParameters ),      std::end( quadraticParameters ),
+            std::begin( thermalExpansion ),         std::end( thermalExpansion ),
+            std::begin( thermalExpansionJacobian ), std::end( thermalExpansionJacobian )
+        );
 
         return;
+
     }
 
     void pushForwardGreenLagrangeStrain(const floatVector &greenLagrangeStrain, const floatVector &deformationGradient,

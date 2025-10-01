@@ -566,6 +566,31 @@ namespace tardigradeConstitutiveTools{
                                       floatVector &pulledBackVelocityGradient, floatMatrix &dPullBackLdL,
                                       floatMatrix &dPullBackLdF);
 
+    template<
+        typename temperature_type, typename referenceTemperature_type,
+        class linearParameters_iterator, class quadraticParameters_iterator,
+        class thermalExpansion_iterator
+    >
+    void quadraticThermalExpansion(
+        const temperature_type &temperature, const referenceTemperature_type &referenceTemperature,
+        const linearParameters_iterator       &linearParameters_begin, const linearParameters_iterator       &linearParameters_end,
+        const quadraticParameters_iterator &quadraticParameters_begin, const quadraticParameters_iterator &quadraticParameters_end,
+        thermalExpansion_iterator thermalExpansion_begin, thermalExpansion_iterator thermalExpansion_end
+    );
+
+    template<
+        typename temperature_type, typename referenceTemperature_type,
+        class linearParameters_iterator, class quadraticParameters_iterator,
+        class thermalExpansion_iterator, class thermalExpansionJacobian_iterator
+    >
+    void quadraticThermalExpansion(
+        const temperature_type &temperature, const referenceTemperature_type &referenceTemperature,
+        const linearParameters_iterator          &linearParameters_begin, const linearParameters_iterator          &linearParameters_end,
+        const quadraticParameters_iterator    &quadraticParameters_begin, const quadraticParameters_iterator    &quadraticParameters_end,
+        thermalExpansion_iterator                 thermalExpansion_begin, thermalExpansion_iterator                 thermalExpansion_end,
+        thermalExpansionJacobian_iterator thermalExpansionJacobian_begin, thermalExpansionJacobian_iterator thermalExpansionJacobian_end
+    );
+
     void quadraticThermalExpansion(const floatType &temperature, const floatType &referenceTemperature,
                                        const floatVector &linearParameters, const floatVector &quadraticParameters,
                                        floatVector &thermalExpansion);
