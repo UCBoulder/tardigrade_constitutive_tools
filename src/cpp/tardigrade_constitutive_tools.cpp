@@ -2767,7 +2767,7 @@ namespace tardigradeConstitutiveTools{
 
         Eigen::Map< const Eigen::Matrix< deformationGradient_type, dim, dim, Eigen::RowMajor > > Fp( &( *previousDeformationGradient_begin ) );
         Eigen::Map< const Eigen::Matrix< deformationGradient_type, dim, dim, Eigen::RowMajor > > Lt( LtpAlpha.data( ) );
-        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > RHS_map( RHS.data( ), dim, dim );
+        Eigen::Map< Eigen::Matrix< deformationGradient_type, dim, dim, Eigen::RowMajor > > RHS_map( RHS.data( ), dim, dim );
 
         if ( mode == 1 ){
             RHS_map = ( Lt * Fp * Dt ).eval( );
@@ -2791,8 +2791,8 @@ namespace tardigradeConstitutiveTools{
             dF_begin, dF_end, deformationGradient_type( )
         );
 
-        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > LHS_map( LHS.data( ) );
-        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > dF_map( &(*dF_begin ) );
+        Eigen::Map< Eigen::Matrix< deformationGradient_type, dim, dim, Eigen::RowMajor > > LHS_map( LHS.data( ) );
+        Eigen::Map< Eigen::Matrix< deformationGradient_type, dim, dim, Eigen::RowMajor > > dF_map( &(*dF_begin ) );
 
         if ( mode == 1 ){
 
@@ -2886,8 +2886,8 @@ namespace tardigradeConstitutiveTools{
 
         for ( unsigned int i = 0; i < dim; i++ ){ LHS[ dim * i + i ] += 1; }
 
-        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > LHS_map( LHS.data( ) );
-        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > inv_LHS_map( inv_LHS.data( ) );
+        Eigen::Map< Eigen::Matrix< deformationGradient_type, dim, dim, Eigen::RowMajor > > LHS_map( LHS.data( ) );
+        Eigen::Map< Eigen::Matrix< deformationGradient_type, dim, dim, Eigen::RowMajor > > inv_LHS_map( inv_LHS.data( ) );
 
         inv_LHS_map = LHS_map.inverse( ).eval( );
 
@@ -3029,8 +3029,8 @@ namespace tardigradeConstitutiveTools{
 
         for ( unsigned int i = 0; i < dim; i++ ){ LHS[ dim * i + i ] += 1; }
 
-        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > LHS_map( LHS.data( ) );
-        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > inv_LHS_map( inv_LHS.data( ) );
+        Eigen::Map< Eigen::Matrix< deformationGradient_type, dim, dim, Eigen::RowMajor > > LHS_map( LHS.data( ) );
+        Eigen::Map< Eigen::Matrix< deformationGradient_type, dim, dim, Eigen::RowMajor > > inv_LHS_map( inv_LHS.data( ) );
 
         inv_LHS_map = LHS_map.inverse( ).eval( );
 
@@ -3867,6 +3867,175 @@ namespace tardigradeConstitutiveTools{
         return;
     }
 
+    template<
+        unsigned int dim,
+        class velocityGradient_iterator, class deformationGradient_iterator,
+        class pulledBackVelocityGradient_iterator
+    >
+    void pullBackVelocityGradient(
+        const velocityGradient_iterator &velocityGradient_begin,       const velocityGradient_iterator &velocityGradient_end,
+        const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
+        pulledBackVelocityGradient_iterator pulledBackVelocityGradient_begin, pulledBackVelocityGradient_iterator pulledBackVelocityGradient_end
+    ){
+        /*!
+         * Pull back the velocity gradient to the configuration indicated by deformationGradient, i.e.
+         *
+         * \f$totalDeformationGradient_{iI} = deformationGradient_{i \bar{I}} remainingDeformationGradient_{\bar{I}I}\f$
+         *
+         * This is done via
+         *
+         * \f$L_{\bar{I} \bar{J}} = deformationGradient_{\bar{I} i}^{-1} velocityGradient_{ij} deformationGradient_{j\bar{J}}\f$
+         *
+         * \param &velocityGradient_begin: The starting iterator of the velocity gradient in the current configuration.
+         * \param &velocityGradient_end: The stopping iterator of the velocity gradient in the current configuration.
+         * \param &deformationGradient_begin: The starting iterator of the deformation gradient between the desired configuration
+         *     and the current configuration.
+         * \param &deformationGradient_end: The stopping iterator of the deformation gradient between the desired configuration
+         *     and the current configuration.
+         * \param &pulledBackVelocityGradient_begin: The starting iterator of the pulled back velocity gradient.
+         * \param &pulledBackVelocityGradient_end: The stopping iterator of the pulled back velocity gradient.
+         */
+
+        using velocityGradient_type           = typename std::iterator_traits<velocityGradient_iterator>::value_type;
+        using deformationGradient_type        = typename std::iterator_traits<deformationGradient_iterator>::value_type;
+        using pulledBackVelocityGradient_type = typename std::iterator_traits<pulledBackVelocityGradient_iterator>::value_type;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            dim * dim == ( unsigned int )( velocityGradient_end - velocityGradient_begin ),
+            "The velocity gradient has a size of " + std::to_string( ( unsigned int )( velocityGradient_end - velocityGradient_begin ) ) + " but it shold be " + std::to_string( dim * dim )
+        );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            dim * dim == ( unsigned int )( deformationGradient_end - deformationGradient_begin ),
+            "The deformation gradient has a size of " + std::to_string( ( unsigned int )( deformationGradient_end - deformationGradient_begin ) ) + " but it shold be " + std::to_string( dim * dim )
+        );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            dim * dim == ( unsigned int )( pulledBackVelocityGradient_end - pulledBackVelocityGradient_begin ),
+            "The pulled back velocity gradient has a size of " + std::to_string( ( unsigned int )( pulledBackVelocityGradient_end - pulledBackVelocityGradient_begin ) ) + " but it shold be " + std::to_string( dim * dim )
+        );
+
+        Eigen::Map< const Eigen::Matrix< deformationGradient_type, dim, dim, Eigen::RowMajor > > F( &(*deformationGradient_begin) );
+        Eigen::Map< const Eigen::Matrix< velocityGradient_type, dim, dim, Eigen::RowMajor > > L( &(*velocityGradient_begin) );
+        Eigen::Map< Eigen::Matrix< pulledBackVelocityGradient_type, dim, dim, Eigen::RowMajor > > pullBackL( &(*pulledBackVelocityGradient_begin) );
+
+        pullBackL = ( F.inverse( ) * L * F ).eval( );
+
+        return;
+
+    }
+
+    template<
+        unsigned int dim,
+        class velocityGradient_iterator, class deformationGradient_iterator,
+        class pulledBackVelocityGradient_iterator,
+        class dPullBackLdL_iterator, class dPullBackLdF_iterator
+    >
+    void pullBackVelocityGradient(
+        const velocityGradient_iterator &velocityGradient_begin,       const velocityGradient_iterator &velocityGradient_end,
+        const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
+        pulledBackVelocityGradient_iterator pulledBackVelocityGradient_begin, pulledBackVelocityGradient_iterator pulledBackVelocityGradient_end,
+        dPullBackLdL_iterator dPullBackLdL_begin, dPullBackLdL_iterator dPullBackLdL_end,
+        dPullBackLdF_iterator dPullBackLdF_begin, dPullBackLdF_iterator dPullBackLdF_end
+    ){
+        /*!
+         * Pull back the velocity gradient to the configuration indicated by deformationGradient, i.e.
+         *
+         * \f$totalDeformationGradient_{iI} = deformationGradient_{i \bar{I}} remainingDeformationGradient_{\bar{I}I}\f$
+         *
+         * This is done via
+         *
+         * \f$L_{\bar{I} \bar{J}} = deformationGradient_{\bar{I} i}^{-1} velocityGradient_{ij} deformationGradient_{j\bar{J}}\f$
+         *
+         * \param &velocityGradient_begin: The starting iterator of the velocity gradient in the current configuration.
+         * \param &velocityGradient_end: The stopping iterator of the velocity gradient in the current configuration.
+         * \param &deformationGradient_begin: The starting iterator of the deformation gradient between the desired configuration
+         *     and the current configuration.
+         * \param &deformationGradient_end: The stopping iterator of the deformation gradient between the desired configuration
+         *     and the current configuration.
+         * \param &pulledBackVelocityGradient_begin: The starting iterator of the pulled back velocity gradient.
+         * \param &pulledBackVelocityGradient_end: The stopping iterator of the pulled back velocity gradient.
+         * \param &dPullBackLdL_begin: The starting iterator of the gradient of the pulled back velocity gradient
+         *     w.r.t. the velocity gradient.
+         * \param &dPullBackLdL_end: The stopping iterator of the gradient of the pulled back velocity gradient
+         *     w.r.t. the velocity gradient.
+         * \param &dPullBackLdF_begin: The starting iterator of the gradient of the pulled back velocity gradient
+         *     w.r.t. the deformation gradient.
+         * \param &dPullBackLdF_end: The stopping iterator of the gradient of the pulled back velocity gradient
+         *     w.r.t. the deformation gradient.
+         */
+
+        using velocityGradient_type           = typename std::iterator_traits<velocityGradient_iterator>::value_type;
+        using deformationGradient_type        = typename std::iterator_traits<deformationGradient_iterator>::value_type;
+        using pulledBackVelocityGradient_type = typename std::iterator_traits<pulledBackVelocityGradient_iterator>::value_type;
+        using dPullBackLdL_type               = typename std::iterator_traits<dPullBackLdL_iterator>::value_type;
+        using dPullBackLdF_type               = typename std::iterator_traits<dPullBackLdF_iterator>::value_type;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            dim * dim == ( unsigned int )( velocityGradient_end - velocityGradient_begin ),
+            "The velocity gradient has a size of " + std::to_string( ( unsigned int )( velocityGradient_end - velocityGradient_begin ) ) + " but it shold be " + std::to_string( dim * dim )
+        );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            dim * dim == ( unsigned int )( deformationGradient_end - deformationGradient_begin ),
+            "The deformation gradient has a size of " + std::to_string( ( unsigned int )( deformationGradient_end - deformationGradient_begin ) ) + " but it shold be " + std::to_string( dim * dim )
+        );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            dim * dim == ( unsigned int )( pulledBackVelocityGradient_end - pulledBackVelocityGradient_begin ),
+            "The pulled back velocity gradient has a size of " + std::to_string( ( unsigned int )( pulledBackVelocityGradient_end - pulledBackVelocityGradient_begin ) ) + " but it shold be " + std::to_string( dim * dim )
+        );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            dim * dim * dim * dim == ( unsigned int )( dPullBackLdL_end - dPullBackLdL_begin ),
+            "The derivative of the pulled back velocity gradient with respect to the velocity gradient has a size of " + std::to_string( ( unsigned int )( dPullBackLdL_end - dPullBackLdL_begin ) ) + " but it shold be " + std::to_string( dim * dim * dim * dim )
+        );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            dim * dim * dim * dim == ( unsigned int )( dPullBackLdF_end - dPullBackLdF_begin ),
+            "The derivative of the pulled back velocity gradient with respect to the deformation gradient has a size of " + std::to_string( ( unsigned int )( dPullBackLdF_end - dPullBackLdF_begin ) ) + " but it shold be " + std::to_string( dim * dim * dim * dim )
+        );
+
+        Eigen::Map< const Eigen::Matrix< deformationGradient_type, dim, dim, Eigen::RowMajor > > F( &(*deformationGradient_begin) );
+        Eigen::Map< const Eigen::Matrix< velocityGradient_type, dim, dim, Eigen::RowMajor > > L( &(*velocityGradient_begin) );
+        Eigen::Map< Eigen::Matrix< pulledBackVelocityGradient_type, dim, dim, Eigen::RowMajor > > pullBackL( &(*pulledBackVelocityGradient_begin) );
+
+        std::array< deformationGradient_type, dim * dim > inverseDeformationGradient;
+        std::array< pulledBackVelocityGradient_type, dim * dim > term2;
+
+        Eigen::Map< Eigen::Matrix< deformationGradient_type, dim, dim, Eigen::RowMajor > > invF_map( inverseDeformationGradient.data( ) );
+        invF_map = F.inverse( ).eval( );
+
+        Eigen::Map< Eigen::Matrix< pulledBackVelocityGradient_type, dim, dim, Eigen::RowMajor > > term2_map( term2.data( ) );
+        term2_map = ( invF_map * L ).eval( );
+
+        //Pull back the velocity gradient
+        pullBackL = ( term2_map * F ).eval( );
+
+        //Construct the gradients
+        std::fill( dPullBackLdL_begin, dPullBackLdL_end, dPullBackLdL_type( ) );
+        std::fill( dPullBackLdF_begin, dPullBackLdF_end, dPullBackLdF_type( ) );
+
+        for (unsigned int I=0; I<dim; ++I){
+            for (unsigned int J=0; J<dim; ++J){
+                for (unsigned int k=0; k<dim; ++k){
+                    for (unsigned int l=0; l<dim; ++l){
+                        *( dPullBackLdL_begin + dim * dim * dim * I + dim * dim * J + dim * k + l ) = inverseDeformationGradient[ dim * I + k ] * ( *( deformationGradient_begin + dim * l + J ) );
+                    }
+
+                    *( dPullBackLdF_begin + dim * dim * dim * I + dim * dim * J + dim * k + J ) += term2[ dim * I + k ];
+
+                    for ( unsigned int K = 0; K < dim; ++K ){
+                        *( dPullBackLdF_begin + dim * dim * dim * I + dim * dim * J + dim * k + K ) -= inverseDeformationGradient[ dim * I + k ] * ( *( pulledBackVelocityGradient_begin + dim * K + J ) );
+                    }
+                }
+            }
+        }
+
+        return;
+
+    }
+
     void pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
                                       floatVector &pulledBackVelocityGradient){
         /*!
@@ -3884,17 +4053,36 @@ namespace tardigradeConstitutiveTools{
          * \param &pulledBackVelocityGradient: The pulled back velocity gradient.
          */
 
-        //Assume 3D
-        constexpr unsigned int dim = 3;
-        constexpr unsigned int sot_dim = dim * dim;
+        const unsigned int dim = ( unsigned int )std::pow( velocityGradient.size( ), 0.5 );
 
-        //Invert the deformation gradient
-        pulledBackVelocityGradient = floatVector( sot_dim, 0 );
-        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F( deformationGradient.data( ), dim, dim );
-        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > L( velocityGradient.data( ), dim, dim );
-        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > pullBackL( pulledBackVelocityGradient.data( ), dim, dim );
+        pulledBackVelocityGradient = floatVector( dim * dim, 0 );
 
-        pullBackL = ( F.inverse( ) * L * F ).eval( );
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( dim == 3 ) || ( dim == 2 ) || ( dim == 1 ),
+            "The dimension of the deformation gradient is " + std::to_string( dim ) + " but must be 1, 2, or 3"
+        );
+
+        if ( dim == 3 ){
+            pullBackVelocityGradient< 3  >(
+                std::begin( velocityGradient ), std::end( velocityGradient ),
+                std::begin( deformationGradient ), std::end( deformationGradient ),
+                std::begin( pulledBackVelocityGradient ), std::end( pulledBackVelocityGradient )
+            );
+        }
+        else if ( dim == 2 ){
+            pullBackVelocityGradient< 2 >(
+                std::begin( velocityGradient ), std::end( velocityGradient ),
+                std::begin( deformationGradient ), std::end( deformationGradient ),
+                std::begin( pulledBackVelocityGradient ), std::end( pulledBackVelocityGradient )
+            );
+        }
+        else if ( dim == 1 ){
+            pullBackVelocityGradient< 1 >(
+                std::begin( velocityGradient ), std::end( velocityGradient ),
+                std::begin( deformationGradient ), std::end( deformationGradient ),
+                std::begin( pulledBackVelocityGradient ), std::end( pulledBackVelocityGradient )
+            );
+        }
 
         return;
     }
@@ -3921,45 +4109,43 @@ namespace tardigradeConstitutiveTools{
          *     w.r.t. the deformation gradient.
          */
 
-        //Assume 3D
-        constexpr unsigned int dim = 3;
-        constexpr unsigned int sot_dim = dim * dim;
+        const unsigned int dim = ( unsigned int )std::pow( velocityGradient.size( ), 0.5 );
 
-        pulledBackVelocityGradient = floatVector( sot_dim, 0 );
-        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F( deformationGradient.data( ), dim, dim );
-        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > L( velocityGradient.data( ), dim, dim );
-        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > pullBackL( pulledBackVelocityGradient.data( ), dim, dim );
+        pulledBackVelocityGradient = floatVector( dim * dim, 0 );
+        dPullBackLdL = floatVector( dim * dim * dim * dim, 0 );
+        dPullBackLdF = floatVector( dim * dim * dim * dim, 0 );
 
-        floatVector inverseDeformationGradient = deformationGradient;
-        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invF_map( inverseDeformationGradient.data( ), dim, dim );
-        invF_map = invF_map.inverse( ).eval( );
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( dim == 3 ) || ( dim == 2 ) || ( dim == 1 ),
+            "The dimension of the deformation gradient is " + std::to_string( dim ) + " but must be 1, 2, or 3"
+        );
 
-        floatVector term2( sot_dim, 0 );
-        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > term2_map( term2.data( ), dim, dim );
-
-        term2_map = ( invF_map * L ).eval( );
-
-        //Pull back the velocity gradient
-        pullBackL = ( term2_map * F ).eval( );
-
-        //Construct the gradients
-        dPullBackLdL = floatVector( sot_dim * sot_dim, 0 );
-        dPullBackLdF = floatVector( sot_dim * sot_dim, 0 );
-
-        for (unsigned int I=0; I<dim; I++){
-            for (unsigned int J=0; J<dim; J++){
-                for (unsigned int k=0; k<dim; k++){
-                    for (unsigned int l=0; l<dim; l++){
-                        dPullBackLdL[sot_dim * dim * I + sot_dim * J + dim * k + l ] = inverseDeformationGradient[dim*I + k] * deformationGradient[dim*l + J];
-                    }
-
-                    dPullBackLdF[sot_dim * dim * I + sot_dim * J + dim * k + J ] += term2[dim*I + k];
-
-                    for ( unsigned int K = 0; K < dim; K++ ){
-                        dPullBackLdF[sot_dim * dim * I + sot_dim * J + dim * k + K ] -= inverseDeformationGradient[dim*I + k] * pulledBackVelocityGradient[dim*K + J];
-                    }
-                }
-            }
+        if ( dim == 3 ){
+            pullBackVelocityGradient< 3  >(
+                std::begin( velocityGradient ), std::end( velocityGradient ),
+                std::begin( deformationGradient ), std::end( deformationGradient ),
+                std::begin( pulledBackVelocityGradient ), std::end( pulledBackVelocityGradient ),
+                std::begin( dPullBackLdL ), std::end( dPullBackLdL ),
+                std::begin( dPullBackLdF ), std::end( dPullBackLdF )
+            );
+        }
+        else if ( dim == 2 ){
+            pullBackVelocityGradient< 2 >(
+                std::begin( velocityGradient ), std::end( velocityGradient ),
+                std::begin( deformationGradient ), std::end( deformationGradient ),
+                std::begin( pulledBackVelocityGradient ), std::end( pulledBackVelocityGradient ),
+                std::begin( dPullBackLdL ), std::end( dPullBackLdL ),
+                std::begin( dPullBackLdF ), std::end( dPullBackLdF )
+            );
+        }
+        else if ( dim == 1 ){
+            pullBackVelocityGradient< 1 >(
+                std::begin( velocityGradient ), std::end( velocityGradient ),
+                std::begin( deformationGradient ), std::end( deformationGradient ),
+                std::begin( pulledBackVelocityGradient ), std::end( pulledBackVelocityGradient ),
+                std::begin( dPullBackLdL ), std::end( dPullBackLdL ),
+                std::begin( dPullBackLdF ), std::end( dPullBackLdF )
+            );
         }
 
         return;
