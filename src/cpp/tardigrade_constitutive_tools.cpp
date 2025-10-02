@@ -6574,6 +6574,42 @@ namespace tardigradeConstitutiveTools{
 
     }
 
+    template<
+        unsigned int dim,
+        class normalVector_iterator, class gradU_iterator, class dNormalVectordGradU_iterator
+    >
+    void computeDCurrentNormalVectorDGradU(
+        const normalVector_iterator &normalVector_begin, const normalVector_iterator &normalVector_end,
+        const gradU_iterator &gradU_begin, const gradU_iterator &gradU_end,
+        dNormalVectordGradU_iterator dNormalVectordGradU_begin, dNormalVectordGradU_iterator dNormalVectordGradU_end
+    ){
+
+    }
+
+    template<
+        unsigned int dim,
+        class normalVector_iterator, class gradU_iterator, class dAreaWeightedNormalVectordGradU_iterator
+    >
+    void computeDCurrentAreaWeightedNormalVectorDGradU(
+        const normalVector_iterator &normalVector_begin, const normalVector_iterator &normalVector_end,
+        const gradU_iterator &gradU_begin, const gradU_iterator &gradU_end,
+        dAreaWeightedNormalVectordGradU_iterator dAreaWeightedNormalVectordGradU_begin, dAreaWeightedNormalVectordGradU_iterator dAreaWeightedNormalVectordGradU_end
+    ){
+
+    }
+
+    template<
+        unsigned int dim,
+        class normalVector_iterator, class gradU_iterator, class dCurrentAreadGradU_iterator
+    >
+    void computeDCurrentAreaDGradU(
+        const normalVector_iterator &normalVector_begin, const normalVector_iterator &normalVector_end,
+        const gradU_iterator &gradU_begin, const gradU_iterator &gradU_end,
+        dCurrentAreadGradU_iterator dCurrentAreadGradU_begin, dCurrentAreadGradU_iterator dCurrentAreadGradU_end
+    ){
+
+    }
+
     void computeDCurrentNormalVectorDF( const floatVector &normalVector, const floatVector &F, floatVector &dNormalVectordF ){
         /*!
          * Compute the derivative of the normal vector in the current configuration w.r.t. the deformation gradient
@@ -6708,47 +6744,6 @@ namespace tardigradeConstitutiveTools{
         }
 
         return;
-//
-//
-//
-//
-//
-//        constexpr unsigned int dim = 3;
-//        constexpr unsigned int sot_dim = dim * dim;
-//
-//        dCurrentAreadF = floatVector( sot_dim, 0 );
-//
-//        TARDIGRADE_ERROR_TOOLS_CHECK( F.size( ) == sot_dim, "The deformation gradient must be a second order tensor of size " + std::to_string( sot_dim ) + " and it has " + std::to_string( F.size( ) ) + " elements" );
-//
-//        floatVector invF( sot_dim, 0 );
-//
-//        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F_map( F.data( ), dim, dim );
-//
-//        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invF_map( invF.data( ), dim, dim );
-//
-//        invF_map = F_map.inverse( );
-//
-//        floatVector invF_n( dim, 0 );
-//
-//        for ( unsigned int B = 0; B < dim; B++ ){
-//
-//            for ( unsigned int i = 0; i < dim; i++ ){
-//
-//                invF_n[ B ] += invF[ dim * B + i ] * normalVector[ i ];
-//
-//            }
-//
-//        }
-//
-//        for ( unsigned int B = 0; B < dim; B++ ){
-//
-//            for ( unsigned int b = 0; b < dim; b++ ){
-//
-//                dCurrentAreadF[ dim * b + B ] += invF[ dim * B + b ] - normalVector[ b ] * invF_n[ B ];
-//
-//            }
-//
-//        }
 
     }
 
