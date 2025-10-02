@@ -804,6 +804,36 @@ namespace tardigradeConstitutiveTools{
         dCurrentAreadF_iterator dCurrentAreadF_begin, dCurrentAreadF_iterator dCurrentAreadF_end
     );
 
+    template<
+        unsigned int dim,
+        class normalVector_iterator, class gradU_iterator, class dNormalVectordGradU_iterator
+    >
+    void computeDCurrentNormalVectorDGradU(
+        const normalVector_iterator &normalVector_begin, const normalVector_iterator &normalVector_end,
+        const gradU_iterator &gradU_begin, const gradU_iterator &gradU_end,
+        dNormalVectordGradU_iterator dNormalVectordGradU_begin, dNormalVectordGradU_iterator dNormalVectordGradU_end
+    );
+
+    template<
+        unsigned int dim,
+        class normalVector_iterator, class gradU_iterator, class dAreaWeightedNormalVectordGradU_iterator
+    >
+    void computeDCurrentAreaWeightedNormalVectorDGradU(
+        const normalVector_iterator &normalVector_begin, const normalVector_iterator &normalVector_end,
+        const gradU_iterator &gradU_begin, const gradU_iterator &gradU_end,
+        dAreaWeightedNormalVectordGradU_iterator dAreaWeightedNormalVectordGradU_begin, dAreaWeightedNormalVectordGradU_iterator dAreaWeightedNormalVectordGradU_end
+    );
+
+    template<
+        unsigned int dim,
+        class normalVector_iterator, class gradU_iterator, class dCurrentAreadGradU_iterator
+    >
+    void computeDCurrentAreaDGradU(
+        const normalVector_iterator &normalVector_begin, const normalVector_iterator &normalVector_end,
+        const gradU_iterator &gradU_begin, const gradU_iterator &gradU_end,
+        dCurrentAreadGradU_iterator dCurrentAreadGradU_begin, dCurrentAreadGradU_iterator dCurrentAreadGradU_end
+    );
+
     void computeDCurrentNormalVectorDF( const floatVector &normalVector, const floatVector &F, floatVector &dNormalVectordF );
 
     void computeDCurrentAreaWeightedNormalVectorDF( const floatVector &normalVector, const floatVector &F, floatVector &dAreaWeightedNormalVectordF );
