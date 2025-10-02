@@ -743,6 +743,29 @@ namespace tardigradeConstitutiveTools{
     void pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress,
                                    floatMatrix &dCauchyStressdPK2, floatMatrix &dCauchyStressdF );
 
+    template<
+        unsigned int dim,
+        class cauchyStress_iterator, class F_iterator, class PK2_iterator
+    >
+    void pullBackCauchyStress(
+        const cauchyStress_iterator &cauchyStress_begin, const cauchyStress_iterator &cauchyStress_end,
+        const F_iterator &F_begin, const F_iterator &F_end,
+        PK2_iterator PK2_begin, PK2_iterator PK2_end
+    );
+
+    template<
+        unsigned int dim,
+        class cauchyStress_iterator, class F_iterator, class PK2_iterator,
+        class dPK2dCauchyStress_iterator, class dPK2dF_iterator
+    >
+    void pullBackCauchyStress(
+        const cauchyStress_iterator &cauchyStress_begin, const cauchyStress_iterator &cauchyStress_end,
+        const F_iterator &F_begin, const F_iterator &F_end,
+        PK2_iterator PK2_begin, PK2_iterator PK2_end,
+        dPK2dCauchyStress_iterator dPK2dCauchyStress_begin, dPK2dCauchyStress_iterator dPK2dCauchyStress_end,
+        dPK2dF_iterator dPK2dF_begin, dPK2dF_iterator dPK2dF_end
+    );
+
     void pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2 );
 
     void pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2,
