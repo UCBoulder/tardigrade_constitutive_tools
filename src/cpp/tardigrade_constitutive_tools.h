@@ -774,6 +774,26 @@ namespace tardigradeConstitutiveTools{
     void pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2,
                                    floatMatrix &dPK2dCauchyStress, floatMatrix &dPK2dF );
 
+    template<
+        unsigned int dim,
+        class normalVector_iterator, class F_iterator, class dNormalVectordF_iterator
+    >
+    void computeDCurrentNormalVectorDF(
+        const normalVector_iterator &normalVector_begin, const normalVector_iterator &normalVector_end,
+        const F_iterator &F_begin, const F_iterator &F_end,
+        dNormalVectordF_iterator dNormalVectordF_begin, dNormalVectordF_iterator dNormalVectordF_end
+    );
+
+    template<
+        unsigned int dim,
+        class normalVector_iterator, class F_iterator, class dAreaWeightedNormalVectordF_iterator
+    >
+    void computeDCurrentAreaWeightedNormalVectorDF(
+        const normalVector_iterator &normalVector_begin, const normalVector_iterator &normalVector_end,
+        const F_iterator &F_begin, const F_iterator &F_end,
+        dAreaWeightedNormalVectordF_iterator dAreaWeightedNormalVectordF_begin, dAreaWeightedNormalVectordF_iterator dAreaWeightedNormalVectordF_end
+    );
+
     void computeDCurrentNormalVectorDF( const floatVector &normalVector, const floatVector &F, floatVector &dNormalVectordF );
 
     void computeDCurrentAreaWeightedNormalVectorDF( const floatVector &normalVector, const floatVector &F, floatVector &dAreaWeightedNormalVectordF );
