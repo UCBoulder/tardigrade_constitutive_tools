@@ -667,6 +667,43 @@ namespace tardigradeConstitutiveTools{
     void pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
                                     floatVector &greenLagrangeStrain, floatMatrix &dEde, floatMatrix &dEdF );
 
+    template<
+        unsigned int dim,
+        class A_iterator, class symmA_iterator
+    >
+    void computeSymmetricPart(
+        const A_iterator &A_begin,  const A_iterator &A_end,
+        symmA_iterator symmA_begin, symmA_iterator symmA_end
+    );
+
+    template<
+        unsigned int dim,
+        class A_iterator, class symmA_iterator, class dSymmAdA_iterator
+    >
+    void computeSymmetricPart(
+        const A_iterator &A_begin,        const A_iterator &A_end,
+        symmA_iterator symmA_begin,       symmA_iterator symmA_end,
+        dSymmAdA_iterator dSymmAdA_begin, dSymmAdA_iterator dSymmAdA_end
+    );
+
+    template<
+        class A_iterator, class symmA_iterator
+    >
+    void computeSymmetricPart(
+        const A_iterator &A_begin,  const A_iterator &A_end,
+        symmA_iterator symmA_begin, symmA_iterator symmA_end,
+        unsigned int &dim
+    );
+
+    template<
+        class A_iterator, class symmA_iterator, class dSymmAdA_iterator
+    >
+    void computeSymmetricPart(
+        const A_iterator &A_begin,        const A_iterator &A_end,
+        symmA_iterator symmA_begin,       symmA_iterator symmA_end,
+        dSymmAdA_iterator dSymmAdA_begin, dSymmAdA_iterator dSymmAdA_end
+    );
+
     void computeSymmetricPart( const floatVector &A, floatVector &symmA, unsigned int &dim );
 
     void computeSymmetricPart( const floatVector &A, floatVector &symmA );

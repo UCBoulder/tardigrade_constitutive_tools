@@ -4946,6 +4946,195 @@ namespace tardigradeConstitutiveTools{
         return;
     }
 
+    template<
+        unsigned int dim,
+        class A_iterator, class symmA_iterator
+    >
+    void computeSymmetricPart(
+        const A_iterator &A_begin,  const A_iterator &A_end,
+        symmA_iterator symmA_begin, symmA_iterator symmA_end
+    ){
+        /*!
+         * Compute the symmetric part of a second order tensor ( \f$A\f$ ) and return it.
+         *
+         * \f$symm( A )_ij = \frac{1}{2}\left(A_{ij} + A_{ji}\right)\f$
+         *
+         * \param &A_begin: A constant reference to the starting iterator of the second order tensor to process ( \f$A\f$ )
+         * \param &A_end: A constant reference to the stopping iterator of the second order tensor to process ( \f$A\f$ )
+         * \param symmA_begin: The starting iterator of the symmetric part of A ( \f$A^{symm}\f$ )
+         * \param symmA_end: The stopping iterator of the symmetric part of A ( \f$A^{symm}\f$ )
+         */
+        
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( A_end - A_begin ) == dim * dim,
+            "A has a size of " + std::to_string( ( unsigned int )( A_end - A_begin ) ) + " but the nearest square matrix has a row and column size of " + std::to_string( dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( symmA_end - symmA_begin ) == dim * dim,
+            "symmA has a size of " + std::to_string( ( unsigned int )( symmA_end - symmA_begin ) ) + " but should have a size of " + std::to_string( dim * dim )
+        )
+ 
+ 
+        for ( unsigned int i = 0; i < dim; ++i ){
+            for ( unsigned int j = 0; j < dim; ++j ){
+                *( symmA_begin + dim * i + j ) = 0.5 * ( ( *( A_begin + dim * i + j ) ) + ( *( A_begin + dim * j + i ) ) );
+            }
+        }
+
+    }
+
+    template<
+        unsigned int dim,
+        class A_iterator, class symmA_iterator, class dSymmAdA_iterator
+    >
+    void computeSymmetricPart(
+        const A_iterator &A_begin,        const A_iterator &A_end,
+        symmA_iterator symmA_begin,       symmA_iterator symmA_end,
+        dSymmAdA_iterator dSymmAdA_begin, dSymmAdA_iterator dSymmAdA_end
+    ){
+        /*!
+         * Compute the symmetric part of a second order tensor ( \f$A\f$ ) and return it.
+         *
+         * \f$symm( A )_ij = \frac{1}{2}\left(A_{ij} + A_{ji}\right)\f$
+         *
+         * \param &A_begin: A constant reference to the starting iterator of the second order tensor to process ( \f$A\f$ )
+         * \param &A_end: A constant reference to the stopping iterator of the second order tensor to process ( \f$A\f$ )
+         * \param symmA_begin: The starting iterator of the symmetric part of A ( \f$A^{symm}\f$ )
+         * \param symmA_end: The stopping iterator of the symmetric part of A ( \f$A^{symm}\f$ )
+         * \param dSymmAdA_begin: The starting iterator of the symmetric part of the derivative of the symmetric part of A
+         *     with respect to A ( \f$\frac{\partial A^{symm}}{\partial A}\f$ )
+         * \param dSymmAdA_end: The stopping iterator of the symmetric part of the derivative of the symmetric part of A
+         *     with respect to A ( \f$\frac{\partial A^{symm}}{\partial A}\f$ )
+         */
+
+        using dSymmAdA_type = typename std::iterator_traits<dSymmAdA_iterator>::value_type;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( dSymmAdA_end - dSymmAdA_begin ) == dim * dim * dim * dim,
+            "dSymmAdA has a size of " + std::to_string( ( unsigned int )( dSymmAdA_end - dSymmAdA_begin ) ) + " but must have a size of " + std::to_string( dim * dim * dim * dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CATCH(
+            computeSymmetricPart<dim>(
+                A_begin,     A_end,
+                symmA_begin, symmA_end
+            )
+        );
+        
+        std::fill( dSymmAdA_begin, dSymmAdA_end, dSymmAdA_type( ) );        
+
+        for ( unsigned int i = 0; i < dim; ++i ){
+            for ( unsigned int j = 0; j < dim; ++j ){
+                *( dSymmAdA_begin + dim * dim * dim * i + dim * dim * j + dim * i + j ) += 0.5;
+                *( dSymmAdA_begin + dim * dim * dim * i + dim * dim * j + dim * j + i ) += 0.5;
+            }
+        }
+        
+        return;
+
+    }
+
+    template<
+        class A_iterator, class symmA_iterator
+    >
+    void computeSymmetricPart(
+        const A_iterator &A_begin,  const A_iterator &A_end,
+        symmA_iterator symmA_begin, symmA_iterator symmA_end,
+        unsigned int &dim
+    ){
+        /*!
+         * Compute the symmetric part of a second order tensor ( \f$A\f$ ) and return it.
+         *
+         * \f$symm( A )_ij = \frac{1}{2}\left(A_{ij} + A_{ji}\right)\f$
+         *
+         * \param &A_begin: A constant reference to the starting iterator of the second order tensor to process ( \f$A\f$ )
+         * \param &A_end: A constant reference to the stopping iterator of the second order tensor to process ( \f$A\f$ )
+         * \param symmA_begin: The starting iterator of the symmetric part of A ( \f$A^{symm}\f$ )
+         * \param symmA_end: The stopping iterator of the symmetric part of A ( \f$A^{symm}\f$ )
+         * \param &dim: The dimension of A. Note that this is an output used for help
+         *     with computing the Jacobian. If you don't need dim as an output use the
+         *     version of this function without it.
+         */
+        
+        //Get the dimension of A
+        dim = ( unsigned int )std::pow( ( unsigned int )( A_end - A_begin ), 0.5 );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( A_end - A_begin ) == dim * dim,
+            "A has a size of " + std::to_string( ( unsigned int )( A_end - A_begin ) ) + " but the nearest square matrix has a row and column size of " + std::to_string( dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( symmA_end - symmA_begin ) == dim * dim,
+            "symmA has a size of " + std::to_string( ( unsigned int )( symmA_end - symmA_begin ) ) + " but should have a size of " + std::to_string( dim * dim )
+        )
+ 
+ 
+        for ( unsigned int i = 0; i < dim; ++i ){
+            for ( unsigned int j = 0; j < dim; ++j ){
+                *( symmA_begin + dim * i + j ) = 0.5 * ( ( *( A_begin + dim * i + j ) ) + ( *( A_begin + dim * j + i ) ) );
+            }
+        }
+
+    }
+
+    template<
+        class A_iterator, class symmA_iterator, class dSymmAdA_iterator
+    >
+    void computeSymmetricPart(
+        const A_iterator &A_begin,        const A_iterator &A_end,
+        symmA_iterator symmA_begin,       symmA_iterator symmA_end,
+        dSymmAdA_iterator dSymmAdA_begin, dSymmAdA_iterator dSymmAdA_end
+    ){
+        /*!
+         * Compute the symmetric part of a second order tensor ( \f$A\f$ ) and return it.
+         *
+         * \f$symm( A )_ij = \frac{1}{2}\left(A_{ij} + A_{ji}\right)\f$
+         *
+         * \param &A_begin: A constant reference to the starting iterator of the second order tensor to process ( \f$A\f$ )
+         * \param &A_end: A constant reference to the stopping iterator of the second order tensor to process ( \f$A\f$ )
+         * \param symmA_begin: The starting iterator of the symmetric part of A ( \f$A^{symm}\f$ )
+         * \param symmA_end: The stopping iterator of the symmetric part of A ( \f$A^{symm}\f$ )
+         * \param dSymmAdA_begin: The starting iterator of the symmetric part of the derivative of the symmetric part of A
+         *     with respect to A ( \f$\frac{\partial A^{symm}}{\partial A}\f$ )
+         * \param dSymmAdA_end: The stopping iterator of the symmetric part of the derivative of the symmetric part of A
+         *     with respect to A ( \f$\frac{\partial A^{symm}}{\partial A}\f$ )
+         */
+
+        using dSymmAdA_type = typename std::iterator_traits<dSymmAdA_iterator>::value_type;
+
+        TARDIGRADE_ERROR_TOOLS_EVAL(
+            const unsigned int Asize = ( unsigned int )( A_end - A_begin );
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( dSymmAdA_end - dSymmAdA_begin ) == Asize * Asize,
+            "dSymmAdA has a size of " + std::to_string( ( unsigned int )( dSymmAdA_end - dSymmAdA_begin ) ) + " but must have a size of " + std::to_string( Asize * Asize )
+        )
+
+        unsigned int dim;
+        TARDIGRADE_ERROR_TOOLS_CATCH(
+            computeSymmetricPart(
+                A_begin,     A_end,
+                symmA_begin, symmA_end,
+                dim
+            )
+        );
+        
+        std::fill( dSymmAdA_begin, dSymmAdA_end, dSymmAdA_type( ) );        
+
+        for ( unsigned int i = 0; i < dim; ++i ){
+            for ( unsigned int j = 0; j < dim; ++j ){
+                *( dSymmAdA_begin + dim * dim * dim * i + dim * dim * j + dim * i + j ) += 0.5;
+                *( dSymmAdA_begin + dim * dim * dim * i + dim * dim * j + dim * j + i ) += 0.5;
+            }
+        }
+        
+        return;
+
+    }
+
     void computeSymmetricPart( const floatVector &A, floatVector &symmA, unsigned int &dim ){
         /*!
          * Compute the symmetric part of a second order tensor ( \f$A\f$ ) and return it.
@@ -4958,21 +5147,15 @@ namespace tardigradeConstitutiveTools{
          *     with computing the Jacobian. If you don't need dim as an output use the
          *     version of this function without it.
          */
-        
-        //Get the dimension of A
-        dim = ( unsigned int )( std::sqrt( ( double )A.size( ) ) + 0.5 );
-        const unsigned int sot_dim = dim * dim;
-   
-        TARDIGRADE_ERROR_TOOLS_CHECK( sot_dim == A.size( ), "A is not a square matrix" );
- 
-        symmA = floatVector( A.size( ), 0 );
 
-        for ( unsigned int i = 0; i < dim; i++ ){
-            for ( unsigned int j = 0; j < dim; j++ ){
-                symmA[ dim * i + j ] = 0.5 * ( A[ dim * i + j ] + A[ dim * j + i ] );
-            }
-        }
-    
+        symmA = floatVector( A.size( ) );
+
+        computeSymmetricPart(
+            std::begin( A ),     std::end( A ),
+            std::begin( symmA ), std::end( symmA ),
+            dim
+        );
+
         return;
     }
 
@@ -4987,7 +5170,37 @@ namespace tardigradeConstitutiveTools{
          */
     
         unsigned int dim;
-        return computeSymmetricPart( A, symmA, dim );
+        symmA = floatVector( A.size( ) );
+        return computeSymmetricPart(
+                std::begin( A ),     std::end( A ),
+                std::begin( symmA ), std::end( symmA ), dim );
+    }
+
+    void computeSymmetricPart( const floatVector &A, floatVector &symmA, floatVector &dSymmAdA ){
+        /*!
+         * Compute the symmetric part of a second order tensor ( \f$A\f$ ) and return it.
+         *
+         * \f$( A )^{symm}_{ij} = \frac{1}{2}\left(A_{ij} + A_{ji}\right)\f$
+         *
+         * Also computes the jacobian
+         * 
+         * \f$\frac{\partial A^{symm}_{ij}}{\partial A_{kl}} = \frac{1}{2}\left( \delta_{ik} \delta_{jl} + \delta_{jk}\delta_{il} \right)\f$
+         *
+         * \param &A: A constant reference to the second order tensor to process ( \f$A\f$ )
+         * \param &symmA: The symmetric part of A ( \f$A^{symm}\f$ )
+         * \param &dSymmAdA: The Jacobian of the symmetric part of A w.r.t. A ( \f$\frac{\partial A^{symm}}{\partial A}\f$ )
+         */
+
+        symmA    = floatVector( A.size( ), 0 );
+        dSymmAdA = floatVector( A.size( ) * A.size( ), 0 );
+
+        computeSymmetricPart(
+            std::begin( A ),        std::end( A ),
+            std::begin( symmA ),    std::end( symmA ),
+            std::begin( dSymmAdA ), std::end( dSymmAdA )
+        );
+
+        return;
     }
 
     void computeSymmetricPart( const floatVector &A, floatVector &symmA, floatMatrix &dSymmAdA ){
@@ -5005,52 +5218,21 @@ namespace tardigradeConstitutiveTools{
          * \param &dSymmAdA: The Jacobian of the symmetric part of A w.r.t. A ( \f$\frac{\partial A^{symm}}{\partial A}\f$ )
          */
      
-        unsigned int dim;
-        TARDIGRADE_ERROR_TOOLS_CATCH( computeSymmetricPart( A, symmA, dim ) );
-        
-        dSymmAdA = floatMatrix( symmA.size( ), floatVector( A.size( ), 0 ) );
-        
-        for ( unsigned int i = 0; i < dim; i++ ){
-            for ( unsigned int j = 0; j < dim; j++ ){
-                dSymmAdA[ dim * i + j ][ dim * i + j ] += 0.5;
-                dSymmAdA[ dim * i + j ][ dim * j + i ] += 0.5;
-            }
-        }
+        symmA = floatVector( A.size( ) );
+        floatVector _dSymmAdA( A.size( ) * A.size( ) );
+
+        TARDIGRADE_ERROR_TOOLS_CATCH(
+            computeSymmetricPart(
+                std::begin( A ),         std::end( A ),
+                std::begin( symmA ),     std::end( symmA ),
+                std::begin( _dSymmAdA ), std::end( _dSymmAdA )
+            )
+        );
+
+        dSymmAdA = tardigradeVectorTools::inflate( _dSymmAdA, A.size( ), A.size( ) );
         
         return;
    
-    }
-
-    void computeSymmetricPart( const floatVector &A, floatVector &symmA, floatVector &dSymmAdA ){
-        /*!
-         * Compute the symmetric part of a second order tensor ( \f$A\f$ ) and return it.
-         *
-         * \f$( A )^{symm}_{ij} = \frac{1}{2}\left(A_{ij} + A_{ji}\right)\f$
-         *
-         * Also computes the jacobian
-         * 
-         * \f$\frac{\partial A^{symm}_{ij}}{\partial A_{kl}} = \frac{1}{2}\left( \delta_{ik} \delta_{jl} + \delta_{jk}\delta_{il} \right)\f$
-         *
-         * \param &A: A constant reference to the second order tensor to process ( \f$A\f$ )
-         * \param &symmA: The symmetric part of A ( \f$A^{symm}\f$ )
-         * \param &dSymmAdA: The Jacobian of the symmetric part of A w.r.t. A ( \f$\frac{\partial A^{symm}}{\partial A}\f$ )
-         */
-        
-        unsigned int dim;
-        TARDIGRADE_ERROR_TOOLS_CATCH( computeSymmetricPart( A, symmA, dim ) );
-        
-        const unsigned int Asize = A.size( );
-        
-        dSymmAdA = floatVector( symmA.size( ) * Asize, 0 );
-
-        for ( unsigned int i = 0; i < dim; i++ ){
-            for ( unsigned int j = 0; j < dim; j++ ){
-                dSymmAdA[ dim * Asize * i + Asize * j + dim * i + j ] += 0.5;
-                dSymmAdA[ dim * Asize * i + Asize * j + dim * j + i ] += 0.5;
-            }
-        }
-        
-        return;
     }
 
     void pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress ){

@@ -1579,6 +1579,82 @@ BOOST_AUTO_TEST_CASE( testComputeSymmetricPart, * boost::unit_test::tolerance( D
 
 }
 
+#ifdef TARDIGRADE_HEADER_ONLY
+
+BOOST_AUTO_TEST_CASE( testComputeSymmetricPart2, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
+    /*!
+     * Test the computation of the symmetric part of a matrix
+     *
+     * \param &results: The output file
+     */
+
+    floatVector A = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+
+    floatVector answer = { 1., 3., 5., 3., 5., 7., 5., 7., 9. };
+
+    floatVector result( 9 );
+
+    tardigradeConstitutiveTools::computeSymmetricPart<3>(
+        std::begin( A ), std::end( A ),
+        std::begin( result ), std::end( result )
+    );
+
+    BOOST_TEST( result == answer, CHECK_PER_ELEMENT );
+
+    floatVector resultJ( 9 );
+    floatVector dSymmAdA( 81 );
+
+    tardigradeConstitutiveTools::computeSymmetricPart<3>(
+        std::begin( A ),        std::end( A ),
+        std::begin( resultJ ),  std::end( resultJ ),
+        std::begin( dSymmAdA ), std::end( dSymmAdA )
+    );
+
+    BOOST_TEST( result == answer, CHECK_PER_ELEMENT );
+
+    {
+
+        floatType eps = 1e-6;
+        constexpr unsigned int VAR_DIM = 9;
+        constexpr unsigned int OUT_DIM = 9;
+        floatVector X( std::begin( A ), std::end( A ) );
+
+        for ( unsigned int i = 0; i < VAR_DIM; ++i ){
+
+            floatType delta = eps * std::fabs( A[ i ] ) + eps;
+
+            floatVector Xp( std::begin( X ), std::end( X ) );
+            floatVector Xm( std::begin( X ), std::end( X ) );
+
+            Xp[ i ] += delta;
+            Xm[ i ] -= delta;
+
+            floatVector Rp( VAR_DIM );
+            floatVector Rm( VAR_DIM );
+
+            tardigradeConstitutiveTools::computeSymmetricPart<3>(
+                std::begin( Xp ), std::end( Xp ),
+                std::begin( Rp ), std::end( Rp )
+            );
+
+            tardigradeConstitutiveTools::computeSymmetricPart<3>(
+                std::begin( Xm ), std::end( Xm ),
+                std::begin( Rm ), std::end( Rm )
+            );
+
+            for ( unsigned int j = 0; j < OUT_DIM; ++j ){
+
+                BOOST_TEST( dSymmAdA[ VAR_DIM * j + i ] == ( Rp[ j ] - Rm[ j ] ) / ( 2 * delta ) );
+
+            }
+
+        }
+
+    }
+
+}
+#endif
+
 BOOST_AUTO_TEST_CASE( testPushForwardPK2Stress, * boost::unit_test::tolerance( DEFAULT_TEST_TOLERANCE ) ){
     /*!
      * Test the push forward the PK2 stress to the current configuration
