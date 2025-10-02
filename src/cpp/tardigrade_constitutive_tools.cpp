@@ -6440,6 +6440,64 @@ namespace tardigradeConstitutiveTools{
         const F_iterator &F_begin, const F_iterator &F_end,
         dAreaWeightedNormalVectordF_iterator dAreaWeightedNormalVectordF_begin, dAreaWeightedNormalVectordF_iterator dAreaWeightedNormalVectordF_end
     ){
+        /*!
+         * Compute the derivative of the area weighted normal vector w.r.t. the deformation gradient i.e.
+         * 
+         * \f$ \frac{\partial}{\partial F_{bB}} \left( n_i da \right) \f$
+         * 
+         * Note that if the user passes in the unit normal vector, then the result will be more convenient for the construction of
+         * the jacobian of a surface integral in the current configuration.
+         * 
+         * \param &normalVector_begin: The starting iterator of the unit normal vector in the current configuration
+         * \param &normalVector_end: The stopping iterator of the unit normal vector in the current configuration
+         * \param &F_begin: The starting iterator of the deformation gradient
+         * \param &F_end: The stopping iterator of the deformation gradient
+         * \param &dAreaWeightedNormalVectordF_begin: The starting iterator of the derivative of the area weighted normal vector w.r.t. the deformation gradient
+         * \param &dAreaWeightedNormalVectordF_end: The stopping iterator of the derivative of the area weighted normal vector w.r.t. the deformation gradient
+         */
+
+        using F_type  = typename std::iterator_traits<F_iterator>::value_type;
+        using dAreaWeightedNormalVectordF_type  = typename std::iterator_traits<dAreaWeightedNormalVectordF_iterator>::value_type;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( normalVector_end - normalVector_begin ) == dim,
+            "The normal vector has a dimension of " + std::to_string( ( unsigned int )( normalVector_end - normalVector_begin ) ) + " but should be " + std::to_string( dim )
+        );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( F_end - F_begin ) == dim * dim,
+            "The deformation gradient has a dimension of " + std::to_string( ( unsigned int )( F_end - F_begin ) ) + " but should be " + std::to_string( dim * dim )
+        );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( dAreaWeightedNormalVectordF_end - dAreaWeightedNormalVectordF_begin ) == dim * dim * dim,
+            "The derivative of the area weighted normal vector with respect to the deformation gradient has a dimension of " + std::to_string( ( unsigned int )( dAreaWeightedNormalVectordF_end - dAreaWeightedNormalVectordF_begin ) ) + " but should be " + std::to_string( dim * dim * dim )
+        );
+
+        std::fill( dAreaWeightedNormalVectordF_begin, dAreaWeightedNormalVectordF_end, dAreaWeightedNormalVectordF_type( ) );
+
+        std::array< F_type, dim * dim > F_inv;
+
+        Eigen::Map< const Eigen::Matrix< F_type, dim, dim, Eigen::RowMajor > > F_map( &(*F_begin ) );
+
+        Eigen::Map< Eigen::Matrix< F_type, dim, dim, Eigen::RowMajor > > F_inv_map( F_inv.data( ) );
+
+        F_inv_map = F_map.inverse( );
+
+        for ( unsigned int i = 0; i < dim; ++i ){
+
+            for ( unsigned int b = 0; b < dim; ++b ){
+
+                for ( unsigned int B = 0; B < dim; ++B ){
+
+                    *( dAreaWeightedNormalVectordF_begin + dim * dim * i + dim * b + B ) += ( *( normalVector_begin + i ) ) * F_inv[ dim * B + b ]
+                                                                                          - ( *( normalVector_begin + b ) ) * F_inv[ dim * B + i ];
+
+                }
+
+            }
+
+        }
 
     }
 
@@ -6484,55 +6542,6 @@ namespace tardigradeConstitutiveTools{
         }
 
         return;
-//
-//
-//
-//
-//
-//
-//
-//        constexpr unsigned int dim = 3;
-//        constexpr unsigned int sot_dim = dim * dim;
-//        constexpr unsigned int tot_dim = dim * dim * dim;
-//
-//        dNormalVectordF = floatVector( tot_dim, 0 );
-//
-//        TARDIGRADE_ERROR_TOOLS_CHECK( F.size( ) == sot_dim, "The deformation gradient must be a second order tensor of size " + std::to_string( sot_dim ) + " and it has " + std::to_string( F.size( ) ) + " elements" );
-//
-//        floatVector invF( sot_dim, 0 );
-//
-//        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F_map( F.data( ), dim, dim );
-//
-//        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invF_map( invF.data( ), dim, dim );
-//
-//        invF_map = F_map.inverse( );
-//
-//        floatVector invF_n( dim, 0 );
-//
-//        for ( unsigned int B = 0; B < dim; B++ ){
-//
-//            for ( unsigned int j = 0; j < dim; j++ ){
-//
-//                invF_n[ B ] += invF[ dim * B + j ] * normalVector[ j ];
-//
-//            }
-//
-//        }
-//
-//        for ( unsigned int i = 0; i < dim; i++ ){
-//
-//            for ( unsigned int b = 0; b < dim; b++ ){
-//
-//                for ( unsigned int B = 0; B < dim; B++ ){
-//
-//                    dNormalVectordF[ dim * dim * i + dim * b + B ] += normalVector[ i ] * normalVector[ b ] * invF_n[ B ]
-//                                                                    - normalVector[ b ] * invF[ dim * B + i ];
-//
-//                }
-//
-//            }
-//
-//        }
 
     }
 
@@ -6550,36 +6559,38 @@ namespace tardigradeConstitutiveTools{
          * \param &dAreaWeightedNormalVectordF: The derivative of the area weighted normal vector w.r.t. the deformation gradient
          */
 
-        constexpr unsigned int dim = 3;
-        constexpr unsigned int sot_dim = dim * dim;
-        constexpr unsigned int tot_dim = dim * dim * dim;
+        const unsigned int dim = normalVector.size( );
 
-        dAreaWeightedNormalVectordF = floatVector( tot_dim, 0 );
+        dAreaWeightedNormalVectordF = floatVector( dim * dim * dim, 0 );
 
-        TARDIGRADE_ERROR_TOOLS_CHECK( F.size( ) == sot_dim, "The deformation gradient must be a second order tensor of size " + std::to_string( sot_dim ) + " and it has " + std::to_string( F.size( ) ) + " elements" );
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( dim == 3 ) || ( dim == 2 ) || ( dim == 1 ),
+            "The dimension of the deformation gradient is " + std::to_string( dim ) + " but must be 1, 2, or 3"
+        );
 
-        floatVector invF( sot_dim, 0 );
-
-        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F_map( F.data( ), dim, dim );
-
-        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invF_map( invF.data( ), dim, dim );
-
-        invF_map = F_map.inverse( );
-
-        for ( unsigned int i = 0; i < dim; i++ ){
-
-            for ( unsigned int b = 0; b < dim; b++ ){
-
-                for ( unsigned int B = 0; B < dim; B++ ){
-
-                    dAreaWeightedNormalVectordF[ dim * dim * i + dim * b + B ] += normalVector[ i ] * invF[ dim * B + b ]
-                                                                                - normalVector[ b ] * invF[ dim * B + i ];
-
-                }
-
-            }
-
+        if ( dim == 3 ){
+            computeDCurrentAreaWeightedNormalVectorDF< 3 >(
+                std::begin( normalVector ),                std::end( normalVector ),
+                std::begin( F ),                           std::end( F ),
+                std::begin( dAreaWeightedNormalVectordF ), std::end( dAreaWeightedNormalVectordF )
+            );
         }
+        else if ( dim == 2 ){
+            computeDCurrentAreaWeightedNormalVectorDF< 2 >(
+                std::begin( normalVector ),                std::end( normalVector ),
+                std::begin( F ),                           std::end( F ),
+                std::begin( dAreaWeightedNormalVectordF ), std::end( dAreaWeightedNormalVectordF )
+            );
+        }
+        else if ( dim == 1 ){
+            computeDCurrentAreaWeightedNormalVectorDF< 1 >(
+                std::begin( normalVector ),                std::end( normalVector ),
+                std::begin( F ),                           std::end( F ),
+                std::begin( dAreaWeightedNormalVectordF ), std::end( dAreaWeightedNormalVectordF )
+            );
+        }
+
+        return;
 
     }
 
