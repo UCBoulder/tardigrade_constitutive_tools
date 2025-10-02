@@ -6501,6 +6501,79 @@ namespace tardigradeConstitutiveTools{
 
     }
 
+    template<
+        unsigned int dim,
+        class normalVector_iterator, class F_iterator, class dCurrentAreadF_iterator
+    >
+    void computeDCurrentAreaDF(
+        const normalVector_iterator &normalVector_begin, const normalVector_iterator &normalVector_end,
+        const F_iterator &F_begin, const F_iterator &F_end,
+        dCurrentAreadF_iterator dCurrentAreadF_begin, dCurrentAreadF_iterator dCurrentAreadF_end
+    ){
+        /*!
+         * Compute the derivative of the current area w.r.t. the deformation gradient
+         * 
+         * \param &normalVector_begin: The starting iterator of the unit normal vector in the current configuration
+         * \param &normalVector_end: The stopping iterator of the unit normal vector in the current configuration
+         * \param &F_begin: The starting iterator of the deformation gradient
+         * \param &F_end: The stopping iterator of the deformation gradient
+         * \param &dCurrentAreadF_begin: The starting iterator of the derivative of the area w.r.t. the deformation gradient
+         * \param &dCurrentAreadF_end: The stopping iterator of the derivative of the area w.r.t. the deformation gradient
+         */
+
+        using F_type  = typename std::iterator_traits<F_iterator>::value_type;
+        using dCurrentAreadF_type  = typename std::iterator_traits<dCurrentAreadF_iterator>::value_type;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( normalVector_end - normalVector_begin ) == dim,
+            "The normal vector has a dimension of " + std::to_string( ( unsigned int )( normalVector_end - normalVector_begin ) ) + " but should be " + std::to_string( dim )
+        );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( F_end - F_begin ) == dim * dim,
+            "The deformation gradient has a dimension of " + std::to_string( ( unsigned int )( F_end - F_begin ) ) + " but should be " + std::to_string( dim * dim )
+        );
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( unsigned int )( dCurrentAreadF_end - dCurrentAreadF_begin ) == dim * dim,
+            "The derivative of the current surface area with respect to the deformation gradient has a dimension of " + std::to_string( ( unsigned int )( dCurrentAreadF_end - dCurrentAreadF_begin ) ) + " but should be " + std::to_string( dim * dim )
+        );
+
+        std::fill( dCurrentAreadF_begin, dCurrentAreadF_end, dCurrentAreadF_type( ) );
+
+        std::array< F_type, dim * dim > F_inv;
+        std::array< dCurrentAreadF_type, dim > F_inv_n;
+
+        Eigen::Map< const Eigen::Matrix< F_type, dim, dim, Eigen::RowMajor > > F_map( &(*F_begin ) );
+
+        Eigen::Map< Eigen::Matrix< F_type, dim, dim, Eigen::RowMajor > > F_inv_map( F_inv.data( ) );
+
+        F_inv_map = F_map.inverse( );
+
+        std::fill( std::begin( F_inv_n ), std::end( F_inv_n ), dCurrentAreadF_type( ) );
+
+        for ( unsigned int B = 0; B < dim; ++B ){
+
+            for ( unsigned int i = 0; i < dim; ++i ){
+
+                F_inv_n[ B ] += F_inv[ dim * B + i ] * ( *( normalVector_begin + i ) );
+
+            }
+
+        }
+
+        for ( unsigned int B = 0; B < dim; ++B ){
+
+            for ( unsigned int b = 0; b < dim; ++b ){
+
+                *( dCurrentAreadF_begin + dim * b + B ) += F_inv[ dim * B + b ] - ( *( normalVector_begin + b ) ) * F_inv_n[ B ];
+
+            }
+
+        }
+
+    }
+
     void computeDCurrentNormalVectorDF( const floatVector &normalVector, const floatVector &F, floatVector &dNormalVectordF ){
         /*!
          * Compute the derivative of the normal vector in the current configuration w.r.t. the deformation gradient
@@ -6603,42 +6676,79 @@ namespace tardigradeConstitutiveTools{
          * \param &dCurrentAreadF: The derivative of the current surface area w.r.t. F
          */
 
-        constexpr unsigned int dim = 3;
-        constexpr unsigned int sot_dim = dim * dim;
+        const unsigned int dim = normalVector.size( );
 
-        dCurrentAreadF = floatVector( sot_dim, 0 );
+        dCurrentAreadF = floatVector( dim * dim, 0 );
 
-        TARDIGRADE_ERROR_TOOLS_CHECK( F.size( ) == sot_dim, "The deformation gradient must be a second order tensor of size " + std::to_string( sot_dim ) + " and it has " + std::to_string( F.size( ) ) + " elements" );
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( dim == 3 ) || ( dim == 2 ) || ( dim == 1 ),
+            "The dimension of the deformation gradient is " + std::to_string( dim ) + " but must be 1, 2, or 3"
+        );
 
-        floatVector invF( sot_dim, 0 );
-
-        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F_map( F.data( ), dim, dim );
-
-        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invF_map( invF.data( ), dim, dim );
-
-        invF_map = F_map.inverse( );
-
-        floatVector invF_n( dim, 0 );
-
-        for ( unsigned int B = 0; B < dim; B++ ){
-
-            for ( unsigned int i = 0; i < dim; i++ ){
-
-                invF_n[ B ] += invF[ dim * B + i ] * normalVector[ i ];
-
-            }
-
+        if ( dim == 3 ){
+            computeDCurrentAreaDF< 3 >(
+                std::begin( normalVector ), std::end( normalVector ),
+                std::begin( F ),            std::end( F ),
+                std::begin( dCurrentAreadF ), std::end( dCurrentAreadF )
+            );
+        }
+        else if ( dim == 2 ){
+            computeDCurrentAreaDF< 2 >(
+                std::begin( normalVector ), std::end( normalVector ),
+                std::begin( F ),            std::end( F ),
+                std::begin( dCurrentAreadF ), std::end( dCurrentAreadF )
+            );
+        }
+        else if ( dim == 1 ){
+            computeDCurrentAreaDF< 1 >(
+                std::begin( normalVector ), std::end( normalVector ),
+                std::begin( F ),            std::end( F ),
+                std::begin( dCurrentAreadF ), std::end( dCurrentAreadF )
+            );
         }
 
-        for ( unsigned int B = 0; B < dim; B++ ){
-
-            for ( unsigned int b = 0; b < dim; b++ ){
-
-                dCurrentAreadF[ dim * b + B ] += invF[ dim * B + b ] - normalVector[ b ] * invF_n[ B ];
-
-            }
-
-        }
+        return;
+//
+//
+//
+//
+//
+//        constexpr unsigned int dim = 3;
+//        constexpr unsigned int sot_dim = dim * dim;
+//
+//        dCurrentAreadF = floatVector( sot_dim, 0 );
+//
+//        TARDIGRADE_ERROR_TOOLS_CHECK( F.size( ) == sot_dim, "The deformation gradient must be a second order tensor of size " + std::to_string( sot_dim ) + " and it has " + std::to_string( F.size( ) ) + " elements" );
+//
+//        floatVector invF( sot_dim, 0 );
+//
+//        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F_map( F.data( ), dim, dim );
+//
+//        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > invF_map( invF.data( ), dim, dim );
+//
+//        invF_map = F_map.inverse( );
+//
+//        floatVector invF_n( dim, 0 );
+//
+//        for ( unsigned int B = 0; B < dim; B++ ){
+//
+//            for ( unsigned int i = 0; i < dim; i++ ){
+//
+//                invF_n[ B ] += invF[ dim * B + i ] * normalVector[ i ];
+//
+//            }
+//
+//        }
+//
+//        for ( unsigned int B = 0; B < dim; B++ ){
+//
+//            for ( unsigned int b = 0; b < dim; b++ ){
+//
+//                dCurrentAreadF[ dim * b + B ] += invF[ dim * B + b ] - normalVector[ b ] * invF_n[ B ];
+//
+//            }
+//
+//        }
 
     }
 

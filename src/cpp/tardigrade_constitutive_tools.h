@@ -794,6 +794,16 @@ namespace tardigradeConstitutiveTools{
         dAreaWeightedNormalVectordF_iterator dAreaWeightedNormalVectordF_begin, dAreaWeightedNormalVectordF_iterator dAreaWeightedNormalVectordF_end
     );
 
+    template<
+        unsigned int dim,
+        class normalVector_iterator, class F_iterator, class dCurrentAreadF_iterator
+    >
+    void computeDCurrentAreaDF(
+        const normalVector_iterator &normalVector_begin, const normalVector_iterator &normalVector_end,
+        const F_iterator &F_begin, const F_iterator &F_end,
+        dCurrentAreadF_iterator dCurrentAreadF_begin, dCurrentAreadF_iterator dCurrentAreadF_end
+    );
+
     void computeDCurrentNormalVectorDF( const floatVector &normalVector, const floatVector &F, floatVector &dNormalVectordF );
 
     void computeDCurrentAreaWeightedNormalVectorDF( const floatVector &normalVector, const floatVector &F, floatVector &dAreaWeightedNormalVectordF );
