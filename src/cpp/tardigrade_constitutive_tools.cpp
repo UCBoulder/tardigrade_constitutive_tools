@@ -5235,6 +5235,172 @@ namespace tardigradeConstitutiveTools{
    
     }
 
+    template<
+        unsigned int dim,
+        class PK2_iterator, class F_iterator, class cauchyStress_iterator
+    >
+    void pushForwardPK2Stress(
+        const PK2_iterator &PK2_begin, const PK2_iterator &PK2_end,
+        const F_iterator &F_begin,     const F_iterator &F_end,
+        cauchyStress_iterator cauchyStress_begin, cauchyStress_iterator cauchyStress_end
+    ){
+        /*!
+         * Push the Second Piola-Kirchhoff stress forward to the current configuration resulting in the Cauchy stress
+         * 
+         * \f$ \sigma_{ij} = \frac{1}{J} F_{iI} S_{IJ} F_{jJ} \f$
+         * 
+         * \param &PK2_begin: The starting iterator of the Second Piola-Kirchhoff stress \f$ S_{IJ} \f$
+         * \param &PK2_end: The stopping iterator of the Second Piola-Kirchhoff stress \f$ S_{IJ} \f$
+         * \param &F_begin: The starting iterator of the deformation gradient \f$ F_{iI} \f$
+         * \param &F_end: The stopping iterator of the deformation gradient \f$ F_{iI} \f$
+         * \param &cauchyStress_begin: The starting iterator of the Cauchy stress \f$ \sigma_{ij} \f$
+         * \param &cauchyStress_end: The stopping iterator of the Cauchy stress \f$ \sigma_{ij} \f$
+         */
+
+        using PK2_type          = typename std::iterator_traits<PK2_iterator>::value_type;
+        using F_type            = typename std::iterator_traits<F_iterator>::value_type;
+        using cauchyStress_type = typename std::iterator_traits<cauchyStress_iterator>::value_type;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            dim * dim == ( unsigned int )( PK2_end - PK2_begin ),
+            "The PK2 stress has a size of " + std::to_string( ( unsigned int )( PK2_end - PK2_begin ) ) + " but must have a size of " + std::to_string( dim * dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            dim * dim == ( unsigned int )( F_end - F_begin ),
+            "The deformation gradient has a size of " + std::to_string( ( unsigned int )( F_end - F_begin ) ) + " but must have a size of " + std::to_string( dim * dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            dim * dim == ( unsigned int )( cauchyStress_end - cauchyStress_begin ),
+            "The Cauchy stress has a size of " + std::to_string( ( unsigned int )( cauchyStress_end - cauchyStress_begin ) ) + " but must have a size of " + std::to_string( dim * dim )
+        )
+
+        Eigen::Map< const Eigen::Matrix< PK2_type, dim, dim, Eigen::RowMajor > >    PK2_map( &(*PK2_begin) );
+        Eigen::Map< const Eigen::Matrix< F_type, dim, dim, Eigen::RowMajor > >      F_map( &(*F_begin) );
+        Eigen::Map< Eigen::Matrix< cauchyStress_type, dim, dim, Eigen::RowMajor > > cauchyStress_map( &(*cauchyStress_begin) );
+
+        F_type J = F_map.determinant( );
+
+        cauchyStress_map = ( F_map * PK2_map * F_map.transpose( ) / J ).eval( );
+
+        return;
+
+    }
+
+    template<
+        unsigned int dim,
+        class PK2_iterator, class F_iterator, class cauchyStress_iterator,
+        class dCauchyStressdPK2_iterator, class dCauchyStressdF_iterator
+    >
+    void pushForwardPK2Stress(
+        const PK2_iterator &PK2_begin, const PK2_iterator &PK2_end,
+        const F_iterator &F_begin,     const F_iterator &F_end,
+        cauchyStress_iterator cauchyStress_begin, cauchyStress_iterator cauchyStress_end,
+        dCauchyStressdPK2_iterator dCauchyStressdPK2_begin, dCauchyStressdPK2_iterator dCauchyStressdPK2_end,
+        dCauchyStressdF_iterator dCauchyStressdF_begin, dCauchyStressdF_iterator dCauchyStressdF_end
+    ){
+        /*!
+         * Push the Second Piola-Kirchhoff stress forward to the current configuration resulting in the Cauchy stress
+         * 
+         * \f$ \sigma_{ij} = \frac{1}{J} F_{iI} S_{IJ} F_{jJ} \f$
+         * 
+         * \param &PK2_begin: The starting iterator of the Second Piola-Kirchhoff stress \f$ S_{IJ} \f$
+         * \param &PK2_end: The stopping iterator of the Second Piola-Kirchhoff stress \f$ S_{IJ} \f$
+         * \param &F_begin: The starting iterator of the deformation gradient \f$ F_{iI} \f$
+         * \param &F_end: The stopping iterator of the deformation gradient \f$ F_{iI} \f$
+         * \param &cauchyStress_begin: The starting iterator of the Cauchy stress \f$ \sigma_{ij} \f$
+         * \param &cauchyStress_end: The stopping iterator of the Cauchy stress \f$ \sigma_{ij} \f$
+         * \param &dCauchyStressdPK2_begin: The starting iterator of the gradient of the Cauchy stress w.r.t. the PK2 stress
+         * \param &dCauchyStressdPK2_end: The stopping iterator of the gradient of the Cauchy stress w.r.t. the PK2 stress
+         * \param &dCauchyStressdF_begin: The starting iterator of the gradient of the Cauchy stress w.r.t. the deformation gradient
+         * \param &dCauchyStressdF_end: The stopping iterator of the gradient of the Cauchy stress w.r.t. the deformation gradient
+         */
+
+        using PK2_type               = typename std::iterator_traits<PK2_iterator>::value_type;
+        using F_type                 = typename std::iterator_traits<F_iterator>::value_type;
+        using cauchyStress_type      = typename std::iterator_traits<cauchyStress_iterator>::value_type;
+        using dCauchyStressdPK2_type = typename std::iterator_traits<dCauchyStressdPK2_iterator>::value_type;
+        using dCauchyStressdF_type   = typename std::iterator_traits<dCauchyStressdF_iterator>::value_type;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            dim * dim == ( unsigned int )( PK2_end - PK2_begin ),
+            "The PK2 stress has a size of " + std::to_string( ( unsigned int )( PK2_end - PK2_begin ) ) + " but must have a size of " + std::to_string( dim * dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            dim * dim == ( unsigned int )( F_end - F_begin ),
+            "The deformation gradient has a size of " + std::to_string( ( unsigned int )( F_end - F_begin ) ) + " but must have a size of " + std::to_string( dim * dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            dim * dim == ( unsigned int )( cauchyStress_end - cauchyStress_begin ),
+            "The Cauchy stress has a size of " + std::to_string( ( unsigned int )( cauchyStress_end - cauchyStress_begin ) ) + " but must have a size of " + std::to_string( dim * dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            dim * dim * dim * dim == ( unsigned int )( dCauchyStressdPK2_end - dCauchyStressdPK2_begin ),
+            "The derivative of the Cauchy stress w.r.t. the PK2 stress has a size of " + std::to_string( ( unsigned int )( dCauchyStressdPK2_end - dCauchyStressdPK2_begin ) ) + " but must have a size of " + std::to_string( dim * dim * dim * dim )
+        )
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            dim * dim * dim * dim == ( unsigned int )( dCauchyStressdF_end - dCauchyStressdF_begin ),
+            "The derivative of the Cauchy stress w.r.t. the deformation gradient has a size of " + std::to_string( ( unsigned int )( dCauchyStressdF_end - dCauchyStressdF_begin ) ) + " but must have a size of " + std::to_string( dim * dim * dim * dim )
+        )
+
+        std::array< F_type, dim * dim > dJdF;
+
+        Eigen::Map< const Eigen::Matrix< PK2_type, dim, dim, Eigen::RowMajor > >    PK2_map( &(*PK2_begin) );
+        Eigen::Map< const Eigen::Matrix< F_type, dim, dim, Eigen::RowMajor > >      F_map( &(*F_begin) );
+        Eigen::Map< Eigen::Matrix< cauchyStress_type, dim, dim, Eigen::RowMajor > > cauchyStress_map( &(*cauchyStress_begin) );
+        Eigen::Map< Eigen::Matrix< F_type, dim, dim, Eigen::RowMajor > > dJdF_map( dJdF.data( ) );
+
+        F_type J = F_map.determinant( );
+
+        cauchyStress_map = ( F_map * PK2_map * F_map.transpose( ) / J ).eval( );
+        dJdF_map = ( J * F_map.inverse( ).transpose( ) ).eval( );
+
+        std::fill( dCauchyStressdPK2_begin, dCauchyStressdPK2_end, dCauchyStressdPK2_type( ) );
+        std::fill( dCauchyStressdF_begin,   dCauchyStressdF_end,   dCauchyStressdF_type( ) );
+
+        for ( unsigned int i = 0; i < dim; ++i ){
+
+            for ( unsigned int j = 0; j < dim; ++j ){
+
+                for ( unsigned int A = 0; A < dim; ++A ){
+
+                    for ( unsigned int B = 0; B < dim; ++B ){
+
+                        *( dCauchyStressdPK2_begin + dim * dim * dim * i + dim * dim * j + dim * A + B ) += ( *( F_begin + dim * i + A ) ) * ( *( F_begin + dim * j + B ) );
+
+                        *( dCauchyStressdF_begin   + dim * dim * dim * i + dim * dim * j + dim * A + B ) -= ( *( cauchyStress_begin + dim * i + j ) ) * dJdF[ dim * A + B ];
+
+                        *( dCauchyStressdF_begin   + dim * dim * dim * i + dim * dim * j + dim * i + A ) += ( *( PK2_begin + dim * A + B ) ) * ( *( F_begin + dim * j + B ) );
+
+                        *( dCauchyStressdF_begin   + dim * dim * dim * i + dim * dim * j + dim * j + A ) += ( *( F_begin + dim * i + B ) ) * ( *( PK2_begin + dim * B + A ) );
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        std::transform(
+            dCauchyStressdPK2_begin, dCauchyStressdPK2_end, dCauchyStressdPK2_begin,
+            std::bind( std::divides< >( ), std::placeholders::_1, J )
+        );
+
+        std::transform(
+            dCauchyStressdF_begin, dCauchyStressdF_end, dCauchyStressdF_begin,
+            std::bind( std::divides< >( ), std::placeholders::_1, J )
+        );
+
+        return;
+
+    }
+
     void pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress ){
         /*!
          * Push the Second Piola-Kirchhoff stress forward to the current configuration resulting in the Cauchy stress
@@ -5246,22 +5412,36 @@ namespace tardigradeConstitutiveTools{
          * \param &cauchyStress: The Cauchy stress \f$ \sigma_{ij} \f$
          */
 
-        constexpr unsigned int dim = 3;
-        constexpr unsigned int sot_dim = dim * dim;
-        
-        TARDIGRADE_ERROR_TOOLS_CHECK( sot_dim == PK2.size( ), "The PK2 stress must have a size of " + std::to_string( sot_dim ) + " and has a size of " + std::to_string( PK2.size( ) ) )
+        const unsigned int dim = ( unsigned int )std::pow( PK2.size( ), 0.5 );
 
-        TARDIGRADE_ERROR_TOOLS_CHECK( PK2.size( ) == F.size( ), "The deformation gradient must have a size of " + std::to_string( PK2.size( ) ) + " and has a size of " + std::to_string( F.size( ) ) );
+        cauchyStress = floatVector( dim * dim, 0 );
 
-        cauchyStress = floatVector( sot_dim, 0 );
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( dim == 3 ) || ( dim == 2 ) || ( dim == 1 ),
+            "The dimension of the PK2 stress is " + std::to_string( dim ) + " but must be 1, 2, or 3"
+        );
 
-        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > PK2_map( PK2.data( ), dim, dim );
-        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F_map( F.data( ), dim, dim );
-        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > cauchyStress_map( cauchyStress.data( ), dim, dim );
-
-        floatType J = F_map.determinant( );
-
-        cauchyStress_map = ( F_map * PK2_map * F_map.transpose( ) / J ).eval( );
+        if ( dim == 3 ){
+            pushForwardPK2Stress< 3 >(
+                std::begin( PK2 ),          std::end( PK2 ),
+                std::begin( F ),            std::end( F ),
+                std::begin( cauchyStress ), std::end( cauchyStress )
+            );
+        }
+        else if ( dim == 2 ){
+            pushForwardPK2Stress< 2 >(
+                std::begin( PK2 ),          std::end( PK2 ),
+                std::begin( F ),            std::end( F ),
+                std::begin( cauchyStress ), std::end( cauchyStress )
+            );
+        }
+        else if ( dim == 1 ){
+            pushForwardPK2Stress< 1 >(
+                std::begin( PK2 ),          std::end( PK2 ),
+                std::begin( F ),            std::end( F ),
+                std::begin( cauchyStress ), std::end( cauchyStress )
+            );
+        }
 
         return;
 
@@ -5281,57 +5461,44 @@ namespace tardigradeConstitutiveTools{
          * \param &dCauchyStressdF: The gradient of the Cauchy stress w.r.t. the deformation gradient
          */
 
-        constexpr unsigned int dim = 3;
-        constexpr unsigned int sot_dim = dim * dim;
-        constexpr unsigned int fot_dim = sot_dim * sot_dim;
-        
-        TARDIGRADE_ERROR_TOOLS_CHECK( dim * dim == PK2.size( ), "The PK2 stress must have a size of " + std::to_string( sot_dim ) + " and has a size of " + std::to_string( PK2.size( ) ) );
+        const unsigned int dim = ( unsigned int )std::pow( PK2.size( ), 0.5 );
 
-        TARDIGRADE_ERROR_TOOLS_CHECK( PK2.size( ) == F.size( ), "The deformation gradient must have a size of " + std::to_string( PK2.size( ) ) + " and has a size of " + std::to_string( F.size( ) ) );
+        cauchyStress = floatVector( dim * dim, 0 );
+        dCauchyStressdPK2 = floatVector( dim * dim * dim * dim, 0 );
+        dCauchyStressdF = floatVector( dim * dim * dim * dim, 0 );
 
-        cauchyStress = floatVector( sot_dim, 0 );
-        floatVector dJdF( sot_dim, 0 );
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            ( dim == 3 ) || ( dim == 2 ) || ( dim == 1 ),
+            "The dimension of the PK2 stress is " + std::to_string( dim ) + " but must be 1, 2, or 3"
+        );
 
-        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > PK2_map( PK2.data( ), dim, dim );
-        Eigen::Map< const Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > F_map( F.data( ), dim, dim );
-        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > cauchyStress_map( cauchyStress.data( ), dim, dim );
-        Eigen::Map< Eigen::Matrix< floatType, dim, dim, Eigen::RowMajor > > dJdF_map( dJdF.data( ), dim, dim );
-
-        floatType J = F_map.determinant( );
-
-        cauchyStress_map = ( F_map * PK2_map * F_map.transpose( ) / J ).eval( );
-
-        dJdF_map = ( J * F_map.inverse( ).transpose( ) ).eval( );
-
-        dCauchyStressdF = floatVector( fot_dim, 0 );
-
-        dCauchyStressdPK2 = floatVector( fot_dim, 0 );
-
-        floatVector eye( dim * dim, 0 );
-        tardigradeVectorTools::eye( eye );
-
-        for ( unsigned int i = 0; i < dim; i++ ){
-
-            for ( unsigned int j = 0; j < dim; j++ ){
-
-                for ( unsigned int A = 0; A < dim; A++ ){
-
-                    for ( unsigned int B = 0; B < dim; B++ ){
-
-                        dCauchyStressdPK2[ dim * sot_dim * i + sot_dim * j + dim * A + B ] += F[ dim * i + A ] * F[ dim * j + B ] / J;
-                        dCauchyStressdF[ dim * sot_dim * i + sot_dim * j + dim * A + B ] -= cauchyStress[ dim * i + j ] * dJdF[ dim * A + B ] / J;
-
-                        dCauchyStressdF[ dim * sot_dim * i + sot_dim * j + dim * i + A ] += PK2[ dim * A + B ] * F[ dim * j + B ] / J;
-
-                        dCauchyStressdF[ dim * sot_dim * i + sot_dim * j + dim * j + A ] += F[ dim * i + B ] * PK2[ dim * B + A ] / J;
-
-                    }
-
-                }
-
-            }
-
-        } 
+        if ( dim == 3 ){
+            pushForwardPK2Stress< 3 >(
+                std::begin( PK2 ),               std::end( PK2 ),
+                std::begin( F ),                 std::end( F ),
+                std::begin( cauchyStress ),      std::end( cauchyStress ),
+                std::begin( dCauchyStressdPK2 ), std::end( dCauchyStressdPK2 ),
+                std::begin( dCauchyStressdF ),   std::end( dCauchyStressdF )
+            );
+        }
+        else if ( dim == 2 ){
+            pushForwardPK2Stress< 2 >(
+                std::begin( PK2 ),          std::end( PK2 ),
+                std::begin( F ),            std::end( F ),
+                std::begin( cauchyStress ),      std::end( cauchyStress ),
+                std::begin( dCauchyStressdPK2 ), std::end( dCauchyStressdPK2 ),
+                std::begin( dCauchyStressdF ),   std::end( dCauchyStressdF )
+            );
+        }
+        else if ( dim == 1 ){
+            pushForwardPK2Stress< 1 >(
+                std::begin( PK2 ),          std::end( PK2 ),
+                std::begin( F ),            std::end( F ),
+                std::begin( cauchyStress ),      std::end( cauchyStress ),
+                std::begin( dCauchyStressdPK2 ), std::end( dCauchyStressdPK2 ),
+                std::begin( dCauchyStressdF ),   std::end( dCauchyStressdF )
+            );
+        }
 
         return;
 

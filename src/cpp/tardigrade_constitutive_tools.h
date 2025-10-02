@@ -712,6 +712,29 @@ namespace tardigradeConstitutiveTools{
 
     void computeSymmetricPart( const floatVector &A, floatVector &symmA, floatMatrix &dSymmAdA );
 
+    template<
+        unsigned int dim,
+        class PK2_iterator, class F_iterator, class cauchyStress_iterator
+    >
+    void pushForwardPK2Stress(
+        const PK2_iterator &PK2_begin, const PK2_iterator &PK2_end,
+        const F_iterator &F_begin,     const F_iterator &F_end,
+        cauchyStress_iterator cauchyStress_begin, cauchyStress_iterator cauchyStress_end
+    );
+
+    template<
+        unsigned int dim,
+        class PK2_iterator, class F_iterator, class cauchyStress_iterator,
+        class dCauchyStressdPK2_iterator, class dCauchyStressdF_iterator
+    >
+    void pushForwardPK2Stress(
+        const PK2_iterator &PK2_begin, const PK2_iterator &PK2_end,
+        const F_iterator &F_begin,     const F_iterator &F_end,
+        cauchyStress_iterator cauchyStress_begin, cauchyStress_iterator cauchyStress_end,
+        dCauchyStressdPK2_iterator dCauchyStressdPK2_begin, dCauchyStressdPK2_iterator dCauchyStressdPK2_end,
+        dCauchyStressdF_iterator dCauchyStressdF_begin, dCauchyStressdF_iterator dCauchyStressdF_end
+    );
+
     void pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress );
 
     void pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress,
