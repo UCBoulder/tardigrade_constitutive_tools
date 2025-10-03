@@ -36,103 +36,103 @@ namespace tardigradeConstitutiveTools{
     typedef std::vector< floatType > floatVector; //!< Define a vector of floats
     typedef std::vector< std::vector< floatType > > floatMatrix; //!< Define a matrix of floats
 
-    inline floatType deltaDirac(const unsigned int i, const unsigned int j);
+    TARDIGRADE_OPTIONAL_INLINE floatType deltaDirac(const unsigned int i, const unsigned int j);
 
     template< unsigned int dim, class A_iterator, class Q_iterator, class rotatedA_iterator >
-    inline void rotateMatrix(
+    TARDIGRADE_OPTIONAL_INLINE void rotateMatrix(
         const A_iterator &A_begin, const A_iterator &A_end,
         const Q_iterator &Q_begin, const Q_iterator &Q_end,
         rotatedA_iterator rotatedA_begin, rotatedA_iterator rotatedA_end
     );
 
     template< class A_iterator, class Q_iterator, class rotatedA_iterator >
-    inline void rotateMatrix(
+    TARDIGRADE_OPTIONAL_INLINE void rotateMatrix(
         const A_iterator &A_begin, const A_iterator &A_end,
         const Q_iterator &Q_begin, const Q_iterator &Q_end,
         const unsigned int dim,
         rotatedA_iterator rotatedA_begin, rotatedA_iterator rotatedA_end
     );
 
-    inline void rotateMatrix(const floatVector &A, const floatVector &Q, floatVector &rotatedA);
+    TARDIGRADE_OPTIONAL_INLINE void rotateMatrix(const floatVector &A, const floatVector &Q, floatVector &rotatedA);
 
     template< unsigned int dim, class displacementGradient_iterator, class deformationGradient_iterator >
-    inline void computeDeformationGradient(
+    TARDIGRADE_OPTIONAL_INLINE void computeDeformationGradient(
         const displacementGradient_iterator &displacementGradient_begin, const displacementGradient_iterator &displacementGradient_end,
         deformationGradient_iterator        deformationGradient_begin,   deformationGradient_iterator        deformationGradient_end,
         const bool isCurrent
     );
 
-    inline void computeDeformationGradient( const floatVector &displacementGradient, floatVector &F, const bool isCurrent );
+    TARDIGRADE_OPTIONAL_INLINE void computeDeformationGradient( const floatVector &displacementGradient, floatVector &F, const bool isCurrent );
 
     template< unsigned int dim, class displacementGradient_iterator, class deformationGradient_iterator, class dFdGradU_iterator >
-    inline void computeDeformationGradient(
+    TARDIGRADE_OPTIONAL_INLINE void computeDeformationGradient(
         const displacementGradient_iterator &displacementGradient_begin, const displacementGradient_iterator &displacementGradient_end,
         deformationGradient_iterator        deformationGradient_begin,   deformationGradient_iterator        deformationGradient_end,
         dFdGradU_iterator                   dFdGradU_begin,              dFdGradU_iterator                   dFdGradU_end,
         const bool isCurrent
     );
 
-    inline void computeDeformationGradient( const floatVector &displacementGradient, floatVector &F, floatVector &dFdGradU, const bool isCurrent );
+    TARDIGRADE_OPTIONAL_INLINE void computeDeformationGradient( const floatVector &displacementGradient, floatVector &F, floatVector &dFdGradU, const bool isCurrent );
 
     template< unsigned int dim, class deformationGradient_iterator, class C_iterator >
-    inline void computeRightCauchyGreen(
+    TARDIGRADE_OPTIONAL_INLINE void computeRightCauchyGreen(
         const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
         C_iterator C_begin, C_iterator C_end
     );
 
     template< unsigned int dim, class deformationGradient_iterator, class C_iterator, class dCdF_iterator >
-    inline void computeRightCauchyGreen(
+    TARDIGRADE_OPTIONAL_INLINE void computeRightCauchyGreen(
         const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
         C_iterator C_begin,       C_iterator C_end,
         dCdF_iterator dCdF_begin, dCdF_iterator dCdF_end
     );
 
-    inline void computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C );
+    TARDIGRADE_OPTIONAL_INLINE void computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C );
 
-    inline void computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C, floatVector &dCdF );
+    TARDIGRADE_OPTIONAL_INLINE void computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C, floatVector &dCdF );
 
-    inline void computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C, floatMatrix &dCdF );
+    TARDIGRADE_OPTIONAL_INLINE void computeRightCauchyGreen( const floatVector &deformationGradient, floatVector &C, floatMatrix &dCdF );
 
     template< unsigned int dim, class deformationGradient_iterator, class E_iterator>
-    inline void computeGreenLagrangeStrain(
+    TARDIGRADE_OPTIONAL_INLINE void computeGreenLagrangeStrain(
         const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
         E_iterator E_begin,                                            E_iterator E_end
     );
 
     template< unsigned int dim, class deformationGradient_iterator, class E_iterator, class dEdF_iterator>
-    inline void computeGreenLagrangeStrain(
+    TARDIGRADE_OPTIONAL_INLINE void computeGreenLagrangeStrain(
         const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
         E_iterator E_begin,                                            E_iterator E_end,
         dEdF_iterator dEdF_begin,                                      dEdF_iterator dEdF_end
     );
 
-    inline void computeGreenLagrangeStrain(const floatVector &deformationGradient, floatVector &E);
+    TARDIGRADE_OPTIONAL_INLINE void computeGreenLagrangeStrain(const floatVector &deformationGradient, floatVector &E);
 
-    inline void computeGreenLagrangeStrain(const floatVector &deformationGradient, floatVector &E, floatVector &dEdF);
+    TARDIGRADE_OPTIONAL_INLINE void computeGreenLagrangeStrain(const floatVector &deformationGradient, floatVector &E, floatVector &dEdF);
 
-    inline void computeGreenLagrangeStrain(const floatVector &deformationGradient, floatVector &E, floatMatrix &dEdF);
+    TARDIGRADE_OPTIONAL_INLINE void computeGreenLagrangeStrain(const floatVector &deformationGradient, floatVector &E, floatMatrix &dEdF);
 
     template< unsigned int dim, class deformationGradient_iterator, class dEdF_iterator >
-    inline void computeDGreenLagrangeStrainDF(
+    TARDIGRADE_OPTIONAL_INLINE void computeDGreenLagrangeStrainDF(
         const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
         dEdF_iterator dEdF_begin,                                      dEdF_iterator dEdF_end
     );
 
-    inline void computeDGreenLagrangeStrainDF(const floatVector &deformationGradient, floatVector &dEdF);
+    TARDIGRADE_OPTIONAL_INLINE void computeDGreenLagrangeStrainDF(const floatVector &deformationGradient, floatVector &dEdF);
 
-    inline void computeDGreenLagrangeStrainDF(const floatVector &deformationGradient, floatMatrix &dEdF);
+    TARDIGRADE_OPTIONAL_INLINE void computeDGreenLagrangeStrainDF(const floatVector &deformationGradient, floatMatrix &dEdF);
 
     template< unsigned int dim, class E_iterator, class Ebar_iterator, typename J_type >
-    inline void decomposeGreenLagrangeStrain(
+    TARDIGRADE_OPTIONAL_INLINE void decomposeGreenLagrangeStrain(
         const E_iterator &E_begin, const E_iterator &E_end,
         Ebar_iterator  Ebar_begin, Ebar_iterator  Ebar_end,
         J_type &J
     );
 
-    inline void decomposeGreenLagrangeStrain(const floatVector &E, floatVector &Ebar, floatType &J);
+    TARDIGRADE_OPTIONAL_INLINE void decomposeGreenLagrangeStrain(const floatVector &E, floatVector &Ebar, floatType &J);
 
     template< unsigned int dim, class E_iterator, class Ebar_iterator, typename J_type, class dEbardE_iterator, class dJdE_iterator >
-    inline void decomposeGreenLagrangeStrain(
+    TARDIGRADE_OPTIONAL_INLINE void decomposeGreenLagrangeStrain(
         const E_iterator &E_begin, const E_iterator &E_end,
         Ebar_iterator  Ebar_begin, Ebar_iterator  Ebar_end,
         J_type &J,
@@ -140,46 +140,46 @@ namespace tardigradeConstitutiveTools{
         dJdE_iterator    dJdE_begin,    dJdE_iterator    dJdE_end
     );
 
-    inline void decomposeGreenLagrangeStrain(const floatVector &E, floatVector &Ebar, floatType &J,
+    TARDIGRADE_OPTIONAL_INLINE void decomposeGreenLagrangeStrain(const floatVector &E, floatVector &Ebar, floatType &J,
                                           floatVector &dEbardE, floatVector &dJdE);
 
-    inline void decomposeGreenLagrangeStrain(const floatVector &E, floatVector &Ebar, floatType &J,
+    TARDIGRADE_OPTIONAL_INLINE void decomposeGreenLagrangeStrain(const floatVector &E, floatVector &Ebar, floatType &J,
                                           floatMatrix &dEbardE, floatVector &dJdE);
 
     template< unsigned int dim, class PK2Stress_iterator, class deformationGradient_iterator, class cauchyStress_iterator >
-    inline void mapPK2toCauchy(
+    TARDIGRADE_OPTIONAL_INLINE void mapPK2toCauchy(
         const PK2Stress_iterator           &PK2Stress_begin,           const PK2Stress_iterator           &PK2Stress_end,
         const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
         cauchyStress_iterator              cauchyStress_begin,         cauchyStress_iterator              cauchyStress_end
     );
 
-    inline void mapPK2toCauchy(const floatVector &PK2Stress, const floatVector &deformationGradient, floatVector &cauchyStress);
+    TARDIGRADE_OPTIONAL_INLINE void mapPK2toCauchy(const floatVector &PK2Stress, const floatVector &deformationGradient, floatVector &cauchyStress);
 
     template< typename temperature_type, class WLFParameters_iterator, typename factor_type >
-    inline void WLF(
+    TARDIGRADE_OPTIONAL_INLINE void WLF(
         const temperature_type &temperature, const WLFParameters_iterator &WLFParameters_begin, const WLFParameters_iterator &WLFParameters_end,
         factor_type &factor
     );
 
     template< typename temperature_type, class WLFParameters_iterator, typename factor_type, typename dFactordT_type >
-    inline void WLF(
+    TARDIGRADE_OPTIONAL_INLINE void WLF(
         const temperature_type &temperature, const WLFParameters_iterator &WLFParameters_begin, const WLFParameters_iterator &WLFParameters_end,
         factor_type &factor, dFactordT_type &dFactordT
     );
 
-    inline void WLF(const floatType &temperature, const floatVector &WLFParameters, floatType &factor);
+    TARDIGRADE_OPTIONAL_INLINE void WLF(const floatType &temperature, const floatVector &WLFParameters, floatType &factor);
 
-    inline void WLF(const floatType &temperature, const floatVector &WLFParameters, floatType &factor, floatType &dFactordT);
+    TARDIGRADE_OPTIONAL_INLINE void WLF(const floatType &temperature, const floatVector &WLFParameters, floatType &factor, floatType &dFactordT);
 
     template< unsigned int dim, class velocityGradient_iterator, class deformationGradient_iterator, class DFDt_iterator >
-    inline void computeDFDt(
+    TARDIGRADE_OPTIONAL_INLINE void computeDFDt(
         const velocityGradient_iterator    &velocityGradient_begin,    const velocityGradient_iterator    &velocityGradient_end,
         const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
         DFDt_iterator DFDt_begin, DFDt_iterator DFDt_end
     );
 
     template< unsigned int dim, class velocityGradient_iterator, class deformationGradient_iterator, class DFDt_iterator, class dDFDtdL_iterator, class dDFDtdF_iterator >
-    inline void computeDFDt(
+    TARDIGRADE_OPTIONAL_INLINE void computeDFDt(
         const velocityGradient_iterator    &velocityGradient_begin,    const velocityGradient_iterator    &velocityGradient_end,
         const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
         DFDt_iterator DFDt_begin,       DFDt_iterator DFDt_end,
@@ -187,12 +187,12 @@ namespace tardigradeConstitutiveTools{
         dDFDtdF_iterator dDFDtdF_begin, dDFDtdF_iterator dDFDtdF_end
     );
 
-    inline void computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt);
+    TARDIGRADE_OPTIONAL_INLINE void computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt);
 
-    inline void computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt,
+    TARDIGRADE_OPTIONAL_INLINE void computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt,
                          floatVector &dDFDtdL, floatVector &dDFDtdF);
 
-    inline void computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt,
+    TARDIGRADE_OPTIONAL_INLINE void computeDFDt(const floatVector &velocityGradient, const floatVector &deformationGradient, floatVector &DFDt,
                          floatMatrix &dDFDtdL, floatMatrix &dDFDtdF);
 
     template<
@@ -200,7 +200,7 @@ namespace tardigradeConstitutiveTools{
         class Ap_iterator, class DApDt_iterator, class DADt_iterator,
         class dA_iterator, class A_iterator, class alpha_iterator
     >
-    inline void midpointEvolution(
+    TARDIGRADE_OPTIONAL_INLINE void midpointEvolution(
         const Dt_type &Dt,
         const Ap_iterator    &Ap_begin,    const Ap_iterator    &Ap_end,
         const DApDt_iterator &DApDt_begin, const DApDt_iterator &DApDt_end,
@@ -215,7 +215,7 @@ namespace tardigradeConstitutiveTools{
         class Ap_iterator, class DApDt_iterator, class DADt_iterator,
         class dA_iterator, class A_iterator, class DADADt_iterator, class alpha_iterator
     >
-    inline void midpointEvolution(
+    TARDIGRADE_OPTIONAL_INLINE void midpointEvolution(
         const Dt_type &Dt,
         const Ap_iterator    &Ap_begin,    const Ap_iterator    &Ap_end,
         const DApDt_iterator &DApDt_begin, const DApDt_iterator &DApDt_end,
@@ -232,7 +232,7 @@ namespace tardigradeConstitutiveTools{
         class dA_iterator, class A_iterator, class DADADt_iterator, class DADApDt_iterator,
         class alpha_iterator
     >
-    inline void midpointEvolution(
+    TARDIGRADE_OPTIONAL_INLINE void midpointEvolution(
         const Dt_type &Dt,
         const Ap_iterator    &Ap_begin,     const Ap_iterator    &Ap_end,
         const DApDt_iterator &DApDt_begin,  const DApDt_iterator &DApDt_end,
@@ -249,7 +249,7 @@ namespace tardigradeConstitutiveTools{
         class Ap_iterator, class DApDt_iterator, class DADt_iterator,
         class dA_iterator, class A_iterator, typename alpha_type
     >
-    inline void midpointEvolution(
+    TARDIGRADE_OPTIONAL_INLINE void midpointEvolution(
         const Dt_type &Dt,
         const Ap_iterator    &Ap_begin,    const Ap_iterator    &Ap_end,
         const DApDt_iterator &DApDt_begin, const DApDt_iterator &DApDt_end,
@@ -264,7 +264,7 @@ namespace tardigradeConstitutiveTools{
         class Ap_iterator, class DApDt_iterator, class DADt_iterator,
         class dA_iterator, class A_iterator, class DADADt_iterator, typename alpha_type
     >
-    inline void midpointEvolution(
+    TARDIGRADE_OPTIONAL_INLINE void midpointEvolution(
         const Dt_type &Dt,
         const Ap_iterator    &Ap_begin,    const Ap_iterator    &Ap_end,
         const DApDt_iterator &DApDt_begin, const DApDt_iterator &DApDt_end,
@@ -281,7 +281,7 @@ namespace tardigradeConstitutiveTools{
         class dA_iterator, class A_iterator, class DADADt_iterator, class DADApDt_iterator,
         typename alpha_type
     >
-    inline void midpointEvolution(
+    TARDIGRADE_OPTIONAL_INLINE void midpointEvolution(
         const Dt_type &Dt,
         const Ap_iterator    &Ap_begin,     const Ap_iterator    &Ap_end,
         const DApDt_iterator &DApDt_begin,  const DApDt_iterator &DApDt_end,
@@ -293,37 +293,37 @@ namespace tardigradeConstitutiveTools{
         alpha_type alpha = 0.5
     );
 
-    inline void midpointEvolution(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    TARDIGRADE_OPTIONAL_INLINE void midpointEvolution(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                floatVector &dA, floatVector &A, const floatVector &alpha);
 
-    inline void midpointEvolutionFlatJ(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    TARDIGRADE_OPTIONAL_INLINE void midpointEvolutionFlatJ(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                     floatVector &dA, floatVector &A, floatVector &DADADt, const floatVector &alpha);
 
-    inline void midpointEvolutionFlatJ(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    TARDIGRADE_OPTIONAL_INLINE void midpointEvolutionFlatJ(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                     floatVector &dA, floatVector &A, floatVector &DADADt, floatVector &DADADtp,
                                     const floatVector &alpha);
 
-    inline void midpointEvolution(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    TARDIGRADE_OPTIONAL_INLINE void midpointEvolution(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                floatVector &dA, floatVector &A, floatMatrix &DADADt, const floatVector &alpha);
 
-    inline void midpointEvolution(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    TARDIGRADE_OPTIONAL_INLINE void midpointEvolution(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                floatVector &dA, floatVector &A, floatMatrix &DADADt, floatMatrix &DADADtp,
                                const floatVector &alpha);
 
-    inline void midpointEvolution(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    TARDIGRADE_OPTIONAL_INLINE void midpointEvolution(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                floatVector &dA, floatVector &A, const floatType alpha=0.5);
 
-    inline void midpointEvolutionFlatJ(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    TARDIGRADE_OPTIONAL_INLINE void midpointEvolutionFlatJ(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                     floatVector &dA, floatVector &A, floatVector &DADADt, const floatType alpha=0.5);
 
-    inline void midpointEvolutionFlatJ(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    TARDIGRADE_OPTIONAL_INLINE void midpointEvolutionFlatJ(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                     floatVector &dA, floatVector &A, floatVector &DADADt, floatVector &DADADtp,
                                     const floatType alpha=0.5);
 
-    inline void midpointEvolution(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    TARDIGRADE_OPTIONAL_INLINE void midpointEvolution(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                floatVector &dA, floatVector &A, floatMatrix &DADADt, const floatType alpha=0.5);
 
-    inline void midpointEvolution(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
+    TARDIGRADE_OPTIONAL_INLINE void midpointEvolution(const floatType &Dt, const floatVector &Ap, const floatVector &DApDt, const floatVector &DADt,
                                floatVector &dA, floatVector &A, floatMatrix &DADADt, floatMatrix &DADADtp,
                                const floatType alpha=0.5);
 
@@ -335,7 +335,7 @@ namespace tardigradeConstitutiveTools{
       class dF_iterator, class deformationGradient_iterator,
       typename alpha_type
     >
-    inline void evolveF(
+    TARDIGRADE_OPTIONAL_INLINE void evolveF(
         const Dt_type &Dt,
         const previousDeformationGradient_iterator &previousDeformationGradient_begin, const previousDeformationGradient_iterator &previousDeformationGradient_end,
         const Lp_iterator &Lp_begin, const Lp_iterator &Lp_end, const L_iterator &L_begin, const L_iterator &L_end,
@@ -353,7 +353,7 @@ namespace tardigradeConstitutiveTools{
       class dFdL_iterator,
       typename alpha_type
     >
-    inline void evolveF(
+    TARDIGRADE_OPTIONAL_INLINE void evolveF(
         const Dt_type &Dt,
         const previousDeformationGradient_iterator &previousDeformationGradient_begin, const previousDeformationGradient_iterator &previousDeformationGradient_end,
         const Lp_iterator &Lp_begin, const Lp_iterator &Lp_end, const L_iterator &L_begin, const L_iterator &L_end,
@@ -372,7 +372,7 @@ namespace tardigradeConstitutiveTools{
       class dFdL_iterator, class ddFdFp_iterator, class dFdFp_iterator, class dFdLp_iterator,
       typename alpha_type
     >
-    inline void evolveF(
+    TARDIGRADE_OPTIONAL_INLINE void evolveF(
         const Dt_type &Dt,
         const previousDeformationGradient_iterator &previousDeformationGradient_begin, const previousDeformationGradient_iterator &previousDeformationGradient_end,
         const Lp_iterator &Lp_begin, const Lp_iterator &Lp_end, const L_iterator &L_begin, const L_iterator &L_end,
@@ -385,34 +385,34 @@ namespace tardigradeConstitutiveTools{
         const alpha_type alpha
     );
 
-    inline void evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    TARDIGRADE_OPTIONAL_INLINE void evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                      floatVector &dF, floatVector &deformationGradient, const floatType alpha=0.5, const unsigned int mode = 1);
 
-    inline void evolveFFlatJ(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    TARDIGRADE_OPTIONAL_INLINE void evolveFFlatJ(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                           floatVector &dF, floatVector &deformationGradient, floatVector &dFdL, const floatType alpha=0.5, const unsigned int mode = 1);
 
-    inline void evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    TARDIGRADE_OPTIONAL_INLINE void evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                      floatVector &dF, floatVector &deformationGradient, floatMatrix &dFdL, const floatType alpha=0.5, const unsigned int mode = 1);
 
-    inline void evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    TARDIGRADE_OPTIONAL_INLINE void evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                      floatVector &deformationGradient, floatType alpha=0.5, const unsigned int mode = 1);
 
-    inline void evolveFFlatJ(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    TARDIGRADE_OPTIONAL_INLINE void evolveFFlatJ(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                           floatVector &deformationGradient, floatVector &dFdL, const floatType alpha=0.5, const unsigned int mode = 1);
 
-    inline void evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    TARDIGRADE_OPTIONAL_INLINE void evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                      floatVector &deformationGradient, floatMatrix &dFdL, const floatType alpha=0.5, const unsigned int mode = 1);
 
-    inline void evolveFFlatJ(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    TARDIGRADE_OPTIONAL_INLINE void evolveFFlatJ(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                           floatVector &deformationGradient, floatVector &dFdL, floatVector &dFdFp, floatVector &dFdLp, const floatType alpha=0.5, const unsigned int mode = 1);
 
-    inline void evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    TARDIGRADE_OPTIONAL_INLINE void evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                      floatVector &deformationGradient, floatMatrix &dFdL, floatMatrix &dFdFp, floatMatrix &dFdLp, const floatType alpha=0.5, const unsigned int mode = 1);
 
-    inline void evolveFFlatJ(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    TARDIGRADE_OPTIONAL_INLINE void evolveFFlatJ(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                           floatVector &dF, floatVector &deformationGradient, floatVector &dFdL, floatVector &ddFdFp, floatVector &dFdFp, floatVector &dFdLp, const floatType alpha=0.5, const unsigned int mode = 1);
 
-    inline void evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    TARDIGRADE_OPTIONAL_INLINE void evolveF(const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                      floatVector &dF, floatVector &deformationGradient, floatMatrix &dFdL, floatMatrix &ddFdFp, floatMatrix &dFdFp, floatMatrix &dFdLp, const floatType alpha=0.5, const unsigned int mode = 1);
 
     template<
@@ -423,7 +423,7 @@ namespace tardigradeConstitutiveTools{
         class deformationGradient_iterator,
         typename alpha_type
     >
-    inline void evolveFExponentialMap(
+    TARDIGRADE_OPTIONAL_INLINE void evolveFExponentialMap(
         const Dt_type &Dt,
         const previousDeformationGradient_iterator &previousDeformationGradient_begin, const previousDeformationGradient_iterator &previousDeformationGradient_end,
         const Lp_iterator &Lp_begin, const Lp_iterator &Lp_end, const L_iterator &L_begin, const L_iterator &L_end,
@@ -439,7 +439,7 @@ namespace tardigradeConstitutiveTools{
         class dFdL_iterator,
         typename alpha_type
     >
-    inline void evolveFExponentialMap(
+    TARDIGRADE_OPTIONAL_INLINE void evolveFExponentialMap(
         const Dt_type &Dt,
         const previousDeformationGradient_iterator &previousDeformationGradient_begin, const previousDeformationGradient_iterator &previousDeformationGradient_end,
         const Lp_iterator &Lp_begin, const Lp_iterator &Lp_end, const L_iterator &L_begin, const L_iterator &L_end,
@@ -457,7 +457,7 @@ namespace tardigradeConstitutiveTools{
         class dFdL_iterator, class dFdFp_iterator, class dFdLp_iterator,
         typename alpha_type
     >
-    inline void evolveFExponentialMap(
+    TARDIGRADE_OPTIONAL_INLINE void evolveFExponentialMap(
         const Dt_type &Dt,
         const previousDeformationGradient_iterator &previousDeformationGradient_begin, const previousDeformationGradient_iterator &previousDeformationGradient_end,
         const Lp_iterator &Lp_begin, const Lp_iterator &Lp_end, const L_iterator &L_begin, const L_iterator &L_end,
@@ -466,17 +466,17 @@ namespace tardigradeConstitutiveTools{
         const alpha_type alpha = 0.5
     );
 
-    inline void evolveFExponentialMap( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    TARDIGRADE_OPTIONAL_INLINE void evolveFExponentialMap( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                                 floatVector &deformationGradient, const floatType alpha=0.5 );
 
-    inline void evolveFExponentialMap( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    TARDIGRADE_OPTIONAL_INLINE void evolveFExponentialMap( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                                 floatVector &deformationGradient, floatVector &dFdL, const floatType alpha=0.5 );
 
-    inline void evolveFExponentialMap( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
+    TARDIGRADE_OPTIONAL_INLINE void evolveFExponentialMap( const floatType &Dt, const floatVector &previousDeformationGradient, const floatVector &Lp, const floatVector &L,
                                 floatVector &deformationGradient, floatVector &dFdL, floatVector &dFdFp, floatVector &dFdLp, const floatType alpha=0.5 );
 
     template<typename T>
-    inline T mac(const T &x){
+    TARDIGRADE_OPTIONAL_INLINE T mac(const T &x){
         /*!
          * Compute the Macaulay brackets of a scalar x
          *
@@ -489,7 +489,7 @@ namespace tardigradeConstitutiveTools{
     }
 
     template<typename T>
-    inline T mac(const T &x, T &dmacdx){
+    TARDIGRADE_OPTIONAL_INLINE T mac(const T &x, T &dmacdx){
         /*!
          * Compute the Macaulay brackets of the scalar x and
          * return the jacobian as well.
@@ -510,7 +510,7 @@ namespace tardigradeConstitutiveTools{
     template<
         class A_iterator, class Anorm_iterator
     >
-    inline void computeUnitNormal(
+    TARDIGRADE_OPTIONAL_INLINE void computeUnitNormal(
         const A_iterator &A_begin,  const A_iterator &A_end,
         Anorm_iterator Anorm_begin, Anorm_iterator Anorm_end
     );
@@ -518,24 +518,24 @@ namespace tardigradeConstitutiveTools{
     template<
         class A_iterator, class Anorm_iterator, class dAnormdA_iterator
     >
-    inline void computeUnitNormal(
+    TARDIGRADE_OPTIONAL_INLINE void computeUnitNormal(
         const A_iterator &A_begin,        const A_iterator &A_end,
         Anorm_iterator Anorm_begin,       Anorm_iterator Anorm_end,
         dAnormdA_iterator dAnormdA_begin, dAnormdA_iterator dAnormdA_end
     );
 
-    inline void computeUnitNormal(const floatVector &A, floatVector &Anorm);
+    TARDIGRADE_OPTIONAL_INLINE void computeUnitNormal(const floatVector &A, floatVector &Anorm);
 
-    inline void computeUnitNormal(const floatVector &A, floatVector &Anorm, floatVector &dAnormdA);
+    TARDIGRADE_OPTIONAL_INLINE void computeUnitNormal(const floatVector &A, floatVector &Anorm, floatVector &dAnormdA);
 
-    inline void computeUnitNormal(const floatVector &A, floatVector &Anorm, floatMatrix &dAnormdA);
+    TARDIGRADE_OPTIONAL_INLINE void computeUnitNormal(const floatVector &A, floatVector &Anorm, floatMatrix &dAnormdA);
 
     template<
         unsigned int dim,
         class velocityGradient_iterator, class deformationGradient_iterator,
         class pulledBackVelocityGradient_iterator
     >
-    inline void pullBackVelocityGradient(
+    TARDIGRADE_OPTIONAL_INLINE void pullBackVelocityGradient(
         const velocityGradient_iterator &velocityGradient_begin,       const velocityGradient_iterator &velocityGradient_end,
         const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
         pulledBackVelocityGradient_iterator pulledBackVelocityGradient_begin, pulledBackVelocityGradient_iterator pulledBackVelocityGradient_end
@@ -547,7 +547,7 @@ namespace tardigradeConstitutiveTools{
         class pulledBackVelocityGradient_iterator,
         class dPullBackLdL_iterator, class dPullBackLdF_iterator
     >
-    inline void pullBackVelocityGradient(
+    TARDIGRADE_OPTIONAL_INLINE void pullBackVelocityGradient(
         const velocityGradient_iterator &velocityGradient_begin,       const velocityGradient_iterator &velocityGradient_end,
         const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
         pulledBackVelocityGradient_iterator pulledBackVelocityGradient_begin, pulledBackVelocityGradient_iterator pulledBackVelocityGradient_end,
@@ -555,14 +555,14 @@ namespace tardigradeConstitutiveTools{
         dPullBackLdF_iterator dPullBackLdF_begin, dPullBackLdF_iterator dPullBackLdF_end
     );
 
-    inline void pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
+    TARDIGRADE_OPTIONAL_INLINE void pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
                                       floatVector &pulledBackVelocityGradient);
 
-    inline void pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
+    TARDIGRADE_OPTIONAL_INLINE void pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
                                       floatVector &pulledBackVelocityGradient, floatVector &dPullBackLdL,
                                       floatVector &dPullBackLdF);
 
-    inline void pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
+    TARDIGRADE_OPTIONAL_INLINE void pullBackVelocityGradient(const floatVector &velocityGradient, const floatVector &deformationGradient,
                                       floatVector &pulledBackVelocityGradient, floatMatrix &dPullBackLdL,
                                       floatMatrix &dPullBackLdF);
 
@@ -571,7 +571,7 @@ namespace tardigradeConstitutiveTools{
         class linearParameters_iterator, class quadraticParameters_iterator,
         class thermalExpansion_iterator
     >
-    inline void quadraticThermalExpansion(
+    TARDIGRADE_OPTIONAL_INLINE void quadraticThermalExpansion(
         const temperature_type &temperature, const referenceTemperature_type &referenceTemperature,
         const linearParameters_iterator       &linearParameters_begin, const linearParameters_iterator       &linearParameters_end,
         const quadraticParameters_iterator &quadraticParameters_begin, const quadraticParameters_iterator &quadraticParameters_end,
@@ -583,7 +583,7 @@ namespace tardigradeConstitutiveTools{
         class linearParameters_iterator, class quadraticParameters_iterator,
         class thermalExpansion_iterator, class thermalExpansionJacobian_iterator
     >
-    inline void quadraticThermalExpansion(
+    TARDIGRADE_OPTIONAL_INLINE void quadraticThermalExpansion(
         const temperature_type &temperature, const referenceTemperature_type &referenceTemperature,
         const linearParameters_iterator          &linearParameters_begin, const linearParameters_iterator          &linearParameters_end,
         const quadraticParameters_iterator    &quadraticParameters_begin, const quadraticParameters_iterator    &quadraticParameters_end,
@@ -591,11 +591,11 @@ namespace tardigradeConstitutiveTools{
         thermalExpansionJacobian_iterator thermalExpansionJacobian_begin, thermalExpansionJacobian_iterator thermalExpansionJacobian_end
     );
 
-    inline void quadraticThermalExpansion(const floatType &temperature, const floatType &referenceTemperature,
+    TARDIGRADE_OPTIONAL_INLINE void quadraticThermalExpansion(const floatType &temperature, const floatType &referenceTemperature,
                                        const floatVector &linearParameters, const floatVector &quadraticParameters,
                                        floatVector &thermalExpansion);
 
-    inline void quadraticThermalExpansion(const floatType &temperature, const floatType &referenceTemperature,
+    TARDIGRADE_OPTIONAL_INLINE void quadraticThermalExpansion(const floatType &temperature, const floatType &referenceTemperature,
                                        const floatVector &linearParameters, const floatVector &quadraticParameters,
                                        floatVector &thermalExpansion, floatVector &thermalExpansionJacobian);
 
@@ -604,7 +604,7 @@ namespace tardigradeConstitutiveTools{
         class greenLagrangeStrain_iterator, class deformationGradient_iterator,
         class almansiStrain_iterator
     >
-    inline void pushForwardGreenLagrangeStrain(
+    TARDIGRADE_OPTIONAL_INLINE void pushForwardGreenLagrangeStrain(
         const greenLagrangeStrain_iterator &greenLagrangeStrain_begin, const greenLagrangeStrain_iterator &greenLagrangeStrain_end,
         const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
         almansiStrain_iterator almansiStrain_begin, almansiStrain_iterator almansiStrain_end
@@ -616,7 +616,7 @@ namespace tardigradeConstitutiveTools{
         class almansiStrain_iterator,
         class dAlmansiStraindE_iterator, class dAlmansiStraindF_iterator
     >
-    inline void pushForwardGreenLagrangeStrain(
+    TARDIGRADE_OPTIONAL_INLINE void pushForwardGreenLagrangeStrain(
         const greenLagrangeStrain_iterator &greenLagrangeStrain_begin, const greenLagrangeStrain_iterator &greenLagrangeStrain_end,
         const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
         almansiStrain_iterator almansiStrain_begin,       almansiStrain_iterator almansiStrain_end,
@@ -624,13 +624,13 @@ namespace tardigradeConstitutiveTools{
         dAlmansiStraindF_iterator dAlmansiStraindF_begin, dAlmansiStraindF_iterator dAlmansiStraindF_end
     );
 
-    inline void pushForwardGreenLagrangeStrain(const floatVector &greenLagrangeStrain, const floatVector &deformationGradient,
+    TARDIGRADE_OPTIONAL_INLINE void pushForwardGreenLagrangeStrain(const floatVector &greenLagrangeStrain, const floatVector &deformationGradient,
                                             floatVector &almansiStrain);
 
-    inline void pushForwardGreenLagrangeStrain(const floatVector &greenLagrangeStrain, const floatVector &deformationGradient,
+    TARDIGRADE_OPTIONAL_INLINE void pushForwardGreenLagrangeStrain(const floatVector &greenLagrangeStrain, const floatVector &deformationGradient,
                                             floatVector &almansiStrain, floatVector &dAlmansiStraindE, floatVector &dAlmansiStraindF);
 
-    inline void pushForwardGreenLagrangeStrain(const floatVector &greenLagrangeStrain, const floatVector &deformationGradient,
+    TARDIGRADE_OPTIONAL_INLINE void pushForwardGreenLagrangeStrain(const floatVector &greenLagrangeStrain, const floatVector &deformationGradient,
                                             floatVector &almansiStrain, floatMatrix &dAlmansiStraindE, floatMatrix &dAlmansiStraindF);
 
     template<
@@ -638,7 +638,7 @@ namespace tardigradeConstitutiveTools{
         class almansiStrain_iterator, class deformationGradient_iterator,
         class greenLagrangeStrain_iterator
     >
-    inline void pullBackAlmansiStrain(
+    TARDIGRADE_OPTIONAL_INLINE void pullBackAlmansiStrain(
         const almansiStrain_iterator &almansiStrain_begin, const almansiStrain_iterator &almansiStrain_end,
         const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
         greenLagrangeStrain_iterator greenLagrangeStrain_begin, greenLagrangeStrain_iterator greenLagrangeStrain_end
@@ -650,7 +650,7 @@ namespace tardigradeConstitutiveTools{
         class greenLagrangeStrain_iterator,
         class dEde_iterator, class dEdF_iterator
     >
-    inline void pullBackAlmansiStrain(
+    TARDIGRADE_OPTIONAL_INLINE void pullBackAlmansiStrain(
         const almansiStrain_iterator &almansiStrain_begin, const almansiStrain_iterator &almansiStrain_end,
         const deformationGradient_iterator &deformationGradient_begin, const deformationGradient_iterator &deformationGradient_end,
         greenLagrangeStrain_iterator greenLagrangeStrain_begin, greenLagrangeStrain_iterator greenLagrangeStrain_end,
@@ -658,20 +658,20 @@ namespace tardigradeConstitutiveTools{
         dEdF_iterator dEdF_begin, dEdF_iterator dEdF_end
     );
 
-    inline void pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
+    TARDIGRADE_OPTIONAL_INLINE void pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
                                     floatVector &greenLagrangeStrain );
 
-    inline void pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
+    TARDIGRADE_OPTIONAL_INLINE void pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
                                     floatVector &greenLagrangeStrain, floatVector &dEde, floatVector &dEdF );
 
-    inline void pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
+    TARDIGRADE_OPTIONAL_INLINE void pullBackAlmansiStrain( const floatVector &almansiStrain, const floatVector &deformationGradient,
                                     floatVector &greenLagrangeStrain, floatMatrix &dEde, floatMatrix &dEdF );
 
     template<
         unsigned int dim,
         class A_iterator, class symmA_iterator
     >
-    inline void computeSymmetricPart(
+    TARDIGRADE_OPTIONAL_INLINE void computeSymmetricPart(
         const A_iterator &A_begin,  const A_iterator &A_end,
         symmA_iterator symmA_begin, symmA_iterator symmA_end
     );
@@ -680,7 +680,7 @@ namespace tardigradeConstitutiveTools{
         unsigned int dim,
         class A_iterator, class symmA_iterator, class dSymmAdA_iterator
     >
-    inline void computeSymmetricPart(
+    TARDIGRADE_OPTIONAL_INLINE void computeSymmetricPart(
         const A_iterator &A_begin,        const A_iterator &A_end,
         symmA_iterator symmA_begin,       symmA_iterator symmA_end,
         dSymmAdA_iterator dSymmAdA_begin, dSymmAdA_iterator dSymmAdA_end
@@ -689,7 +689,7 @@ namespace tardigradeConstitutiveTools{
     template<
         class A_iterator, class symmA_iterator
     >
-    inline void computeSymmetricPart(
+    TARDIGRADE_OPTIONAL_INLINE void computeSymmetricPart(
         const A_iterator &A_begin,  const A_iterator &A_end,
         symmA_iterator symmA_begin, symmA_iterator symmA_end,
         unsigned int &dim
@@ -698,25 +698,25 @@ namespace tardigradeConstitutiveTools{
     template<
         class A_iterator, class symmA_iterator, class dSymmAdA_iterator
     >
-    inline void computeSymmetricPart(
+    TARDIGRADE_OPTIONAL_INLINE void computeSymmetricPart(
         const A_iterator &A_begin,        const A_iterator &A_end,
         symmA_iterator symmA_begin,       symmA_iterator symmA_end,
         dSymmAdA_iterator dSymmAdA_begin, dSymmAdA_iterator dSymmAdA_end
     );
 
-    inline void computeSymmetricPart( const floatVector &A, floatVector &symmA, unsigned int &dim );
+    TARDIGRADE_OPTIONAL_INLINE void computeSymmetricPart( const floatVector &A, floatVector &symmA, unsigned int &dim );
 
-    inline void computeSymmetricPart( const floatVector &A, floatVector &symmA );
+    TARDIGRADE_OPTIONAL_INLINE void computeSymmetricPart( const floatVector &A, floatVector &symmA );
 
-    inline void computeSymmetricPart( const floatVector &A, floatVector &symmA, floatVector &dSymmAdA );
+    TARDIGRADE_OPTIONAL_INLINE void computeSymmetricPart( const floatVector &A, floatVector &symmA, floatVector &dSymmAdA );
 
-    inline void computeSymmetricPart( const floatVector &A, floatVector &symmA, floatMatrix &dSymmAdA );
+    TARDIGRADE_OPTIONAL_INLINE void computeSymmetricPart( const floatVector &A, floatVector &symmA, floatMatrix &dSymmAdA );
 
     template<
         unsigned int dim,
         class PK2_iterator, class F_iterator, class cauchyStress_iterator
     >
-    inline void pushForwardPK2Stress(
+    TARDIGRADE_OPTIONAL_INLINE void pushForwardPK2Stress(
         const PK2_iterator &PK2_begin, const PK2_iterator &PK2_end,
         const F_iterator &F_begin,     const F_iterator &F_end,
         cauchyStress_iterator cauchyStress_begin, cauchyStress_iterator cauchyStress_end
@@ -727,7 +727,7 @@ namespace tardigradeConstitutiveTools{
         class PK2_iterator, class F_iterator, class cauchyStress_iterator,
         class dCauchyStressdPK2_iterator, class dCauchyStressdF_iterator
     >
-    inline void pushForwardPK2Stress(
+    TARDIGRADE_OPTIONAL_INLINE void pushForwardPK2Stress(
         const PK2_iterator &PK2_begin, const PK2_iterator &PK2_end,
         const F_iterator &F_begin,     const F_iterator &F_end,
         cauchyStress_iterator cauchyStress_begin, cauchyStress_iterator cauchyStress_end,
@@ -735,19 +735,19 @@ namespace tardigradeConstitutiveTools{
         dCauchyStressdF_iterator dCauchyStressdF_begin, dCauchyStressdF_iterator dCauchyStressdF_end
     );
 
-    inline void pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress );
+    TARDIGRADE_OPTIONAL_INLINE void pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress );
 
-    inline void pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress,
+    TARDIGRADE_OPTIONAL_INLINE void pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress,
                                    floatVector &dCauchyStressdPK2, floatVector &dCauchyStressdF );
 
-    inline void pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress,
+    TARDIGRADE_OPTIONAL_INLINE void pushForwardPK2Stress( const floatVector &PK2, const floatVector &F, floatVector &cauchyStress,
                                    floatMatrix &dCauchyStressdPK2, floatMatrix &dCauchyStressdF );
 
     template<
         unsigned int dim,
         class cauchyStress_iterator, class F_iterator, class PK2_iterator
     >
-    inline void pullBackCauchyStress(
+    TARDIGRADE_OPTIONAL_INLINE void pullBackCauchyStress(
         const cauchyStress_iterator &cauchyStress_begin, const cauchyStress_iterator &cauchyStress_end,
         const F_iterator &F_begin, const F_iterator &F_end,
         PK2_iterator PK2_begin, PK2_iterator PK2_end
@@ -758,7 +758,7 @@ namespace tardigradeConstitutiveTools{
         class cauchyStress_iterator, class F_iterator, class PK2_iterator,
         class dPK2dCauchyStress_iterator, class dPK2dF_iterator
     >
-    inline void pullBackCauchyStress(
+    TARDIGRADE_OPTIONAL_INLINE void pullBackCauchyStress(
         const cauchyStress_iterator &cauchyStress_begin, const cauchyStress_iterator &cauchyStress_end,
         const F_iterator &F_begin, const F_iterator &F_end,
         PK2_iterator PK2_begin, PK2_iterator PK2_end,
@@ -766,19 +766,19 @@ namespace tardigradeConstitutiveTools{
         dPK2dF_iterator dPK2dF_begin, dPK2dF_iterator dPK2dF_end
     );
 
-    inline void pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2 );
+    TARDIGRADE_OPTIONAL_INLINE void pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2 );
 
-    inline void pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2,
+    TARDIGRADE_OPTIONAL_INLINE void pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2,
                                    floatVector &dPK2dCauchyStress, floatVector &dPK2dF );
 
-    inline void pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2,
+    TARDIGRADE_OPTIONAL_INLINE void pullBackCauchyStress( const floatVector &cauchyStress, const floatVector &F, floatVector &PK2,
                                    floatMatrix &dPK2dCauchyStress, floatMatrix &dPK2dF );
 
     template<
         unsigned int dim,
         class normalVector_iterator, class F_iterator, class dNormalVectordF_iterator
     >
-    inline void computeDCurrentNormalVectorDF(
+    TARDIGRADE_OPTIONAL_INLINE void computeDCurrentNormalVectorDF(
         const normalVector_iterator &normalVector_begin, const normalVector_iterator &normalVector_end,
         const F_iterator &F_begin, const F_iterator &F_end,
         dNormalVectordF_iterator dNormalVectordF_begin, dNormalVectordF_iterator dNormalVectordF_end
@@ -788,7 +788,7 @@ namespace tardigradeConstitutiveTools{
         unsigned int dim,
         class normalVector_iterator, class F_iterator, class dAreaWeightedNormalVectordF_iterator
     >
-    inline void computeDCurrentAreaWeightedNormalVectorDF(
+    TARDIGRADE_OPTIONAL_INLINE void computeDCurrentAreaWeightedNormalVectorDF(
         const normalVector_iterator &normalVector_begin, const normalVector_iterator &normalVector_end,
         const F_iterator &F_begin, const F_iterator &F_end,
         dAreaWeightedNormalVectordF_iterator dAreaWeightedNormalVectordF_begin, dAreaWeightedNormalVectordF_iterator dAreaWeightedNormalVectordF_end
@@ -798,7 +798,7 @@ namespace tardigradeConstitutiveTools{
         unsigned int dim,
         class normalVector_iterator, class F_iterator, class dCurrentAreadF_iterator
     >
-    inline void computeDCurrentAreaDF(
+    TARDIGRADE_OPTIONAL_INLINE void computeDCurrentAreaDF(
         const normalVector_iterator &normalVector_begin, const normalVector_iterator &normalVector_end,
         const F_iterator &F_begin, const F_iterator &F_end,
         dCurrentAreadF_iterator dCurrentAreadF_begin, dCurrentAreadF_iterator dCurrentAreadF_end
@@ -808,7 +808,7 @@ namespace tardigradeConstitutiveTools{
         unsigned int dim,
         class normalVector_iterator, class gradU_iterator, class dNormalVectordGradU_iterator
     >
-    inline void computeDCurrentNormalVectorDGradU(
+    TARDIGRADE_OPTIONAL_INLINE void computeDCurrentNormalVectorDGradU(
         const normalVector_iterator &normalVector_begin, const normalVector_iterator &normalVector_end,
         const gradU_iterator &gradU_begin, const gradU_iterator &gradU_end,
         dNormalVectordGradU_iterator dNormalVectordGradU_begin, dNormalVectordGradU_iterator dNormalVectordGradU_end,
@@ -819,7 +819,7 @@ namespace tardigradeConstitutiveTools{
         unsigned int dim,
         class normalVector_iterator, class gradU_iterator, class dAreaWeightedNormalVectordGradU_iterator
     >
-    inline void computeDCurrentAreaWeightedNormalVectorDGradU(
+    TARDIGRADE_OPTIONAL_INLINE void computeDCurrentAreaWeightedNormalVectorDGradU(
         const normalVector_iterator &normalVector_begin, const normalVector_iterator &normalVector_end,
         const gradU_iterator &gradU_begin, const gradU_iterator &gradU_end,
         dAreaWeightedNormalVectordGradU_iterator dAreaWeightedNormalVectordGradU_begin, dAreaWeightedNormalVectordGradU_iterator dAreaWeightedNormalVectordGradU_end,
@@ -830,24 +830,24 @@ namespace tardigradeConstitutiveTools{
         unsigned int dim,
         class normalVector_iterator, class gradU_iterator, class dCurrentAreadGradU_iterator
     >
-    inline void computeDCurrentAreaDGradU(
+    TARDIGRADE_OPTIONAL_INLINE void computeDCurrentAreaDGradU(
         const normalVector_iterator &normalVector_begin, const normalVector_iterator &normalVector_end,
         const gradU_iterator &gradU_begin, const gradU_iterator &gradU_end,
         dCurrentAreadGradU_iterator dCurrentAreadGradU_begin, dCurrentAreadGradU_iterator dCurrentAreadGradU_end,
         const bool isCurrent = true
     );
 
-    inline void computeDCurrentNormalVectorDF( const floatVector &normalVector, const floatVector &F, floatVector &dNormalVectordF );
+    TARDIGRADE_OPTIONAL_INLINE void computeDCurrentNormalVectorDF( const floatVector &normalVector, const floatVector &F, floatVector &dNormalVectordF );
 
-    inline void computeDCurrentAreaWeightedNormalVectorDF( const floatVector &normalVector, const floatVector &F, floatVector &dAreaWeightedNormalVectordF );
+    TARDIGRADE_OPTIONAL_INLINE void computeDCurrentAreaWeightedNormalVectorDF( const floatVector &normalVector, const floatVector &F, floatVector &dAreaWeightedNormalVectordF );
 
-    inline void computeDCurrentAreaDF( const floatVector &normalVector, const floatVector &F, floatVector &dCurrentAreadF );
+    TARDIGRADE_OPTIONAL_INLINE void computeDCurrentAreaDF( const floatVector &normalVector, const floatVector &F, floatVector &dCurrentAreadF );
 
-    inline void computeDCurrentNormalVectorDGradU( const floatVector &normalVector, const floatVector &gradU, floatVector &dNormalVectordGradU, const bool isCurrent = true );
+    TARDIGRADE_OPTIONAL_INLINE void computeDCurrentNormalVectorDGradU( const floatVector &normalVector, const floatVector &gradU, floatVector &dNormalVectordGradU, const bool isCurrent = true );
 
-    inline void computeDCurrentAreaWeightedNormalVectorDGradU( const floatVector &normalVector, const floatVector &gradU, floatVector &dAreaWeightedNormalVectordGradU, const bool isCurrent = true );
+    TARDIGRADE_OPTIONAL_INLINE void computeDCurrentAreaWeightedNormalVectorDGradU( const floatVector &normalVector, const floatVector &gradU, floatVector &dAreaWeightedNormalVectordGradU, const bool isCurrent = true );
 
-    inline void computeDCurrentAreaDGradU( const floatVector &normalVector, const floatVector &gradU, floatVector &dCurrentAreadGradU, const bool isCurrent = true );
+    TARDIGRADE_OPTIONAL_INLINE void computeDCurrentAreaDGradU( const floatVector &normalVector, const floatVector &gradU, floatVector &dCurrentAreadGradU, const bool isCurrent = true );
 
 }
 
