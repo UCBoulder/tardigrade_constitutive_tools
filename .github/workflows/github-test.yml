@@ -19,6 +19,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         build_type: [Release]
+        config_zip: [ {header_only: OFF, python_bindings: ON}, {header_only: ON, python_bindings: OFF} ]
+        tardigrade_opt: [OFF, ON]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,7 +39,7 @@ jobs:
         run: conda install --file environment.txt --yes --channel conda-forge
       - name: Build
         shell: bash -el {0}
-        run: cmake -S . -B build -DTARDIGRADE_CONSTITUTIVE_TOOLS_BUILD_PYTHON_BINDINGS=OFF && cmake --build build --target all
+        run: cmake -S . -B build -DTARDIGRADE_CONSTITUTIVE_TOOLS_BUILD_PYTHON_BINDINGS=${{ matrix.config_zip.python_bindings }} -DTARDIGRADE_HEADER_ONLY=${{ matrix.config_zip.header_only }} -DTARDIGRADE_CONSTITUTIVE_TOOLS_OPT=${{ matrix.tardigrade_opt }} && cmake --build build --target all
       - name: Test
         shell: bash -el {0}
         run: conda activate test-environment && ctest --test-dir build -V
