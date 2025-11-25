@@ -18,7 +18,7 @@ Information
 Developers
 ==========
 
-* Nathan Miller nathanm@lanl.gov
+* Nathan Miller Nathan.A.Miller@colorado.edu
 * Kyle Brindley kbrindley@lanl.gov
 
 ************
