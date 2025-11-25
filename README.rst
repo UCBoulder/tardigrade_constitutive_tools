@@ -15,9 +15,6 @@ extraneous things.
 Information
 ===========
 
-* Documentation: https://aea.re-pages.lanl.gov/material-models/tardigrade_constitutive_tools
-* Wiki: https://re-git.lanl.gov/aea/material-models/tardigrade_constitutive_tools/-/wikis/home
-
 Developers
 ==========
 
