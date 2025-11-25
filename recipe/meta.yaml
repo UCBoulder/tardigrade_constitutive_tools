@@ -53,6 +53,8 @@ requirements:
 test:
   requires:
     - {{ compiler('cxx') }}
+    - pytest
+    - pytest-xdist
     - make
     - cmake >=3.30
     - libboost-python-devel >=1.82
