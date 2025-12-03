@@ -19,5 +19,5 @@ setuptools_scm >=8
 sphinx>=3.0.4
 sphinx_rtd_theme>=0.4.3
 sphinxcontrib-bibtex
-tardigrade_error_tools>=0.9.7
+tardigrade_error_tools>=0.9.8
 tardigrade_vector_tools>=0.8.7
