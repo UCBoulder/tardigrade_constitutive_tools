@@ -25,7 +25,6 @@ build:
 
 requirements:
   build:
-    - {{ stdlib('c') }}
     - {{ compiler('cxx') }}
     - make
     - cmake >=3.30
