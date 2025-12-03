@@ -18,9 +18,13 @@ add_custom_command(TARGET ${PYTHON_TARGET} PRE_BUILD
                    COMMENT "Building the ${PROJECT_NAME} Cython extension - python target"
                   )
 # Add pytests as a ctest function for automated testing under unified CMake/CTest tools
-add_test(NAME pytest
-         COMMAND
-             ${CMAKE_COMMAND} -E env LD_LIBRARY_PATH=ENV{LD_LIBRARY_PATH}:${CMAKE_BINARY_DIR}/${CPP_SRC_PATH}
-             pytest
-         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/${PYTHON_SRC_PATH}
-        )
+if(${APPLE})
+    set(LIBRARY_MODIFICATION "DYLD_FALLBACK_LIBRARY_PATH=${CMAKE_BINARY_DIR}/${CPP_SRC_PATH}")
+else()
+    set(LIBRARY_MODIFICATION "LD_LIBRARY_PATH=ENV{LD_LIBRARY_PATH}:${CMAKE_BINARY_DIR}/${CPP_SRC_PATH}")
+endif()
+add_test(
+    NAME pytest
+    COMMAND ${CMAKE_COMMAND} -E env ${LIBRARY_MODIFICATION} pytest
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/${PYTHON_SRC_PATH}
+)

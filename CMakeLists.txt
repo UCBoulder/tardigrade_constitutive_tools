@@ -1,6 +1,6 @@
 #===================================================================================================== PROJECT SETUP ===
-cmake_minimum_required(VERSION 3.18)
-project(tardigrade_constitutive_tools)
+cmake_minimum_required(VERSION 3.30)
+project(tardigrade_constitutive_tools LANGUAGES CXX)
 
 # Set common project paths relative to project root directory
 set(CPP_SRC_PATH "src/cpp")
@@ -57,12 +57,16 @@ if(${not_conda_test} STREQUAL "true")
     if (DEFINED ENV{PREFIX})
         set(Python_ROOT_DIR "$ENV{PREFIX}/bin")
     endif()
+    set(Python_FIND_STRATEGY LOCATION)
     find_package(Python COMPONENTS Interpreter REQUIRED)
     execute_process(COMMAND ${Python_EXECUTABLE} -m setuptools_scm
                             OUTPUT_VARIABLE ${PROJECT_NAME}_VERSION_STRING_FULL
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
     string(REGEX MATCH "[0-9]+\.[0-9]+\.[0-9]+" ${PROJECT_NAME}_VERSION ${${PROJECT_NAME}_VERSION_STRING_FULL})
-    project(${PROJECT_NAME} VERSION ${${PROJECT_NAME}_VERSION})
+    if(${${PROJECT_NAME}_VERSION} STREQUAL "")
+        set(${PROJECT_NAME}_VERSION 0.0.0)
+    endif()
+    project(${PROJECT_NAME} VERSION ${${PROJECT_NAME}_VERSION} LANGUAGES CXX)
 endif()
 
 # Add installation directory variables
@@ -147,7 +151,7 @@ endif()
 # Only add tests and documentation for current project builds. Protects downstream project builds.
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     # Find Boost. Required for tests
-    find_package(Boost 1.53.0 REQUIRED COMPONENTS unit_test_framework)
+    find_package(Boost 1.82.0 REQUIRED)
     # Add c++ tests and docs
     add_subdirectory(${CPP_TEST_PATH})
     if(${not_conda_test} STREQUAL "true")
