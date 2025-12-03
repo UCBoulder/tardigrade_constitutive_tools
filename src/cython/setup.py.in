@@ -17,7 +17,6 @@ CYTHON_SOURCE_SUBDIRECTORY = pathlib.Path("@CYTHON_SRC_PATH@")
 CPP_SOURCE_SUBDIRECTORY = pathlib.Path("@CPP_SRC_PATH@")
 CPP_SOURCE_DIRECTORY = ROOT_DIRECTORY / CPP_SOURCE_SUBDIRECTORY
 UPSTREAM_PROJECTS = '@upstream_packages@'.split(';')
-STATIC_LIBRARY_PROJECTS = '@static_library_projects@'.split(';')
 PROJECT_NAME = "@PROJECT_NAME@"
 CXX_STANDARD = "@CMAKE_CXX_STANDARD@"
 EIGEN_DIR = "@EIGEN_DIR@"
@@ -26,21 +25,6 @@ EIGEN_DIR = "@EIGEN_DIR@"
 # Get the third-party include directories #
 ###########################################
 include_dirs = [numpy.get_include(), str(CPP_SOURCE_DIRECTORY), EIGEN_DIR, str(CONDA_ENVIRONMENT_INCLUDE)]
-
-############################
-# Get the static libraries #
-############################
-static_libraries = []
-libdir="lib"
-for upstream_project in STATIC_LIBRARY_PROJECTS:
-    upstream_installed = CONDA_ENVIRONMENT / f"{libdir}/lib{upstream_project}.a"
-    upstream_insource = BUILD_DIRECTORY / f"_deps/{upstream_project}-build" / CPP_SOURCE_SUBDIRECTORY / f"lib{upstream_project}.a"
-    if upstream_installed.exists() and upstream_installed.is_file():
-        static_libraries.append(str(upstream_installed.resolve()))
-    elif upstream_insource.exists() and upstream_insource.is_file():
-        static_libraries.append(str(upstream_insource.resolve()))
-    else:
-        warnings.warn(f"Could not find upstream static library from '{upstream_project}'", RuntimeWarning)
 
 ############################
 # Get the shared libraries #
@@ -70,7 +54,6 @@ for upstream_project in UPSTREAM_PROJECTS:
 ext_modules = [Extension(PROJECT_NAME,
                      sources=[f"main.pyx"],
                      language='c++',
-                     extra_objects=static_libraries,
                      libraries=shared_libraries,
                      library_dirs=shared_library_paths,
                      include_dirs=include_dirs,
