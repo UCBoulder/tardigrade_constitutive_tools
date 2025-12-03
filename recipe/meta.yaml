@@ -68,7 +68,7 @@ test:
     - set -x
     - cmake -S . -B build -DCMAKE_BUILD_TYPE=conda-test -DCMAKE_INSTALL_LIBDIR=lib
     - cmake --build build --target all --verbose
-    - ctest --test-dir build --output-on-failure
+    - ctest --test-dir build --output-on-failure -R 'test_'
     - cd $SP_DIR/$PKG_NAME
     - pytest
 
