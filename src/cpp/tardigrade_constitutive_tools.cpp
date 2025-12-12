@@ -1059,7 +1059,7 @@ namespace tardigradeConstitutiveTools{
             "The isochoric Green-Lagrange strain tensor has a size of " + std::to_string( ( unsigned int )( Ebar_end - Ebar_begin ) ) + " but should have a size of " + std::to_string( dim * dim )
         );
 
-        std::array< E_type, dim * dim > F_squared;
+        std::array< E_type, dim * dim > F_squared = { E_type( ) };
 
         std::transform(
             E_begin, E_end, std::begin( F_squared ),
