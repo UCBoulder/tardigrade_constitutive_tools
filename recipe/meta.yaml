@@ -28,9 +28,9 @@ requirements:
     - {{ compiler('cxx') }}
     - make
     - cmake >=3.30
+    - clang-tools
   host:
     - python {{ python }}
-    - breathe >=4.3.0
     - sphinx >=3.0.4
     - sphinx_rtd_theme >=0.4.3
     - sphinxcontrib-bibtex
@@ -57,6 +57,7 @@ test:
     - pytest-xdist
     - make
     - cmake >=3.30
+    - clang-tools
     - libboost-python-devel >=1.82
     - doxygen
     - sphinx >=3.0.4
