@@ -1877,9 +1877,9 @@ BOOST_AUTO_TEST_CASE( testEvolveFExponentialMap, * boost::unit_test::tolerance( 
 
         floatVector vp, vm;
 
-        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp, Lp, L_p, vp, alpha=alpha );
+        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp, Lp, L_p, vp, alpha );
 
-        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp, Lp, L_m, vm, alpha=alpha );
+        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp, Lp, L_m, vm, alpha );
 
         for ( unsigned int j = 0; j < 9; j++ ){
 
@@ -1905,9 +1905,9 @@ BOOST_AUTO_TEST_CASE( testEvolveFExponentialMap, * boost::unit_test::tolerance( 
 
         floatVector vp, vm;
 
-        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp_p, Lp, L, vp, alpha=alpha );
+        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp_p, Lp, L, vp, alpha );
 
-        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp_m, Lp, L, vm, alpha=alpha );
+        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp_m, Lp, L, vm, alpha );
 
         for ( unsigned int j = 0; j < 9; j++ ){
 
@@ -1933,9 +1933,9 @@ BOOST_AUTO_TEST_CASE( testEvolveFExponentialMap, * boost::unit_test::tolerance( 
 
         floatVector vp, vm;
 
-        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp, Lp_p, L, vp, alpha=alpha );
+        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp, Lp_p, L, vp, alpha );
 
-        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp, Lp_m, L, vm, alpha=alpha );
+        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp, Lp_m, L, vm, alpha );
 
         for ( unsigned int j = 0; j < 9; j++ ){
 
@@ -2007,9 +2007,9 @@ BOOST_AUTO_TEST_CASE( testEvolveFExponentialMap2, * boost::unit_test::tolerance(
 
         floatVector vp, vm;
 
-        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp, Lp, L_p, vp, alpha=alpha );
+        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp, Lp, L_p, vp, alpha );
 
-        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp, Lp, L_m, vm, alpha=alpha );
+        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp, Lp, L_m, vm, alpha );
 
         for ( unsigned int j = 0; j < 9; j++ ){
 
@@ -2035,9 +2035,9 @@ BOOST_AUTO_TEST_CASE( testEvolveFExponentialMap2, * boost::unit_test::tolerance(
 
         floatVector vp, vm;
 
-        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp_p, Lp, L, vp, alpha=alpha );
+        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp_p, Lp, L, vp, alpha );
 
-        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp_m, Lp, L, vm, alpha=alpha );
+        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp_m, Lp, L, vm, alpha );
 
         for ( unsigned int j = 0; j < 9; j++ ){
 
@@ -2063,9 +2063,9 @@ BOOST_AUTO_TEST_CASE( testEvolveFExponentialMap2, * boost::unit_test::tolerance(
 
         floatVector vp, vm;
 
-        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp, Lp_p, L, vp, alpha=alpha );
+        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp, Lp_p, L, vp, alpha );
 
-        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp, Lp_m, L, vm, alpha=alpha );
+        tardigradeConstitutiveTools::evolveFExponentialMap( Dt, Fp, Lp_m, L, vm, alpha );
 
         for ( unsigned int j = 0; j < 9; j++ ){
 
