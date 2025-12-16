@@ -2979,4 +2979,332 @@ namespace tardigradeConstitutiveTools {
         }
     }
 
+    template <unsigned int dim, class normalVector_iterator, class F_iterator, class dNormalVectordF_iterator>
+    void computeDCurrentNormalVectorDF(const normalVector_iterator &normalVector_begin,
+                                       const normalVector_iterator &normalVector_end, const F_iterator &F_begin,
+                                       const F_iterator &F_end, dNormalVectordF_iterator dNormalVectordF_begin,
+                                       dNormalVectordF_iterator dNormalVectordF_end) {
+        /*!
+         * Compute the derivative of the normal vector in the current configuration w.r.t. the deformation gradient
+         *
+         * \param &normalVector_begin: The starting iterator of the unit normal vector in the current configuration
+         * \param &normalVector_end: The stopping iterator of the unit normal vector in the current configuration
+         * \param &F_begin: The starting iterator of the deformation gradient
+         * \param &F_end: The stopping iterator of the deformation gradient
+         * \param &dNormalVectordF_begin: The starting iterator of the derivative of the normal vector w.r.t. the
+         * deformation gradient \param &dNormalVectordF_end: The stopping iterator of the derivative of the normal
+         * vector w.r.t. the deformation gradient
+         */
+
+        using F_type               = typename std::iterator_traits<F_iterator>::value_type;
+        using dNormalVectordF_type = typename std::iterator_traits<dNormalVectordF_iterator>::value_type;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK((unsigned int)(normalVector_end - normalVector_begin) == dim,
+                                     "The normal vector has a dimension of " +
+                                         std::to_string((unsigned int)(normalVector_end - normalVector_begin)) +
+                                         " but should be " + std::to_string(dim));
+
+        TARDIGRADE_ERROR_TOOLS_CHECK((unsigned int)(F_end - F_begin) == dim * dim,
+                                     "The deformation gradient has a dimension of " +
+                                         std::to_string((unsigned int)(F_end - F_begin)) + " but should be " +
+                                         std::to_string(dim * dim));
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            (unsigned int)(dNormalVectordF_end - dNormalVectordF_begin) == dim * dim * dim,
+            "The derivative of the normal vector with respect to the deformation gradient has a dimension of " +
+                std::to_string((unsigned int)(dNormalVectordF_end - dNormalVectordF_begin)) + " but should be " +
+                std::to_string(dim * dim * dim));
+
+        std::fill(dNormalVectordF_begin, dNormalVectordF_end, dNormalVectordF_type());
+
+        std::array<dNormalVectordF_type, dim> F_inv_n;
+        std::array<F_type, dim * dim>         F_inv;
+
+        Eigen::Map<const Eigen::Matrix<F_type, dim, dim, Eigen::RowMajor> > F_map(&(*F_begin));
+
+        Eigen::Map<Eigen::Matrix<F_type, dim, dim, Eigen::RowMajor> > F_inv_map(F_inv.data());
+
+        F_inv_map = F_map.inverse();
+
+        std::fill(std::begin(F_inv_n), std::end(F_inv_n), dNormalVectordF_type());
+
+        for (unsigned int B = 0; B < dim; ++B) {
+            for (unsigned int j = 0; j < dim; ++j) {
+                F_inv_n[B] += F_inv[dim * B + j] * (*(normalVector_begin + j));
+            }
+        }
+
+        for (unsigned int i = 0; i < dim; ++i) {
+            for (unsigned int b = 0; b < dim; ++b) {
+                for (unsigned int B = 0; B < dim; ++B) {
+                    *(dNormalVectordF_begin + dim * dim * i + dim * b + B) +=
+                        (*(normalVector_begin + i)) * (*(normalVector_begin + b)) * F_inv_n[B] -
+                        (*(normalVector_begin + b)) * F_inv[dim * B + i];
+                }
+            }
+        }
+    }
+
+    template <unsigned int dim, class normalVector_iterator, class F_iterator,
+              class dAreaWeightedNormalVectordF_iterator>
+    void computeDCurrentAreaWeightedNormalVectorDF(
+        const normalVector_iterator &normalVector_begin, const normalVector_iterator &normalVector_end,
+        const F_iterator &F_begin, const F_iterator &F_end,
+        dAreaWeightedNormalVectordF_iterator dAreaWeightedNormalVectordF_begin,
+        dAreaWeightedNormalVectordF_iterator dAreaWeightedNormalVectordF_end) {
+        /*!
+         * Compute the derivative of the area weighted normal vector w.r.t. the deformation gradient i.e.
+         *
+         * \f$ \frac{\partial}{\partial F_{bB}} \left( n_i da \right) \f$
+         *
+         * Note that if the user passes in the unit normal vector, then the result will be more convenient for the
+         * construction of the jacobian of a surface integral in the current configuration.
+         *
+         * \param &normalVector_begin: The starting iterator of the unit normal vector in the current configuration
+         * \param &normalVector_end: The stopping iterator of the unit normal vector in the current configuration
+         * \param &F_begin: The starting iterator of the deformation gradient
+         * \param &F_end: The stopping iterator of the deformation gradient
+         * \param &dAreaWeightedNormalVectordF_begin: The starting iterator of the derivative of the area weighted
+         * normal vector w.r.t. the deformation gradient \param &dAreaWeightedNormalVectordF_end: The stopping iterator
+         * of the derivative of the area weighted normal vector w.r.t. the deformation gradient
+         */
+
+        using F_type = typename std::iterator_traits<F_iterator>::value_type;
+        using dAreaWeightedNormalVectordF_type =
+            typename std::iterator_traits<dAreaWeightedNormalVectordF_iterator>::value_type;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK((unsigned int)(normalVector_end - normalVector_begin) == dim,
+                                     "The normal vector has a dimension of " +
+                                         std::to_string((unsigned int)(normalVector_end - normalVector_begin)) +
+                                         " but should be " + std::to_string(dim));
+
+        TARDIGRADE_ERROR_TOOLS_CHECK((unsigned int)(F_end - F_begin) == dim * dim,
+                                     "The deformation gradient has a dimension of " +
+                                         std::to_string((unsigned int)(F_end - F_begin)) + " but should be " +
+                                         std::to_string(dim * dim));
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            (unsigned int)(dAreaWeightedNormalVectordF_end - dAreaWeightedNormalVectordF_begin) == dim * dim * dim,
+            "The derivative of the area weighted normal vector with respect to the deformation gradient has a "
+            "dimension of " +
+                std::to_string((unsigned int)(dAreaWeightedNormalVectordF_end - dAreaWeightedNormalVectordF_begin)) +
+                " but should be " + std::to_string(dim * dim * dim));
+
+        std::fill(dAreaWeightedNormalVectordF_begin, dAreaWeightedNormalVectordF_end,
+                  dAreaWeightedNormalVectordF_type());
+
+        std::array<F_type, dim * dim> F_inv;
+
+        Eigen::Map<const Eigen::Matrix<F_type, dim, dim, Eigen::RowMajor> > F_map(&(*F_begin));
+
+        Eigen::Map<Eigen::Matrix<F_type, dim, dim, Eigen::RowMajor> > F_inv_map(F_inv.data());
+
+        F_inv_map = F_map.inverse();
+
+        for (unsigned int i = 0; i < dim; ++i) {
+            for (unsigned int b = 0; b < dim; ++b) {
+                for (unsigned int B = 0; B < dim; ++B) {
+                    *(dAreaWeightedNormalVectordF_begin + dim * dim * i + dim * b + B) +=
+                        (*(normalVector_begin + i)) * F_inv[dim * B + b] -
+                        (*(normalVector_begin + b)) * F_inv[dim * B + i];
+                }
+            }
+        }
+    }
+
+    template <unsigned int dim, class normalVector_iterator, class F_iterator, class dCurrentAreadF_iterator>
+    void computeDCurrentAreaDF(const normalVector_iterator &normalVector_begin,
+                               const normalVector_iterator &normalVector_end, const F_iterator &F_begin,
+                               const F_iterator &F_end, dCurrentAreadF_iterator dCurrentAreadF_begin,
+                               dCurrentAreadF_iterator dCurrentAreadF_end) {
+        /*!
+         * Compute the derivative of the current area w.r.t. the deformation gradient
+         *
+         * \param &normalVector_begin: The starting iterator of the unit normal vector in the current configuration
+         * \param &normalVector_end: The stopping iterator of the unit normal vector in the current configuration
+         * \param &F_begin: The starting iterator of the deformation gradient
+         * \param &F_end: The stopping iterator of the deformation gradient
+         * \param &dCurrentAreadF_begin: The starting iterator of the derivative of the area w.r.t. the deformation
+         * gradient \param &dCurrentAreadF_end: The stopping iterator of the derivative of the area w.r.t. the
+         * deformation gradient
+         */
+
+        using F_type              = typename std::iterator_traits<F_iterator>::value_type;
+        using dCurrentAreadF_type = typename std::iterator_traits<dCurrentAreadF_iterator>::value_type;
+
+        TARDIGRADE_ERROR_TOOLS_CHECK((unsigned int)(normalVector_end - normalVector_begin) == dim,
+                                     "The normal vector has a dimension of " +
+                                         std::to_string((unsigned int)(normalVector_end - normalVector_begin)) +
+                                         " but should be " + std::to_string(dim));
+
+        TARDIGRADE_ERROR_TOOLS_CHECK((unsigned int)(F_end - F_begin) == dim * dim,
+                                     "The deformation gradient has a dimension of " +
+                                         std::to_string((unsigned int)(F_end - F_begin)) + " but should be " +
+                                         std::to_string(dim * dim));
+
+        TARDIGRADE_ERROR_TOOLS_CHECK(
+            (unsigned int)(dCurrentAreadF_end - dCurrentAreadF_begin) == dim * dim,
+            "The derivative of the current surface area with respect to the deformation gradient has a dimension of " +
+                std::to_string((unsigned int)(dCurrentAreadF_end - dCurrentAreadF_begin)) + " but should be " +
+                std::to_string(dim * dim));
+
+        std::fill(dCurrentAreadF_begin, dCurrentAreadF_end, dCurrentAreadF_type());
+
+        std::array<F_type, dim * dim>        F_inv;
+        std::array<dCurrentAreadF_type, dim> F_inv_n;
+
+        Eigen::Map<const Eigen::Matrix<F_type, dim, dim, Eigen::RowMajor> > F_map(&(*F_begin));
+
+        Eigen::Map<Eigen::Matrix<F_type, dim, dim, Eigen::RowMajor> > F_inv_map(F_inv.data());
+
+        F_inv_map = F_map.inverse();
+
+        std::fill(std::begin(F_inv_n), std::end(F_inv_n), dCurrentAreadF_type());
+
+        for (unsigned int B = 0; B < dim; ++B) {
+            for (unsigned int i = 0; i < dim; ++i) {
+                F_inv_n[B] += F_inv[dim * B + i] * (*(normalVector_begin + i));
+            }
+        }
+
+        for (unsigned int B = 0; B < dim; ++B) {
+            for (unsigned int b = 0; b < dim; ++b) {
+                *(dCurrentAreadF_begin + dim * b + B) += F_inv[dim * B + b] - (*(normalVector_begin + b)) * F_inv_n[B];
+            }
+        }
+    }
+
+    template <unsigned int dim, class normalVector_iterator, class gradU_iterator, class dNormalVectordGradU_iterator>
+    void computeDCurrentNormalVectorDGradU(const normalVector_iterator &normalVector_begin,
+                                           const normalVector_iterator &normalVector_end,
+                                           const gradU_iterator &gradU_begin, const gradU_iterator &gradU_end,
+                                           dNormalVectordGradU_iterator dNormalVectordGradU_begin,
+                                           dNormalVectordGradU_iterator dNormalVectordGradU_end, const bool isCurrent) {
+        /*!
+         * Compute the derivative of the normal vector in the current configuration w.r.t. the displacement gradient
+         *
+         * \param &normalVector_begin: The starting iterator of the unit normal vector in the current configuration
+         * \param &normalVector_end: The stopping iterator of the unit normal vector in the current configuration
+         * \param &gradU_begin: The starting iterator of the displacement gradient
+         * \param &gradU_end: The stopping iterator of the displacement gradient
+         * \param &dNormalVectordGradU_begin: The starting iterator of the derivative of the normal vector w.r.t. the
+         * displacement gradient \param &dNormalVectordGradU_end: The stopping iterator of the derivative of the normal
+         * vector w.r.t. the displacement gradient \param &isCurrent: Whether the displacement gradient is with respect
+         * to the reference or current configuration
+         */
+
+        using gradU_type               = typename std::iterator_traits<gradU_iterator>::value_type;
+        using dNormalVectordGradU_type = typename std::iterator_traits<dNormalVectordGradU_iterator>::value_type;
+
+        std::array<gradU_type, dim * dim>                     F;
+        std::array<gradU_type, dim * dim * dim * dim>         dFdGradU;
+        std::array<dNormalVectordGradU_type, dim * dim * dim> dNormalVectordF;
+
+        computeDeformationGradient<dim>(gradU_begin, gradU_end, std::begin(F), std::end(F), std::begin(dFdGradU),
+                                        std::end(dFdGradU), isCurrent);
+
+        computeDCurrentNormalVectorDF<dim>(normalVector_begin, normalVector_end, std::begin(F), std::end(F),
+                                           std::begin(dNormalVectordF), std::end(dNormalVectordF));
+
+        std::fill(dNormalVectordGradU_begin, dNormalVectordGradU_end, dNormalVectordGradU_type());
+
+        for (unsigned int i = 0; i < dim; ++i) {
+            for (unsigned int j = 0; j < dim * dim; ++j) {
+                for (unsigned int k = 0; k < dim * dim; ++k) {
+                    *(dNormalVectordGradU_begin + dim * dim * i + k) +=
+                        dNormalVectordF[dim * dim * i + j] * dFdGradU[dim * dim * j + k];
+                }
+            }
+        }
+    }
+
+    template <unsigned int dim, class normalVector_iterator, class gradU_iterator,
+              class dAreaWeightedNormalVectordGradU_iterator>
+    void computeDCurrentAreaWeightedNormalVectorDGradU(
+        const normalVector_iterator &normalVector_begin, const normalVector_iterator &normalVector_end,
+        const gradU_iterator &gradU_begin, const gradU_iterator &gradU_end,
+        dAreaWeightedNormalVectordGradU_iterator dAreaWeightedNormalVectordGradU_begin,
+        dAreaWeightedNormalVectordGradU_iterator dAreaWeightedNormalVectordGradU_end, const bool isCurrent) {
+        /*!
+         * Compute the derivative of the normal vector in the current configuration w.r.t. the displacement gradient
+         *
+         * \param &normalVector_begin: The starting iterator of the unit normal vector in the current configuration
+         * \param &normalVector_end: The stopping iterator of the unit normal vector in the current configuration
+         * \param &gradU_begin: The starting iterator of the displacement gradient
+         * \param &gradU_end: The stopping iterator of the displacement gradient
+         * \param &dAreaWeightedNormalVectordGradU_begin: The starting iterator of the derivative of the area weighted
+         * normal vector w.r.t. the displacement gradient \param &dAreaWeightedNormalVectordGradU_end: The stopping
+         * iterator of the derivative of the area weighted normal vector w.r.t. the displacement gradient \param
+         * &isCurrent: Whether the displacement gradient is with respect to the reference or current configuration
+         */
+
+        using gradU_type = typename std::iterator_traits<gradU_iterator>::value_type;
+        using dAreaWeightedNormalVectordGradU_type =
+            typename std::iterator_traits<dAreaWeightedNormalVectordGradU_iterator>::value_type;
+
+        std::array<gradU_type, dim * dim>                                 F;
+        std::array<gradU_type, dim * dim * dim * dim>                     dFdGradU;
+        std::array<dAreaWeightedNormalVectordGradU_type, dim * dim * dim> dAreaWeightedNormalVectordF;
+
+        computeDeformationGradient<dim>(gradU_begin, gradU_end, std::begin(F), std::end(F), std::begin(dFdGradU),
+                                        std::end(dFdGradU), isCurrent);
+
+        computeDCurrentAreaWeightedNormalVectorDF<dim>(normalVector_begin, normalVector_end, std::begin(F), std::end(F),
+                                                       std::begin(dAreaWeightedNormalVectordF),
+                                                       std::end(dAreaWeightedNormalVectordF));
+
+        std::fill(dAreaWeightedNormalVectordGradU_begin, dAreaWeightedNormalVectordGradU_end,
+                  dAreaWeightedNormalVectordGradU_type());
+
+        for (unsigned int i = 0; i < dim; ++i) {
+            for (unsigned int j = 0; j < dim * dim; ++j) {
+                for (unsigned int k = 0; k < dim * dim; ++k) {
+                    *(dAreaWeightedNormalVectordGradU_begin + dim * dim * i + k) +=
+                        dAreaWeightedNormalVectordF[dim * dim * i + j] * dFdGradU[dim * dim * j + k];
+                }
+            }
+        }
+    }
+
+    template <unsigned int dim, class normalVector_iterator, class gradU_iterator, class dCurrentAreadGradU_iterator>
+    void computeDCurrentAreaDGradU(const normalVector_iterator &normalVector_begin,
+                                   const normalVector_iterator &normalVector_end, const gradU_iterator &gradU_begin,
+                                   const gradU_iterator       &gradU_end,
+                                   dCurrentAreadGradU_iterator dCurrentAreadGradU_begin,
+                                   dCurrentAreadGradU_iterator dCurrentAreadGradU_end, const bool isCurrent) {
+        /*!
+         * Compute the derivative of the normal vector in the current configuration w.r.t. the displacement gradient
+         *
+         * \param &normalVector_begin: The starting iterator of the unit normal vector in the current configuration
+         * \param &normalVector_end: The stopping iterator of the unit normal vector in the current configuration
+         * \param &gradU_begin: The starting iterator of the displacement gradient
+         * \param &gradU_end: The stopping iterator of the displacement gradient
+         * \param &dCurrentAreadGradU_begin: The starting iterator of the derivative of the current area w.r.t. the
+         * displacement gradient \param &dCurrentAreadGradU_end: The stopping iterator of the derivative of the current
+         * area w.r.t. the displacement gradient \param &isCurrent: Whether the displacement gradient is with respect to
+         * the reference or current configuration
+         */
+
+        using gradU_type              = typename std::iterator_traits<gradU_iterator>::value_type;
+        using dCurrentAreadGradU_type = typename std::iterator_traits<dCurrentAreadGradU_iterator>::value_type;
+
+        std::array<gradU_type, dim * dim>              F;
+        std::array<gradU_type, dim * dim * dim * dim>  dFdGradU;
+        std::array<dCurrentAreadGradU_type, dim * dim> dCurrentAreadF;
+
+        computeDeformationGradient<dim>(gradU_begin, gradU_end, std::begin(F), std::end(F), std::begin(dFdGradU),
+                                        std::end(dFdGradU), isCurrent);
+
+        computeDCurrentAreaDF<dim>(normalVector_begin, normalVector_end, std::begin(F), std::end(F),
+                                   std::begin(dCurrentAreadF), std::end(dCurrentAreadF));
+
+        std::fill(dCurrentAreadGradU_begin, dCurrentAreadGradU_end, dCurrentAreadGradU_type());
+
+        for (unsigned int i = 0; i < dim * dim; ++i) {
+            for (unsigned int j = 0; j < dim * dim; ++j) {
+                *(dCurrentAreadGradU_begin + j) += dCurrentAreadF[i] * dFdGradU[dim * dim * i + j];
+            }
+        }
+    }
+
 }  // namespace tardigradeConstitutiveTools
