@@ -11,6 +11,12 @@ tardigrade_constitutive_tools.cpp
 
 .. doxygenfile:: tardigrade_constitutive_tools.cpp
 
+*********************************
+tardigrade_constitutive_tools.tpp
+*********************************
+
+.. doxygenfile:: tardigrade_constitutive_tools.tpp
+
 *******************************
 tardigrade_constitutive_tools.h
 *******************************
