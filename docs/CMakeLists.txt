@@ -4,6 +4,7 @@ find_package(Sphinx REQUIRED)
 # Find all the public headers
 set(PROJECT_PUBLIC_HEADER_DIR ${PROJECT_SOURCE_DIR}/${CPP_SRC_PATH})
 file(GLOB_RECURSE PROJECT_PUBLIC_HEADERS ${PROJECT_PUBLIC_HEADER_DIR}/*.h)
+file(GLOB_RECURSE PROJECT_PUBLIC_HEADERS ${PROJECT_PUBLIC_HEADER_DIR}/*.tpp)
 file(GLOB_RECURSE PROJECT_SOURCE_FILES ${PROJECT_PUBLIC_HEADER_DIR}/*.cpp)
 
 #=================================================================== DOXYGEN ===

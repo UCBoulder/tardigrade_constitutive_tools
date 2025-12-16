@@ -782,6 +782,8 @@ namespace tardigradeConstitutiveTools {
 
 }  // namespace tardigradeConstitutiveTools
 
+#include "tardigrade_constitutive_tools.tpp"
+
 #ifdef TARDIGRADE_HEADER_ONLY
 #include "tardigrade_constitutive_tools.cpp"
 #endif

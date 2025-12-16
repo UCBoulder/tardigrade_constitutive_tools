@@ -65,6 +65,7 @@ test:
     - CMakeLists.txt
     - src/cpp/tests/CMakeLists.txt
     - src/cpp/tests/test_tardigrade_constitutive_tools.cpp
+    - src/cpp/tests/test_tardigrade_constitutive_tools.tpp
   commands:
     - set -x
     - cmake -S . -B build -DCMAKE_BUILD_TYPE=conda-test -DCMAKE_INSTALL_LIBDIR=lib
