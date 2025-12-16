@@ -47,7 +47,7 @@ jobs:
       - name: clang-tidy Lint
         if: ${{ matrix.os == 'ubuntu-latest'}}
         shell: bash -el {0}
-        run: run-clang-tidy -config-file=.clang-tidy -header-filter=*.h -p build -extra-arg="-mno-sse2"
+        run: run-clang-tidy -config-file=.clang-tidy -p build -extra-arg="-mno-sse2"
       - name: clang-format Lint
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.tardigrade_opt == 'OFF' && matrix.header_only == 'ON' }}
         shell: bash -el {0}
