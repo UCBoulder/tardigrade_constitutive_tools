@@ -44,6 +44,10 @@ requirements:
     - sphinxcontrib-bibtex
   host:
     - python {{ python }}
+    - pip
+    - cython
+    - setuptools >=77
+    - setuptools_scm >=8
     - eigen >=3.3.7
     - tardigrade_error_tools >=0.9.8
     - tardigrade_vector_tools >=0.8.7
@@ -71,8 +75,8 @@ test:
   commands:
     - set -x
     - cmake -S . -B build -DCMAKE_BUILD_TYPE=conda-test -DCMAKE_INSTALL_LIBDIR=lib
-    - cmake --build build --target all --verbose
-    - ctest --test-dir build --output-on-failure -R 'test_'
+    - cmake --build build --target all --verbose --parallel 4
+    - ctest --test-dir build --output-on-failure -R 'test_' --parallel 4
     - cd $SP_DIR/$PKG_NAME
     - pytest
 
