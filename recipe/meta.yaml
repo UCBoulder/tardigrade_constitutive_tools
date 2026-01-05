@@ -25,25 +25,28 @@ build:
 
 requirements:
   build:
+    - python
+    - cross-python_{{ target_platform }}     # [build_platform != target_platform]
+    - cython
     - {{ compiler('cxx') }}
     - make
     - cmake >=3.30
+    - breathe >=4.3.0
     - clang-tools
-  host:
-    - python {{ python }}
+    - doxygen
+    - libboost-python-devel >=1.82
+    - pip
+    - python-build
+    - setuptools >=77
+    - setuptools_scm >=8
     - sphinx >=3.0.4
     - sphinx_rtd_theme >=0.4.3
     - sphinxcontrib-bibtex
-    - python-build
-    - pip
-    - cython
-    - setuptools >=77
-    - setuptools_scm >=8
+  host:
+    - python {{ python }}
     - eigen >=3.3.7
-    - libboost-python-devel >=1.82
     - tardigrade_error_tools >=0.9.8
     - tardigrade_vector_tools >=0.8.7
-    - doxygen
   run:
     - python
     - eigen >=3.3.7
