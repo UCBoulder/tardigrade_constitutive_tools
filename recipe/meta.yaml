@@ -15,7 +15,7 @@ build:
   script:
     - set -x
     # Build and install c++ libraries
-    - cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_LIBDIR=lib
+    - cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_LIBDIR=lib  # Conda-forge feedstock must replace ``-DCMAKE_INSTALL_LIBDIR=lib`` with ``${CMAKE_ARGS}``
     - cmake --build build --target tardigrade_constitutive_tools tardigrade_constitutive_tools_PYTHON
     - cmake --install build --prefix ${PREFIX}
     # Build and install Conda package
@@ -25,25 +25,32 @@ build:
 
 requirements:
   build:
-    - {{ compiler('cxx') }}
+    - python
+    - cross-python_{{ target_platform }}     # [build_platform != target_platform]
+    - cython
+    - {{ compiler('cxx') }}  # Conda-forge feedstock also requires ``{{ stdlib('c') }}`, but this breaks the in-repo recipe.
     - make
     - cmake >=3.30
-  host:
-    - python {{ python }}
     - breathe >=4.3.0
+    - clang-tools
+    - doxygen
+    - libboost-python-devel >=1.82
+    - pip
+    - python-build
+    - setuptools >=77
+    - setuptools_scm >=8
     - sphinx >=3.0.4
     - sphinx_rtd_theme >=0.4.3
     - sphinxcontrib-bibtex
-    - python-build
+  host:
+    - python {{ python }}
     - pip
     - cython
     - setuptools >=77
     - setuptools_scm >=8
     - eigen >=3.3.7
-    - libboost-python-devel >=1.82
     - tardigrade_error_tools >=0.9.8
     - tardigrade_vector_tools >=0.8.7
-    - doxygen
   run:
     - python
     - eigen >=3.3.7
@@ -57,6 +64,7 @@ test:
     - pytest-xdist
     - make
     - cmake >=3.30
+    - clang-tools
     - libboost-python-devel >=1.82
     - doxygen
     - sphinx >=3.0.4
@@ -67,8 +75,8 @@ test:
   commands:
     - set -x
     - cmake -S . -B build -DCMAKE_BUILD_TYPE=conda-test -DCMAKE_INSTALL_LIBDIR=lib
-    - cmake --build build --target all --verbose
-    - ctest --test-dir build --output-on-failure -R 'test_'
+    - cmake --build build --target all --verbose --parallel 4
+    - ctest --test-dir build --output-on-failure -R 'test_' --parallel 4
     - cd $SP_DIR/$PKG_NAME
     - pytest
 
