@@ -25,6 +25,11 @@ if(${TARDIGRADE_HEADER_ONLY})
     message("BUILDING IN HEADER ONLY MODE")
 endif()
 
+if(${TARDIGRADE_ERROR_TOOLS_OPT})
+    add_compile_definitions(TARDIGRADE_ERROR_TOOLS_OPT)
+    message(WARNING "BUILDING OPTIMIZED ERROR TOOLS. NO ERRORS WILL BE CAUGHT")
+endif()
+
 # Add a flag for if a full build of all tardigrade repositories should be performed
 set(TARDIGRADE_FULL_BUILD
     OFF
