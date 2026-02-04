@@ -160,7 +160,7 @@ namespace tardigradeConstitutiveTools {
 
         using deformationGradient_type = typename std::iterator_traits<deformationGradient_iterator>::value_type;
 
-        constexpr unsigned int sot_dim = dim * dim;
+        TARDIGRADE_ERROR_TOOLS_EVAL(constexpr unsigned int sot_dim = dim * dim;)
 
         TARDIGRADE_ERROR_TOOLS_CHECK((unsigned int)(displacementGradient_end - displacementGradient_begin) == sot_dim,
                                      "The displacement gradient has " +
@@ -227,7 +227,7 @@ namespace tardigradeConstitutiveTools {
         using deformationGradient_type = typename std::iterator_traits<deformationGradient_iterator>::value_type;
 
         constexpr unsigned int sot_dim = dim * dim;
-        constexpr unsigned int fot_dim = sot_dim * sot_dim;
+        TARDIGRADE_ERROR_TOOLS_EVAL(constexpr unsigned int fot_dim = sot_dim * sot_dim;)
 
         TARDIGRADE_ERROR_TOOLS_CHECK((unsigned int)(displacementGradient_end - displacementGradient_begin) == sot_dim,
                                      "The displacement gradient has " +
@@ -307,7 +307,7 @@ namespace tardigradeConstitutiveTools {
         using deformationGradient_type = typename std::iterator_traits<deformationGradient_iterator>::value_type;
         using C_type                   = typename std::iterator_traits<C_iterator>::value_type;
 
-        constexpr unsigned int sot_dim = dim * dim;
+        TARDIGRADE_ERROR_TOOLS_EVAL(constexpr unsigned int sot_dim = dim * dim;)
 
         TARDIGRADE_ERROR_TOOLS_CHECK((unsigned int)(deformationGradient_end - deformationGradient_begin) == sot_dim,
                                      "The deformation gradient has a size of " +
