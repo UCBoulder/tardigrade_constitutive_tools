@@ -6,6 +6,7 @@ cython
 doxygen>=1.9
 gersemi
 eigen>=3.3.7
+eigen-abi-devel
 libboost-python-devel>=1.82
 make
 numpy

@@ -278,8 +278,10 @@ BOOST_AUTO_TEST_CASE(testDecomposeGreenLagrangeStrain, *boost::unit_test::tolera
 
     floatVector badE = {-1, 0, 0, 0, 1, 0, 0, 0, 1};
 
+#ifndef TARDIGRADE_ERROR_TOOLS_OPT
     BOOST_REQUIRE_THROW(tardigradeConstitutiveTools::decomposeGreenLagrangeStrain(badE, EbarOut, JOut),
                         std::nested_exception);
+#endif
 }
 
 BOOST_AUTO_TEST_CASE(testMapPK2toCauchy, *boost::unit_test::tolerance(DEFAULT_TEST_TOLERANCE)) {

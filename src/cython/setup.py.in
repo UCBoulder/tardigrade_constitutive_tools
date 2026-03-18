@@ -12,6 +12,7 @@ CONDA_ENVIRONMENT = pathlib.Path(os.environ['CONDA_PREFIX'])
 CONDA_ENVIRONMENT_INCLUDE = CONDA_ENVIRONMENT / "include"
 ROOT_DIRECTORY = pathlib.Path("@PROJECT_SOURCE_DIR@")
 BUILD_DIRECTORY = pathlib.Path("@PROJECT_BINARY_DIR@")
+CMAKE_BUILD_DIRECTORY = pathlib.Path("@CMAKE_BINARY_DIR@")
 PYTHON_SOURCE_SUBDIRECTORY = pathlib.Path("@PYTHON_SRC_PATH@")
 CYTHON_SOURCE_SUBDIRECTORY = pathlib.Path("@CYTHON_SRC_PATH@")
 CPP_SOURCE_SUBDIRECTORY = pathlib.Path("@CPP_SRC_PATH@")
@@ -40,13 +41,13 @@ shared_library_paths = [str(BUILD_DIRECTORY / CPP_SOURCE_SUBDIRECTORY )]
 
 # Get all of the possible in-source build include locations
 for upstream_project in UPSTREAM_PROJECTS:
-    upstream_insource = BUILD_DIRECTORY / f"_deps/{upstream_project}-src" / CPP_SOURCE_SUBDIRECTORY
+    upstream_insource = CMAKE_BUILD_DIRECTORY / f"_deps/{upstream_project}-src" / CPP_SOURCE_SUBDIRECTORY
     if upstream_insource.exists() and upstream_insource.is_dir():
         include_dirs.append(upstream_insource.resolve())
-    upstream_insource = BUILD_DIRECTORY / f"_deps/{upstream_project}-src" / PYTHON_SOURCE_SUBDIRECTORY
+    upstream_insource = CMAKE_BUILD_DIRECTORY / f"_deps/{upstream_project}-src" / PYTHON_SOURCE_SUBDIRECTORY
     if upstream_insource.exists() and upstream_insource.is_dir():
         include_dirs.append(upstream_insource.resolve())
-    upstream_insource = BUILD_DIRECTORY / f"_deps/{upstream_project}-src" / CYTHON_SOURCE_SUBDIRECTORY
+    upstream_insource = CMAKE_BUILD_DIRECTORY / f"_deps/{upstream_project}-src" / CYTHON_SOURCE_SUBDIRECTORY
     if upstream_insource.exists() and upstream_insource.is_dir():
         include_dirs.append(upstream_insource.resolve())
 
