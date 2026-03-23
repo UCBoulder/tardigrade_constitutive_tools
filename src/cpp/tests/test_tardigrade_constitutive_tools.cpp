@@ -967,7 +967,7 @@ BOOST_AUTO_TEST_CASE(testComputeUnitNormal, *boost::unit_test::tolerance(DEFAULT
 
     tardigradeConstitutiveTools::computeUnitNormal(A, Anorm);
 
-    BOOST_CHECK(tardigradeVectorTools::inner(Anorm, Anorm) == 1.);
+    BOOST_TEST(tardigradeVectorTools::inner(Anorm, Anorm) == 1.);
 
     // Check the jacobian
     floatVector AnormJ;
