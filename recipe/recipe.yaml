@@ -46,7 +46,7 @@ requirements:
     - sphinx_rtd_theme >=0.4.3
     - sphinxcontrib-bibtex
   host:
-    - python ${{ python }}
+    - python ${{ python }}.*
     - pip
     - cython
     - setuptools >=77
